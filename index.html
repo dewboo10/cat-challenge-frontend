@@ -1,0 +1,85 @@
+<!-- UPDATED index.html with OTP Verification UI -->
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ultimate Prep | Login/Register</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>tailwind.config = { darkMode: 'class' };</script>
+</head>
+<body class="bg-white dark:bg-[#0f0f0f] text-black dark:text-white min-h-screen flex items-center justify-center">
+
+  <div class="bg-[#f4f4f4] dark:bg-[#1a1a1a] p-8 rounded-lg shadow-lg w-full max-w-md space-y-6">
+    <h1 class="text-2xl font-bold text-center">🚀 Welcome to Ultimate Prep</h1>
+
+    <!-- Login Form -->
+    <div id="login-section">
+      <h2 class="text-lg font-semibold mb-2">Login to your account</h2>
+      <input id="login-username" type="text" placeholder="Username" class="w-full px-4 py-2 rounded mb-2 bg-gray-200 dark:bg-gray-700" />
+      <input id="login-password" type="password" placeholder="Password" class="w-full px-4 py-2 rounded mb-4 bg-gray-200 dark:bg-gray-700" />
+      <button onclick="loginUser()" class="w-full bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded font-bold">Login</button>
+      <p class="text-sm text-center mt-4">Not registered? <a href="#" onclick="toggleForms('register')" class="text-blue-600 dark:text-blue-400 underline">Create an account</a></p>
+    </div>
+
+    <!-- Register Form (Hidden Initially) -->
+    <div id="register-section" class="hidden">
+      <h2 class="text-lg font-semibold mb-2">Create a new account</h2>
+      <input id="username" type="text" placeholder="Username" class="w-full px-4 py-2 rounded mb-2 bg-gray-200 dark:bg-gray-700" />
+      <input id="email" type="email" placeholder="Email Address" class="w-full px-4 py-2 rounded mb-2 bg-gray-200 dark:bg-gray-700" />
+      <input id="password" type="password" placeholder="Password" class="w-full px-4 py-2 rounded mb-2 bg-gray-200 dark:bg-gray-700" />
+
+      <div class="flex gap-2 mb-2">
+        <button onclick="sendFakeOtp()" id="otp-btn" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded text-sm">Send OTP</button>
+        <span id="otp-timer" class="text-sm text-gray-600 hidden">Resend in <span id="timer-count">60</span>s</span>
+      </div>
+      <input id="otp-input" type="text" placeholder="Enter OTP (123456)" class="w-full px-4 py-2 rounded mb-2 bg-gray-200 dark:bg-gray-700 hidden" />
+      <button onclick="verifyFakeOtp()" id="verify-btn" class="hidden w-full bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded font-bold">Verify OTP</button>
+
+      <button onclick="registerUser()" id="register-final-btn" class="hidden w-full mt-4 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded font-bold">Register</button>
+      <p class="text-sm text-center mt-4">Already have an account? <a href="#" onclick="toggleForms('login')" class="text-blue-600 dark:text-blue-400 underline">Back to Login</a></p>
+    </div>
+
+  </div>
+
+  <script src="js/auth.js"></script>
+  <script>
+    function toggleForms(view) {
+      document.getElementById("login-section").classList.toggle("hidden", view === "register");
+      document.getElementById("register-section").classList.toggle("hidden", view === "login");
+    }
+
+    function sendFakeOtp() {
+      document.getElementById("otp-input").classList.remove("hidden");
+      document.getElementById("verify-btn").classList.remove("hidden");
+      document.getElementById("otp-btn").disabled = true;
+      document.getElementById("otp-timer").classList.remove("hidden");
+
+      let countdown = 60;
+      document.getElementById("timer-count").textContent = countdown;
+      const interval = setInterval(() => {
+        countdown--;
+        document.getElementById("timer-count").textContent = countdown;
+        if (countdown === 0) {
+          clearInterval(interval);
+          document.getElementById("otp-btn").disabled = false;
+          document.getElementById("otp-timer").classList.add("hidden");
+        }
+      }, 1000);
+    }
+
+    function verifyFakeOtp() {
+      const otp = document.getElementById("otp-input").value.trim();
+      if (otp === "123456") {
+        alert("✅ OTP Verified!");
+        document.getElementById("register-final-btn").classList.remove("hidden");
+        document.getElementById("otp-input").classList.add("hidden");
+        document.getElementById("verify-btn").classList.add("hidden");
+      } else {
+        alert("❌ Incorrect OTP. Try again.");
+      }
+    }
+  </script>
+
+</body>
+</html>

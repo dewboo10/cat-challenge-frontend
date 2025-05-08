@@ -1,0 +1,56 @@
+<!-- FINAL UPDATED payment.html -->
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Buy Premium | Ultimate Prep</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = { darkMode: 'class' };
+  </script>
+</head>
+<body class="bg-white dark:bg-[#0f0f0f] text-black dark:text-white min-h-screen flex flex-col">
+
+<!-- Navbar -->
+<nav class="bg-[#f4f4f4] dark:bg-[#1a1a1a] p-4 flex justify-between items-center shadow">
+  <h1 class="text-xl font-bold">Upgrade to Premium</h1>
+  <button onclick="goBackDashboard()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded">Dashboard</button>
+</nav>
+
+<!-- Main Content -->
+<main class="flex-1 p-8 flex flex-col items-center justify-center text-center space-y-6">
+
+  <h2 class="text-3xl font-bold text-blue-600">🎉 Unlock Full Access!</h2>
+  <p class="text-lg">Become a Premium Member and supercharge your preparation!</p>
+
+  <div class="bg-gray-100 dark:bg-[#1a1a1a] p-6 rounded shadow-lg w-full max-w-xl">
+    <h3 class="text-xl font-semibold mb-4">🚀 Premium Features</h3>
+    <ul class="text-left space-y-2 text-sm">
+      <li>✅ Full access to 100 Days Mock Challenge</li>
+      <li>✅ Exclusive access to StudyZone (Voice Chat + Groups)</li>
+      <li>✅ Unlimited performance tracking</li>
+      <li>✅ Priority support and future perks</li>
+    </ul>
+  </div>
+  <button onclick="upgradeToPremium()" class="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded">
+    Buy Premium Access 💳
+  </button>
+  
+</main>
+
+<script>
+function buyPremium() {
+  localStorage.setItem("isPaidUser", true);
+  alert("🎉 Congratulations! You are now a Premium Member.");
+  window.location.href = "dashboard.html";
+}
+
+function goBackDashboard() {
+  window.location.href = "dashboard.html";
+}
+</script>
+<script src="js/payment.js"></script>
+
+</body>
+</html>

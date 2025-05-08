@@ -1,0 +1,45 @@
+<!-- UPDATED exam-select.html -->
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Select Your Exam | Ultimate Prep</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = { darkMode: 'class' };
+  </script>
+</head>
+<body class="bg-white dark:bg-[#0f0f0f] text-black dark:text-white min-h-screen flex items-center justify-center">
+
+  <div class="bg-gray-100 dark:bg-[#1a1a1a] p-8 rounded-lg shadow-lg w-96 space-y-6">
+    <h1 class="text-2xl font-bold text-center text-blue-600 dark:text-blue-400">🎯 Choose Your Exam</h1>
+
+    <div class="space-y-4">
+      <button onclick="selectExam('CAT')" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded font-semibold">CAT</button>
+      <button onclick="selectExam('IPMAT')" class="w-full bg-green-600 hover:bg-green-700 text-white py-3 rounded font-semibold">IPMAT</button>
+      <button onclick="selectExam('SSC')" class="w-full bg-yellow-500 hover:bg-yellow-600 text-white py-3 rounded font-semibold">SSC CGL</button>
+      <button onclick="selectExam('SBI')" class="w-full bg-purple-600 hover:bg-purple-700 text-white py-3 rounded font-semibold">SBI Clerk</button>
+      <button onclick="selectExam('BANK_PO')" class="w-full bg-pink-600 hover:bg-pink-700 text-white py-3 rounded font-semibold">Bank PO</button>
+      <button onclick="selectExam('SNAP')" class="w-full bg-red-600 hover:bg-red-700 text-white py-3 rounded font-semibold">SNAP</button>
+      <button onclick="selectExam('NMAT')" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-3 rounded font-semibold">NMAT</button>
+      <button onclick="selectExam('CMAT')" class="w-full bg-teal-600 hover:bg-teal-700 text-white py-3 rounded font-semibold">CMAT</button>
+    </div>
+  </div>
+
+<script>
+function selectExam(examName) {
+  localStorage.setItem('selectedExam', examName);
+  alert(`✅ You have selected ${examName} Exam!`);
+  window.location.href = "dashboard.html";
+}
+
+// Apply saved theme immediately
+(function() {
+  const theme = localStorage.getItem("theme") || "dark";
+  document.documentElement.classList.toggle("dark", theme === "dark");
+})();
+</script>
+
+</body>
+</html>

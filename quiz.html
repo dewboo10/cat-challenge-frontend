@@ -1,0 +1,105 @@
+<!-- UPDATED quiz.html -->
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Quiz | Ultimate Prep</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>tailwind.config = { darkMode: 'class' };</script>
+</head>
+<body class="bg-white dark:bg-[#0f0f0f] dark:text-white min-h-screen">
+
+<!-- Start Screen (Guidelines) -->
+<div id="start-screen" class="flex items-center justify-center min-h-screen">
+  <div class="bg-gray-100 dark:bg-[#1a1a1a] p-8 rounded-lg shadow-lg w-full max-w-xl text-center space-y-6">
+    <h1 class="text-2xl font-bold text-blue-600 dark:text-blue-400">📝 Quiz Guidelines</h1>
+    <ul class="text-left text-sm space-y-2">
+      <li>⏳ Fixed time for each section (Quant, VARC, LRDI).</li>
+      <li>🚫 No pause allowed once started. Timer continues even if reloaded.</li>
+      <li>✅ Save, Mark, or Clear your responses.</li>
+      <li>📤 Submit quiz anytime or auto-submit when time runs out.</li>
+    </ul>
+    <div class="flex items-center gap-2 justify-center">
+      <input type="checkbox" id="agree-checkbox" class="accent-blue-600">
+      <label for="agree-checkbox" class="text-sm">I have read and agree to the above rules.</label>
+    </div>
+    <button onclick="startQuiz()" id="start-btn" disabled class="px-6 py-2 bg-gray-400 rounded text-white font-semibold">Start Quiz</button>
+  </div>
+</div>
+
+<!-- Main Quiz Interface (hidden initially) -->
+<div id="quiz-panel" class="hidden grid grid-cols-6 min-h-screen">
+
+  <!-- Panel 1: Main Content -->
+  <section class="col-span-3 p-6 border-r border-gray-300 dark:border-gray-700">
+    <h1 class="text-xl font-bold mb-4">Question No. <span id="question-number">1</span></h1>
+    <div id="main-block" class="bg-gray-100 dark:bg-[#1a1a1a] p-4 rounded shadow-sm">
+      <div id="video-review" class="mb-4"></div>
+      <p id="passage-text" class="text-sm">Loading passage...</p>
+    </div>
+  </section>
+
+  <!-- Panel 2: Question and Options -->
+  <section class="col-span-2 p-6 space-y-4">
+    <h2 id="question-text" class="text-lg font-semibold">Loading question...</h2>
+    <div id="options-container" class="space-y-3"></div>
+    <div id="written-explanation" class="text-sm text-gray-400"></div>
+
+    <div class="flex gap-2 mt-6" id="control-buttons">
+      <button onclick="clearResponse()" class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded">Clear</button>
+      <button onclick="markAndNext()" class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded">Mark & Next</button>
+      <button onclick="saveAndNext()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded">Save & Next</button>
+    </div>
+  </section>
+
+  <!-- Panel 3: Profile + Navigator -->
+  <aside class="col-span-1 p-4 border-l border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-[#1a1a1a] flex flex-col justify-between">
+
+    <!-- User Profile Top -->
+    <div class="flex items-center gap-3 mb-4">
+      <img src="https://www.svgrepo.com/show/382106/avatar-boy.svg" alt="Profile" class="w-10 h-10 rounded-full bg-gray-200">
+      <div class="text-sm font-semibold" id="profile-username">User</div>
+    </div>
+
+    <!-- Section and Timer Info -->
+    <div class="space-y-4">
+      <div class="text-sm">
+        <h3 class="font-bold text-center">Section: <span id="section-name">Quant</span></h3>
+        <p class="text-center text-xs mt-1">Time Left: <span id="timer">40:00</span></p>
+        <hr class="my-2">
+        <p class="text-center text-sm">Answered: <span id="answered-count">0</span></p>
+      </div>
+      <div class="mt-4">
+        <h4 class="font-semibold text-sm mb-2">Question Overview</h4>
+        <div id="question-overview" class="grid grid-cols-5 gap-2 text-sm"></div>
+      </div>
+    </div>
+
+    <!-- Submit & Quit -->
+    <div>
+      <button onclick="quitQuiz()" class="bg-red-600 hover:bg-red-700 text-white w-full py-2 rounded mb-2">Quit</button>
+      <button onclick="submitQuiz()" class="bg-green-600 hover:bg-green-700 text-white w-full py-2 rounded">Submit</button>
+    </div>
+
+  </aside>
+
+</div>
+
+<!-- Scripts -->
+<script src="js/quiz.js"></script>
+
+<script>
+// Enable Start button after Agree checkbox
+const checkbox = document.getElementById("agree-checkbox");
+const startBtn = document.getElementById("start-btn");
+checkbox.addEventListener("change", () => {
+  startBtn.disabled = !checkbox.checked;
+  startBtn.className = checkbox.checked 
+    ? "px-6 py-2 bg-blue-600 hover:bg-blue-700 rounded text-white font-semibold" 
+    : "px-6 py-2 bg-gray-400 rounded text-white font-semibold";
+});
+</script>
+
+</body>
+</html>

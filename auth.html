@@ -1,0 +1,78 @@
+<!-- FINAL NEW auth.html - Login/Register Page -->
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login | Ultimate Prep</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = { darkMode: 'class' };
+  </script>
+</head>
+<body class="bg-white dark:bg-[#0f0f0f] text-black dark:text-white min-h-screen flex items-center justify-center">
+
+<!-- Main Container -->
+<div class="bg-gray-100 dark:bg-[#1a1a1a] p-8 rounded shadow-md w-full max-w-md space-y-6">
+
+  <h1 class="text-2xl font-bold text-center text-blue-600">Ultimate Prep</h1>
+  <p class="text-center text-sm text-gray-500">Login to continue your preparation journey</p>
+
+  <div class="space-y-4">
+    <input id="email" type="email" placeholder="Email" class="w-full px-4 py-2 rounded bg-white dark:bg-[#0f0f0f] border border-gray-300 dark:border-gray-700">
+    <input id="password" type="password" placeholder="Password" class="w-full px-4 py-2 rounded bg-white dark:bg-[#0f0f0f] border border-gray-300 dark:border-gray-700">
+  </div>
+
+  <button onclick="loginUser()" class="w-full px-6 py-3 mt-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded">
+    Continue
+  </button>
+
+  <p class="text-center text-sm mt-4">
+    Don't have an account? <a href="#" onclick="registerUser()" class="text-blue-500 hover:underline">Register here</a>
+  </p>
+
+</div>
+
+<script>
+// Simulated LocalStorage User Auth
+function loginUser() {
+  const email = document.getElementById("email").value.trim();
+  const password = document.getElementById("password").value.trim();
+
+  if (!email || !password) {
+    alert("🚫 Please fill all fields!");
+    return;
+  }
+
+  const savedUser = JSON.parse(localStorage.getItem("user"));
+
+  if (savedUser && savedUser.email === email && savedUser.password === password) {
+    alert("✅ Login Successful!");
+    window.location.href = "exam-select.html";
+  } else {
+    alert("🚫 Invalid email or password!");
+  }
+}
+
+function registerUser() {
+  const email = prompt("Enter your Email:");
+  const password = prompt("Set a Password:");
+
+  if (!email || !password) {
+    alert("🚫 Both fields are required to register.");
+    return;
+  }
+
+  const userObj = {
+    email: email,
+    password: password,
+    username: email.split("@")[0] // Simple username from email before @
+  };
+
+  localStorage.setItem("user", JSON.stringify(userObj));
+  alert("✅ Registration Successful! Now Login.");
+}
+</script>
+
+</body>
+</html>

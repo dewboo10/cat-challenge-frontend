@@ -1,0 +1,67 @@
+<!-- FINAL UPDATED performance.html with Retained Layout & Advanced Analysis Setup -->
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Performance Dashboard | Ultimate Prep</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = { darkMode: 'class' };
+  </script>
+</head>
+<body class="bg-white dark:bg-[#0f0f0f] text-black dark:text-white min-h-screen">
+
+  <!-- Navbar -->
+  <nav class="bg-[#f4f4f4] dark:bg-[#1a1a1a] px-6 py-4 shadow flex justify-between items-center">
+    <h1 class="text-xl font-bold">📈 Performance Dashboard</h1>
+    <button onclick="logoutUser()" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded">Logout</button>
+  </nav>
+
+  <!-- Main Layout -->
+  <main class="p-6 space-y-8">
+
+    <!-- Summary Cards -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div class="bg-[#e0f7fa] dark:bg-[#1a1a2a] p-4 rounded shadow text-center">
+        <p class="text-sm">Total Quizzes</p>
+        <h2 id="total-quizzes" class="text-2xl font-bold">--</h2>
+      </div>
+      <div class="bg-[#e8f5e9] dark:bg-[#173b1f] p-4 rounded shadow text-center">
+        <p class="text-sm">Average Accuracy</p>
+        <h2 id="avg-accuracy" class="text-2xl font-bold">--%</h2>
+      </div>
+      <div class="bg-[#fff3e0] dark:bg-[#40321f] p-4 rounded shadow text-center">
+        <p class="text-sm">Avg Time / Question</p>
+        <h2 id="avg-time" class="text-2xl font-bold">--s</h2>
+      </div>
+      <div class="bg-[#ede7f6] dark:bg-[#2e1f47] p-4 rounded shadow text-center">
+        <p class="text-sm">Predicted Percentile</p>
+        <h2 id="predicted-percentile" class="text-2xl font-bold">--%</h2>
+      </div>
+    </div>
+
+    <!-- Chapter-wise Analysis -->
+    <section class="mt-6">
+      <h2 class="text-xl font-semibold mb-4">📚 Section & Topic Wise Analysis</h2>
+      <div id="chapter-analysis" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <!-- Filled dynamically -->
+      </div>
+    </section>
+
+    <!-- Time Insight Chart (Future) -->
+    <section class="mt-6">
+      <h2 class="text-xl font-semibold mb-4">⏱ Time Distribution</h2>
+      <canvas id="timeChart" class="w-full max-w-3xl mx-auto"></canvas>
+    </section>
+
+    <!-- Reset Button -->
+    <div class="text-center">
+      <button onclick="resetPerformance()" class="mt-4 px-6 py-2 bg-red-500 hover:bg-red-600 text-white rounded">Reset Performance</button>
+    </div>
+
+  </main>
+
+  <script src="js/performance.js"></script>
+</body>
+</html>

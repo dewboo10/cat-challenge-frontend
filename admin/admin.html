@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin Dashboard | Ultimate CAT Prep</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = { darkMode: 'class' };
+  </script>
+</head>
+
+<body class="bg-white dark:bg-[#0f0f0f] dark:text-white min-h-screen flex flex-col">
+
+  <!-- Navbar -->
+  <nav class="w-full px-6 py-4 flex justify-between items-center bg-gray-100 dark:bg-[#1a1a1a] shadow">
+    <h1 class="text-2xl font-bold text-blue-500">🔑 Admin Panel</h1>
+    <button onclick="logoutAdmin()" class="bg-red-600 hover:bg-red-700 px-4 py-2 rounded text-white">Logout</button>
+  </nav>
+
+  <!-- Main Content -->
+  <main id="admin-content" class="p-6 flex-1 grid grid-cols-1 md:grid-cols-2 gap-6 hidden">
+
+    <!-- User Stats -->
+    <section class="bg-white dark:bg-[#1f1f1f] p-6 rounded shadow space-y-4">
+      <h2 class="text-xl font-bold">👥 Users Overview</h2>
+      <p id="total-users" class="text-3xl font-bold">0 Users</p>
+    </section>
+
+    <!-- Quiz Stats -->
+    <section class="bg-white dark:bg-[#1f1f1f] p-6 rounded shadow space-y-4">
+      <h2 class="text-xl font-bold">📚 Quizzes Overview</h2>
+      <p id="total-quizzes" class="text-3xl font-bold">0 Completed</p>
+    </section>
+
+    <!-- Reset Progress Button -->
+    <section class="bg-white dark:bg-[#1f1f1f] p-6 rounded shadow space-y-4 md:col-span-2">
+      <h2 class="text-xl font-bold">🛠️ Admin Actions</h2>
+      <button onclick="resetAllProgress()" class="w-full mt-4 bg-red-500 hover:bg-red-600 px-4 py-2 rounded text-white font-bold">
+        Reset All User Progress
+      </button>
+    </section>
+
+    <!-- All Registered Users Table -->
+    <section class="bg-white dark:bg-[#1f1f1f] p-6 rounded shadow space-y-4 md:col-span-2">
+      <h2 class="text-xl font-bold">👥 All Registered Users</h2>
+      <div class="overflow-x-auto">
+        <table class="w-full text-left mt-4">
+          <thead>
+            <tr>
+              <th class="px-4 py-2 border-b dark:border-gray-600">Username</th>
+              <th class="px-4 py-2 border-b dark:border-gray-600">Password</th>
+              <th class="px-4 py-2 border-b dark:border-gray-600">Action</th>
+            </tr>
+          </thead>
+          <tbody id="users-table-body">
+            <!-- Dynamic user rows -->
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Send Notification to Users -->
+    <section class="bg-white dark:bg-[#1f1f1f] p-6 rounded shadow space-y-4 md:col-span-2">
+      <h2 class="text-xl font-bold">📢 Send Notification</h2>
+      <input id="notification-input" type="text" placeholder="Enter notification message..." class="w-full px-4 py-2 rounded bg-gray-200 dark:bg-gray-700" />
+      <button onclick="sendNotification()" class="w-full bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded text-white font-bold mt-2">
+        Send Notification
+      </button>
+    </section>
+
+  </main>
+
+  <!-- Admin Login Modal -->
+  <div id="login-modal" class="flex-1 flex items-center justify-center">
+    <div class="bg-gray-100 dark:bg-[#1f1f1f] p-8 rounded shadow w-80 space-y-4">
+      <h2 class="text-center text-xl font-bold">Admin Login</h2>
+      <input id="admin-username" type="text" placeholder="Username" class="w-full px-3 py-2 rounded bg-gray-200 dark:bg-gray-700" />
+      <input id="admin-password" type="password" placeholder="Password" class="w-full px-3 py-2 rounded bg-gray-200 dark:bg-gray-700" />
+      <button onclick="loginAdmin()" class="w-full bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded text-white font-bold">
+        Login
+      </button>
+    </div>
+  </div>
+<!-- Notification Management Section -->
+<section class="bg-white dark:bg-[#1f1f1f] p-6 rounded shadow space-y-4 md:col-span-2">
+  <h2 class="text-xl font-bold">📢 Manage Notifications</h2>
+  <ul id="notification-list" class="space-y-2 text-sm"></ul>
+  <button onclick="clearAllNotifications()" class="mt-4 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded font-semibold">
+    🧹 Clear All Notifications
+  </button>
+</section>
+
+  <script src="admin.js" ></script>
+    
+</body>
+</html>
