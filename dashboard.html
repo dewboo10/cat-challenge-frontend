@@ -28,7 +28,7 @@
 <!-- Navbar -->
 <nav class="w-full fixed top-0 left-0 right-0 bg-blue-600 text-white px-6 py-4 shadow flex justify-between items-center z-40">
   <h1 class="text-xl font-bold">Ultimate Prep</h1>
-  <button onclick="showModal()" class="bg-white text-blue-600 px-4 py-2 rounded hover:bg-blue-100 font-semibold">Start Now</button>
+  <div id="navbar-user" class="flex items-center space-x-2"></div>
 </nav>
 
 <!-- Sidebar (Desktop only) -->
@@ -36,7 +36,7 @@
   <div class="space-y-6">
     <div class="bg-white p-4 rounded shadow">
       <h3 class="font-semibold mb-2">🏆 Top 10 Performers</h3>
-      <ul class="space-y-1 text-sm">
+      <ul class="space-y-1 text-sm" id="leaderboard-list">
         <li class="flex justify-between"><span>Riya</span><span>#1</span></li>
         <li class="flex justify-between"><span>Anil</span><span>#2</span></li>
         <li class="flex justify-between"><span>You</span><span>#3</span></li>
@@ -64,41 +64,43 @@
       📚 <span id="study-count">5,000</span> students currently studying
     </div>
     <div class="relative w-full pt-[56.25%] rounded overflow-hidden shadow">
-      <iframe class="absolute top-0 left-0 w-full h-full" src="https://www.youtube.com/embed/5MgBikgcWnY" allowfullscreen></iframe>
+      <iframe class="absolute top-0 left-0 w-full h-full rounded" src="https://www.youtube.com/embed/5MgBikgcWnY" allowfullscreen></iframe>
     </div>
   </section>
 
   <section>
     <h2 class="text-2xl font-bold mb-4">📘 100 Days Quiz Challenge</h2>
     <div id="quiz-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-      <!-- Quiz Cards via JS -->
+      <!-- Quiz Cards will be injected here -->
     </div>
   </section>
 </main>
 
-<!-- Your Modal -->
-<div id="signup-modal" class="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-50 hidden">
-  <div class="bg-white p-8 rounded-lg shadow-lg w-[90%] max-w-md space-y-6">
-    <h2 class="text-xl font-bold text-center text-blue-600">🎯 Join the Journey</h2>
-    <p class="text-center text-gray-600">Register now and take the first step toward your dream college. 100 steps. One goal.</p>
-    <input type="text" placeholder="Username" class="w-full border px-4 py-2 rounded" />
-    <input type="email" placeholder="Email" class="w-full border px-4 py-2 rounded" />
-    <input type="password" placeholder="Password" class="w-full border px-4 py-2 rounded" />
-    <button class="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700">Register & Start</button>
-    <p class="text-center text-sm text-gray-500">Already registered? <a href="#" class="text-blue-600">Login</a></p>
+<!-- Login/Signup Modal -->
+<div id="auth-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+  <div class="bg-white w-full max-w-md p-6 rounded shadow space-y-4">
+    <h2 class="text-xl font-bold text-center text-blue-600">🎯 Join Ultimate Prep</h2>
+    <p class="text-center text-sm text-gray-600">Track progress, unlock quizzes, and start your 100-day journey!</p>
+
+    <input id="auth-username" type="text" placeholder="Username" class="w-full px-4 py-2 rounded border" />
+    <input id="auth-email" type="email" placeholder="Email" class="w-full px-4 py-2 rounded border" />
+    <input id="auth-password" type="password" placeholder="Password" class="w-full px-4 py-2 rounded border" />
+
+    <div class="flex gap-2">
+      <button onclick="sendOtp()" id="otp-btn" class="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded text-sm">Send OTP</button>
+      <span id="otp-timer" class="text-sm text-gray-500 hidden">Resend in <span id="timer-count">60</span>s</span>
+    </div>
+
+    <input id="otp-input" type="text" placeholder="Enter OTP" class="w-full px-4 py-2 rounded border hidden" />
+    <button onclick="verifyOtp()" id="verify-btn" class="hidden w-full bg-green-600 hover:bg-green-700 text-white py-2 rounded">Verify OTP</button>
+
+    <button onclick="registerUser()" id="register-final-btn" class="hidden w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded font-bold">Register & Start</button>
+    <button onclick="closeAuthModal()" class="w-full text-sm text-gray-500 text-center mt-2">Maybe later</button>
   </div>
 </div>
 
+<!-- Scripts -->
 <script>
-  // Show your modal manually
-  function showModal() {
-    document.getElementById("signup-modal").classList.remove("hidden");
-  }
-
-  function closeNotification() {
-    document.getElementById("site-notification").classList.add("hidden");
-  }
-
   // Animate study count
   let count = 4970;
   const display = document.getElementById("study-count");
@@ -112,17 +114,22 @@
   const user = JSON.parse(localStorage.getItem("user"));
   if (!user) {
     document.getElementById("auth-overlay").classList.remove("hidden");
+  } else {
+    const navbarUser = document.getElementById("navbar-user");
+    if (navbarUser) {
+      navbarUser.innerHTML = `<span class="text-sm">👤 ${user.username}</span>`;
+    }
   }
 
-  // Auth redirects
   function openLogin() {
     window.location.href = "index.html#login";
   }
+
   function openRegister() {
     window.location.href = "index.html#register";
   }
 </script>
-
+<script src="js/auth-modal.js"></script>
 <script src="js/dashboard.js"></script>
 </body>
 </html>
