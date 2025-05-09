@@ -1,61 +1,78 @@
-
 console.log("✅ dashboard.js loaded");
 
-// === On DOM Loaded ===
+// === DOMContentLoaded ===
 document.addEventListener("DOMContentLoaded", () => {
   const user = JSON.parse(localStorage.getItem("user"));
   const selectedExam = localStorage.getItem("selectedExam");
 
-  // Show auth overlay if not logged in
+  // Show reminder modal for guests after 5s
   if (!user) {
-    const overlay = document.getElementById("auth-overlay");
-    if (overlay) overlay.classList.remove("hidden");
-    return;
+    setTimeout(() => {
+      const overlay = document.getElementById("auth-overlay");
+      if (overlay) overlay.classList.remove("hidden");
+    }, 5000);
   }
 
-  // Redirect to exam-select if no exam selected
+  // Redirect only if no exam selected
   if (!selectedExam) {
     window.location.href = "exam-select.html";
     return;
   }
 
-  // === Update Username Display ===
-  const usernameDisplay = document.getElementById("username-display");
-  if (usernameDisplay) {
-    usernameDisplay.textContent = user.username;
-  }
-
-  // === Update Dashboard Title ===
-  const titleEl = document.getElementById("dashboard-title");
-  if (titleEl) {
-    titleEl.textContent = `Ultimate ${selectedExam} Prep`;
-  }
-
-  // === Notification Display ===
-  const notification = localStorage.getItem("siteNotification");
-  const notificationBox = document.getElementById("site-notification");
-  const notificationText = document.getElementById("notification-text");
-
-  if (notification && notificationBox && notificationText) {
-    setTimeout(() => {
-      notificationText.textContent = notification;
-      notificationBox.classList.remove("hidden");
-    }, 3000);
-  }
-
+  updateNavbarUser(user);
+  updateDashboardTitle(selectedExam);
   renderCountdown(selectedExam);
   renderQuizCards(user, selectedExam);
   renderLeaderboard(user);
+  showNotification();
 });
 
-// === Close Notification ===
-function closeNotification() {
-  const notificationBox = document.getElementById("site-notification");
-  if (notificationBox) notificationBox.classList.add("hidden");
+function updateNavbarUser(user) {
+  const navbarUser = document.getElementById("navbar-user");
+  if (!navbarUser) return;
+
+  if (user) {
+    navbarUser.innerHTML = `
+      <div class="relative group">
+        <div class="flex items-center gap-2 cursor-pointer">
+          <img src="https://cdn-icons-png.flaticon.com/512/1077/1077114.png" alt="User" class="w-6 h-6 rounded-full" />
+          <span id="username-display" class="font-semibold">${user.username}</span>
+        </div>
+        <div class="absolute right-0 mt-2 bg-white text-black rounded shadow hidden group-hover:block group-focus-within:block z-50 px-4 py-2"
+             onmouseenter="this.style.display='block'" onmouseleave="this.style.display='none'">
+          <button onclick="logoutUser()" class="text-sm font-semibold text-red-500 hover:underline">Logout</button>
+        </div>
+      </div>`;
+  } else {
+    navbarUser.innerHTML = `
+      <a href="index.html#register" class="bg-white text-blue-600 px-4 py-1 rounded hover:bg-blue-100 font-semibold text-sm">Sign Up</a>`;
+  }
 }
 
-// === Countdown Renderer ===
-function renderCountdown(selectedExam) {
+function updateDashboardTitle(exam) {
+  const titleEl = document.getElementById("dashboard-title");
+  if (titleEl) {
+    titleEl.textContent = `Ultimate ${exam} Prep`;
+  }
+}
+
+function showNotification() {
+  const notification = localStorage.getItem("siteNotification");
+  const box = document.getElementById("site-notification");
+  const text = document.getElementById("notification-text");
+  if (notification && box && text) {
+    setTimeout(() => {
+      text.textContent = notification;
+      box.classList.remove("hidden");
+    }, 3000);
+  }
+}
+
+function closeNotification() {
+  document.getElementById("site-notification")?.classList.add("hidden");
+}
+
+function renderCountdown(exam) {
   const examDates = {
     CAT: "2025-11-24",
     IPMAT: "2025-05-20",
@@ -67,36 +84,36 @@ function renderCountdown(selectedExam) {
     BANK_PO: "2025-09-05"
   };
 
-  const target = new Date(`${examDates[selectedExam] || "2025-11-24"}T00:00:00`);
+  const targetDate = new Date(`${examDates[exam] || "2025-11-24"}T00:00:00`);
   const now = new Date();
-  const daysLeft = Math.max(Math.ceil((target - now) / (1000 * 60 * 60 * 24)), 0);
+  const diffDays = Math.max(Math.ceil((targetDate - now) / (1000 * 60 * 60 * 24)), 0);
 
-  const el1 = document.getElementById("days-left");
-  const el2 = document.getElementById("days-left-mobile");
-  if (el1) el1.textContent = `${daysLeft} days`;
-  if (el2) el2.textContent = `${daysLeft} days`;
+  document.getElementById("days-left")!.textContent = `${diffDays} days`;
+  const mobileCountdown = document.getElementById("days-left-mobile");
+  if (mobileCountdown) mobileCountdown.textContent = `${diffDays} days`;
 }
 
-// === Quiz Cards Renderer ===
-function renderQuizCards(user, selectedExam) {
+function renderQuizCards(user, exam) {
   const container = document.getElementById("quiz-grid");
   if (!container) return;
 
-  const progressKey = `progress_${selectedExam}_${user.username}`;
-  const progress = JSON.parse(localStorage.getItem(progressKey) || "{}");
   const isPaid = JSON.parse(localStorage.getItem("isPaidUser") || "false");
+  const progressKey = `progress_${exam}_${user?.username || "guest"}`;
+  const progress = JSON.parse(localStorage.getItem(progressKey) || "{}");
 
   container.innerHTML = "";
 
   for (let day = 1; day <= 100; day++) {
     const isCompleted = progress[`day${day}`]?.completed;
-    const isUnlocked = day <= 5 || isPaid || progress[`day${day - 1}`]?.completed;
+    const unlocked = user
+      ? (day <= 5 || isPaid || progress[`day${day - 1}`]?.completed)
+      : day <= 5;
 
     const card = document.createElement("div");
     card.className = "bg-white border border-gray-200 rounded p-4 shadow text-center space-y-2";
 
-    let buttonHTML = isUnlocked
-      ? `<a href="quiz.html?exam=${selectedExam}&day=${day}">
+    const buttonHTML = unlocked
+      ? `<a href="quiz.html?exam=${exam}&day=${day}">
           <button class="px-4 py-1 bg-yellow-500 hover:bg-yellow-600 text-white rounded text-sm font-semibold">
             ${isCompleted ? "Review" : "Start"}
           </button>
@@ -111,68 +128,45 @@ function renderQuizCards(user, selectedExam) {
       <h3 class="font-semibold text-lg text-black">Day ${day} Quiz</h3>
       ${buttonHTML}
     `;
-
     container.appendChild(card);
   }
 }
 
-// === Static Leaderboard ===
 function renderLeaderboard(user) {
   const leaderboard = [
-    { username: "tanya" },
-    { username: "anil" },
-    { username: "vishal" },
-    { username: "deepika" },
-    { username: "rahul" },
-    { username: "manvi" },
-    { username: "keshav" },
-    { username: "riya" },
-    { username: "dinesh" },
-    { username: "shreya" },
-    { username: user.username }
+    { username: "tanya" }, { username: "anil" }, { username: "vishal" },
+    { username: "deepika" }, { username: "rahul" }, { username: "manvi" },
+    { username: "keshav" }, { username: "riya" }, { username: "dinesh" },
+    { username: "shreya" }, { username: user?.username || "guest" }
   ];
 
-  const unique = leaderboard.filter(
-    (entry, i, self) => self.findIndex(e => e.username === entry.username) === i
+  const unique = leaderboard.filter((entry, i, self) =>
+    self.findIndex(e => e.username === entry.username) === i
   );
 
-  const leaderboardContainer = document.getElementById("leaderboard-list");
-  const userRankEl = document.getElementById("user-rank");
+  const leaderboardEl = document.getElementById("leaderboard");
+  const rankEl = document.getElementById("user-rank");
 
-  if (!leaderboardContainer) return;
+  if (!leaderboardEl) return;
 
-  leaderboardContainer.innerHTML = unique
+  leaderboardEl.innerHTML = unique
     .slice(0, 10)
     .map((entry, i) => `
-      <div class="flex justify-between text-sm ${entry.username === user.username ? 'font-bold text-green-500' : ''}">
-        <span>${entry.username}</span>
-        <span>#${i + 1}</span>
+      <div class="flex justify-between text-sm ${entry.username === user?.username ? 'font-bold text-green-500' : ''}">
+        <span>${entry.username}</span><span>#${i + 1}</span>
       </div>
     `).join("");
 
-  if (userRankEl) userRankEl.textContent = `You are ranked #${unique.findIndex(e => e.username === user.username) + 1}`;
-}
-// === Navbar Username + Logout Dropdown ===
-(function renderNavbarUser() {
-  const navUser = document.getElementById("navbar-user");
-  if (!navUser) return;
-
-  const user = JSON.parse(localStorage.getItem("user"));
-  if (user) {
-    navUser.innerHTML = `
-      <div class="relative group">
-        <button class="flex items-center gap-2 font-semibold">
-          👤 ${user.username}
-          <svg class="w-4 h-4 mt-[2px]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
-          </svg>
-        </button>
-        <div class="absolute right-0 mt-2 bg-white text-black shadow-md rounded hidden group-hover:block z-50 min-w-[140px] text-sm">
-          <button onclick="logoutUser()" class="block w-full text-left px-4 py-2 hover:bg-blue-100">Logout</button>
-        </div>
-      </div>
-    `;
-  } else {
-    navUser.innerHTML = `<a href="index.html" class="bg-white text-blue-600 px-4 py-2 rounded hover:bg-blue-100 font-semibold">Sign Up</a>`;
+  if (rankEl) {
+    const rank = unique.findIndex(e => e.username === user?.username) + 1;
+    rankEl.textContent = `You are ranked #${rank}`;
   }
-})();
+}
+
+// === Logout Handler ===
+function logoutUser() {
+  localStorage.removeItem("user");
+  localStorage.removeItem("isPaidUser");
+  localStorage.removeItem("selectedExam");
+  location.href = "index.html";
+}

@@ -11,11 +11,11 @@
 </head>
 <body class="bg-white text-black min-h-screen font-sans">
 
-<!-- Fullscreen Signup Prompt -->
-<div id="auth-overlay" class="fixed inset-0 bg-black bg-opacity-70 backdrop-blur-sm z-50 flex items-center justify-center hidden">
+<!-- 🔒 Guest Modal After 5s -->
+<div id="guest-modal" class="fixed inset-0 bg-black bg-opacity-70 backdrop-blur-sm z-50 hidden items-center justify-center">
   <div class="bg-white p-8 rounded-lg shadow-lg w-[90%] max-w-md space-y-6 text-center">
     <h2 class="text-2xl font-bold text-blue-600">🎯 100 Steps Toward Your Dream</h2>
-    <p class="text-gray-700">Track your performance. Get personalized analysis.<br>Just login or sign up to begin your journey.</p>
+    <p class="text-gray-700">Track your performance. Unlock all quizzes.<br>Login or sign up now!</p>
     <div class="flex gap-4 justify-center">
       <a href="index.html#login" class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded font-semibold">Login</a>
       <a href="index.html#register" class="bg-green-600 hover:bg-green-700 text-white px-5 py-2 rounded font-semibold">Sign Up</a>
@@ -31,8 +31,8 @@
 <!-- Navbar -->
 <nav class="w-full fixed top-0 left-0 right-0 bg-blue-600 text-white px-6 py-4 shadow flex justify-between items-center z-40">
   <h1 class="text-xl font-bold">Ultimate Prep</h1>
-  <div id="navbar-user" class="relative">
-    <!-- Dynamic: Filled by JS -->
+  <div id="navbar-user" class="relative group">
+    <!-- Filled by JS -->
   </div>
 </nav>
 
@@ -41,7 +41,7 @@
   <div class="space-y-6">
     <div class="bg-white p-4 rounded shadow">
       <h3 class="font-semibold mb-2">🏆 Top 10 Performers</h3>
-      <div id="leaderboard" class="space-y-1 text-sm"></div>
+      <div id="leaderboard-list" class="space-y-1 text-sm"></div>
     </div>
     <div class="bg-white p-4 rounded shadow">
       <h3 class="font-semibold mb-2">⏳ Days Until Exam</h3>
@@ -72,7 +72,7 @@
   <section>
     <h2 class="text-2xl font-bold mb-4">📘 100 Days Quiz Challenge</h2>
     <div id="quiz-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-      <!-- Quiz Cards Rendered by JS -->
+      <!-- Rendered by JS -->
     </div>
   </section>
 </main>
@@ -80,7 +80,7 @@
 <script src="js/theme.js"></script>
 <script src="js/dashboard.js"></script>
 <script>
-  // Animate study count
+  // Study count animation
   let count = 4970;
   const display = document.getElementById("study-count");
   const interval = setInterval(() => {
@@ -89,33 +89,31 @@
     if (count >= 5000) clearInterval(interval);
   }, 20);
 
-  // Delay auth popup for new users (5s)
-  window.addEventListener("load", () => {
-    const user = localStorage.getItem("user");
-    if (!user) {
-      setTimeout(() => {
-        document.getElementById("auth-overlay").classList.remove("hidden");
-      }, 5000);
-    } else {
-      // Show username and logout
-      const navbar = document.getElementById("navbar-user");
-      navbar.innerHTML = `
-        <div class="group relative">
-          <div class="flex items-center gap-2 cursor-pointer">
-            <span class="text-white text-sm font-semibold">👤 ${JSON.parse(user).username}</span>
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
-          </div>
-          <div class="absolute right-0 mt-2 w-32 bg-white text-black rounded shadow-md hidden group-hover:block z-50">
-            <button onclick="logoutUser()" class="block w-full text-left px-4 py-2 hover:bg-gray-100">Logout</button>
-          </div>
-        </div>
-      `;
-    }
-  });
+  // Guest reminder modal after 5s
+  const user = localStorage.getItem("user");
+  if (!user) {
+    setTimeout(() => {
+      const modal = document.getElementById("guest-modal");
+      if (modal) modal.classList.remove("hidden");
+    }, 5000);
+  }
 
-  function logoutUser() {
-    localStorage.clear();
-    window.location.href = "index.html";
+  // Populate Navbar User if logged in
+  const navbarUser = document.getElementById("navbar-user");
+  if (user && navbarUser) {
+    const parsedUser = JSON.parse(user);
+    navbarUser.innerHTML = `
+      <div class="relative group">
+        <button class="flex items-center gap-2 px-3 py-1 bg-white text-blue-600 rounded shadow hover:bg-blue-100 font-medium">
+          <span>${parsedUser.username}</span>
+          <img src="https://api.dicebear.com/7.x/initials/svg?seed=${parsedUser.username}" alt="👤" class="w-6 h-6 rounded-full" />
+        </button>
+        <div class="absolute top-full mt-1 right-0 bg-white border border-gray-200 rounded shadow px-4 py-2 text-sm text-black hidden group-hover:block z-50"
+          onmouseover="this.classList.add('block')" onmouseleave="this.classList.remove('block')">
+          <button onclick="logoutUser()" class="hover:text-red-500">🚪 Logout</button>
+        </div>
+      </div>
+    `;
   }
 </script>
 </body>
