@@ -152,3 +152,27 @@ function renderLeaderboard(user) {
 
   if (userRankEl) userRankEl.textContent = `You are ranked #${unique.findIndex(e => e.username === user.username) + 1}`;
 }
+// === Navbar Username + Logout Dropdown ===
+(function renderNavbarUser() {
+  const navUser = document.getElementById("navbar-user");
+  if (!navUser) return;
+
+  const user = JSON.parse(localStorage.getItem("user"));
+  if (user) {
+    navUser.innerHTML = `
+      <div class="relative group">
+        <button class="flex items-center gap-2 font-semibold">
+          👤 ${user.username}
+          <svg class="w-4 h-4 mt-[2px]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+          </svg>
+        </button>
+        <div class="absolute right-0 mt-2 bg-white text-black shadow-md rounded hidden group-hover:block z-50 min-w-[140px] text-sm">
+          <button onclick="logoutUser()" class="block w-full text-left px-4 py-2 hover:bg-blue-100">Logout</button>
+        </div>
+      </div>
+    `;
+  } else {
+    navUser.innerHTML = `<a href="index.html" class="bg-white text-blue-600 px-4 py-2 rounded hover:bg-blue-100 font-semibold">Sign Up</a>`;
+  }
+})();

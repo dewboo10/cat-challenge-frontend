@@ -31,8 +31,8 @@
 <!-- Navbar -->
 <nav class="w-full fixed top-0 left-0 right-0 bg-blue-600 text-white px-6 py-4 shadow flex justify-between items-center z-40">
   <h1 class="text-xl font-bold">Ultimate Prep</h1>
-  <div id="navbar-user" class="flex items-center gap-4">
-    <!-- Filled by JS: Username + Logout or Sign Up button -->
+  <div id="navbar-user" class="relative">
+    <!-- Dynamic: Filled by JS -->
   </div>
 </nav>
 
@@ -96,8 +96,27 @@
       setTimeout(() => {
         document.getElementById("auth-overlay").classList.remove("hidden");
       }, 5000);
+    } else {
+      // Show username and logout
+      const navbar = document.getElementById("navbar-user");
+      navbar.innerHTML = `
+        <div class="group relative">
+          <div class="flex items-center gap-2 cursor-pointer">
+            <span class="text-white text-sm font-semibold">👤 ${JSON.parse(user).username}</span>
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+          </div>
+          <div class="absolute right-0 mt-2 w-32 bg-white text-black rounded shadow-md hidden group-hover:block z-50">
+            <button onclick="logoutUser()" class="block w-full text-left px-4 py-2 hover:bg-gray-100">Logout</button>
+          </div>
+        </div>
+      `;
     }
   });
+
+  function logoutUser() {
+    localStorage.clear();
+    window.location.href = "index.html";
+  }
 </script>
 </body>
 </html>
