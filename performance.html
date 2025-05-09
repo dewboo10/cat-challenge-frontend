@@ -1,10 +1,18 @@
 <!-- FINAL UPDATED performance.html with Responsive Layout -->
 <!DOCTYPE html>
-<html lang="en" class="dark">
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Performance Dashboard | Ultimate Prep</title>
+  <script>
+    // Apply saved theme before anything renders
+    (function () {
+      const theme = localStorage.getItem("theme") || "light";
+      if (theme === "dark") document.documentElement.classList.add("dark");
+    })();
+  </script>
+  
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = { darkMode: 'class' };
