@@ -117,6 +117,11 @@ function renderCountdown() {
   if (countdownEl) {
     countdownEl.textContent = `${diffDays} days`;
   }
+  const countdownElMobile = document.getElementById("days-left-mobile");
+if (countdownElMobile) {
+  countdownElMobile.textContent = `${diffDays} days`;
+}
+
 }
 
 // === Render Leaderboard (static for now) ===
