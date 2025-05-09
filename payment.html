@@ -1,4 +1,3 @@
-<!-- FINAL UPDATED payment.html -->
 <!DOCTYPE html>
 <html lang="en" class="dark">
 <head>
@@ -13,19 +12,19 @@
 <body class="bg-white dark:bg-[#0f0f0f] text-black dark:text-white min-h-screen flex flex-col">
 
 <!-- Navbar -->
-<nav class="bg-[#f4f4f4] dark:bg-[#1a1a1a] p-4 flex justify-between items-center shadow">
-  <h1 class="text-xl font-bold">Upgrade to Premium</h1>
-  <button onclick="goBackDashboard()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded">Dashboard</button>
+<nav class="bg-[#f4f4f4] dark:bg-[#1a1a1a] p-4 flex flex-col sm:flex-row justify-between items-center shadow gap-2">
+  <h1 class="text-lg sm:text-xl font-bold text-center sm:text-left">Upgrade to Premium</h1>
+  <button onclick="goBackDashboard()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded w-full sm:w-auto">Dashboard</button>
 </nav>
 
 <!-- Main Content -->
-<main class="flex-1 p-8 flex flex-col items-center justify-center text-center space-y-6">
+<main class="flex-1 p-4 sm:p-8 flex flex-col items-center justify-center text-center space-y-6">
 
-  <h2 class="text-3xl font-bold text-blue-600">🎉 Unlock Full Access!</h2>
-  <p class="text-lg">Become a Premium Member and supercharge your preparation!</p>
+  <h2 class="text-2xl sm:text-3xl font-bold text-blue-600">🎉 Unlock Full Access!</h2>
+  <p class="text-base sm:text-lg">Become a Premium Member and supercharge your preparation!</p>
 
   <div class="bg-gray-100 dark:bg-[#1a1a1a] p-6 rounded shadow-lg w-full max-w-xl">
-    <h3 class="text-xl font-semibold mb-4">🚀 Premium Features</h3>
+    <h3 class="text-lg sm:text-xl font-semibold mb-4">🚀 Premium Features</h3>
     <ul class="text-left space-y-2 text-sm">
       <li>✅ Full access to 100 Days Mock Challenge</li>
       <li>✅ Exclusive access to StudyZone (Voice Chat + Groups)</li>
@@ -33,10 +32,11 @@
       <li>✅ Priority support and future perks</li>
     </ul>
   </div>
-  <button onclick="upgradeToPremium()" class="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded">
+
+  <button onclick="upgradeToPremium()" class="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded w-full max-w-xs">
     Buy Premium Access 💳
   </button>
-  
+
 </main>
 
 <script>
