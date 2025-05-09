@@ -7,10 +7,8 @@
   <script>
     document.documentElement.classList.remove("dark"); // force light mode
 
-    // Redirect if user already logged in and exam selected
-    const user = JSON.parse(localStorage.getItem("user"));
     const exam = localStorage.getItem("selectedExam");
-    if (user && exam) {
+    if (exam) {
       window.location.href = "dashboard.html";
     }
   </script>
@@ -38,7 +36,6 @@ function startChallenge() {
   window.location.href = "exam-select.html";
 }
 
-// Animate student count
 let count = 4978;
 const display = document.getElementById("study-count");
 const interval = setInterval(() => {

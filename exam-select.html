@@ -7,13 +7,8 @@
   <script>
     document.documentElement.classList.remove("dark");
 
-    // Check if user is logged in and exam is selected
-    const user = JSON.parse(localStorage.getItem("user"));
     const selectedExam = localStorage.getItem("selectedExam");
-
-    if (!user) {
-      window.location.href = "index.html";
-    } else if (selectedExam) {
+    if (selectedExam) {
       window.location.href = "dashboard.html";
     }
   </script>
