@@ -1,141 +1,128 @@
 <!DOCTYPE html>
-<html lang="en" class="light">
+<html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Dashboard | Ultimate Prep</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <script>
-    tailwind.config = { darkMode: 'class' };
-  </script>
 </head>
-<body class="bg-white dark:bg-[#0f0f0f] text-black dark:text-white min-h-screen">
+<body class="bg-white text-black min-h-screen font-sans">
 
-<!-- Notification Popup -->
-<div id="site-notification" class="hidden fixed bottom-5 right-5 bg-blue-500 dark:bg-blue-600 text-white rounded-lg shadow-lg px-6 py-4 flex items-center justify-between gap-4 z-50 transition-all duration-300">
-  <span id="notification-text" class="text-sm"></span>
-  <button onclick="closeNotification()" class="text-white text-xl leading-none">&times;</button>
+<!-- 🔒 Fullscreen Overlay if User Not Logged In -->
+<div id="auth-overlay" class="fixed inset-0 bg-black bg-opacity-70 backdrop-blur-sm z-50 flex items-center justify-center hidden">
+  <div class="bg-white p-8 rounded-lg shadow-lg w-[90%] max-w-md space-y-6 text-center">
+    <h2 class="text-2xl font-bold text-blue-600">🎯 100 Steps Toward Your Dream</h2>
+    <p class="text-gray-700">Track your performance. Get personalized analysis.<br>Just login or sign up to begin your journey.</p>
+    <div class="flex gap-4 justify-center">
+      <button onclick="openLogin()" class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded font-semibold">Login</button>
+      <button onclick="openRegister()" class="bg-green-600 hover:bg-green-700 text-white px-5 py-2 rounded font-semibold">Sign Up</button>
+    </div>
+  </div>
 </div>
 
-<!-- Desktop Sidebar -->
-<aside class="hidden md:flex w-64 fixed top-0 bottom-0 z-40 bg-[#f4f4f4] dark:bg-[#1a1a1a] text-black dark:text-white flex-col justify-between">
-  <div class="p-4 space-y-4 overflow-y-auto">
-    <div id="leaderboard" class="bg-[#e0e0e0] dark:bg-[#2a2a2a] p-3 rounded shadow">
-      <h3 class="font-semibold mb-2">🏆 Top 10</h3>
-      <div class="text-sm space-y-1"></div>
-      <hr class="my-2 border-gray-500 dark:border-gray-600">
-      <div id="user-rank" class="text-sm">Your Rank: —</div>
-    </div>
+<!-- Notification -->
+<div id="site-notification" class="hidden fixed bottom-5 right-5 bg-blue-600 text-white rounded shadow-lg px-6 py-4 z-50">
+  <span id="notification-text" class="text-sm"></span>
+</div>
 
-    <div id="countdown" class="bg-[#e0e0e0] dark:bg-[#2a2a2a] p-3 rounded shadow">
-      <h3 class="font-semibold mb-2">Days Until Exam ⏳</h3>
-      <p id="days-left" class="text-lg font-bold">-- days</p>
-    </div>
+<!-- Navbar -->
+<nav class="w-full fixed top-0 left-0 right-0 bg-blue-600 text-white px-6 py-4 shadow flex justify-between items-center z-40">
+  <h1 class="text-xl font-bold">Ultimate Prep</h1>
+  <button onclick="showModal()" class="bg-white text-blue-600 px-4 py-2 rounded hover:bg-blue-100 font-semibold">Start Now</button>
+</nav>
 
+<!-- Sidebar (Desktop only) -->
+<aside class="hidden md:flex w-64 fixed top-16 bottom-0 bg-blue-50 border-r border-blue-100 p-4 flex-col justify-between z-30">
+  <div class="space-y-6">
+    <div class="bg-white p-4 rounded shadow">
+      <h3 class="font-semibold mb-2">🏆 Top 10 Performers</h3>
+      <ul class="space-y-1 text-sm">
+        <li class="flex justify-between"><span>Riya</span><span>#1</span></li>
+        <li class="flex justify-between"><span>Anil</span><span>#2</span></li>
+        <li class="flex justify-between"><span>You</span><span>#3</span></li>
+      </ul>
+    </div>
+    <div class="bg-white p-4 rounded shadow">
+      <h3 class="font-semibold mb-2">⏳ Days Until Exam</h3>
+      <p id="days-left" class="text-2xl font-bold text-center">--</p>
+    </div>
     <a href="braingames.html">
-      <button class="w-full flex items-center justify-between px-3 py-2 bg-[#e0e0e0] dark:bg-[#2a2a2a] hover:bg-purple-600 hover:text-white dark:hover:bg-purple-600 rounded">
-        BrainGames <span>🧠</span>
-      </button>
+      <button class="w-full px-3 py-2 bg-blue-100 hover:bg-blue-200 rounded">🧠 BrainGames</button>
     </a>
   </div>
-
-  <div class="p-4 space-y-2">
-    <a href="performance.html">
-      <button class="w-full flex items-center justify-between px-3 py-2 bg-[#e0e0e0] dark:bg-[#2a2a2a] hover:bg-blue-600 hover:text-white dark:hover:bg-blue-600 rounded">
-        Performance <span>📈</span>
-      </button>
-    </a>
-    <button onclick="toggleTheme()" class="w-full flex items-center justify-between px-3 py-2 bg-[#e0e0e0] dark:bg-[#2a2a2a] hover:bg-blue-600 hover:text-white dark:hover:bg-blue-600 rounded">
-      Theme Mode <span>🌓</span>
-    </button>
-    <button onclick="switchExam()" class="w-full flex items-center justify-between px-3 py-2 bg-[#e0e0e0] dark:bg-[#2a2a2a] hover:bg-blue-600 hover:text-white dark:hover:bg-blue-600 rounded">
-      Switch Exam <span>🔄</span>
-    </button>
+  <div class="space-y-2">
+    <a href="performance.html" class="block w-full px-3 py-2 bg-blue-100 hover:bg-blue-200 rounded text-center">📈 Performance</a>
+    <a href="exam-select.html" class="block w-full px-3 py-2 bg-blue-100 hover:bg-blue-200 rounded text-center">🔄 Switch Exam</a>
   </div>
 </aside>
 
-<!-- Navbar -->
-<nav class="fixed top-0 left-0 right-0 md:left-64 z-50 bg-[#f4f4f4] dark:bg-[#1a1a1a] px-4 py-3 shadow flex justify-between items-center">
-  <button onclick="toggleMobileSidebar()" class="md:hidden text-2xl">☰</button>
-  <h1 id="dashboard-title" class="text-lg font-bold">Ultimate Prep</h1>
-  <div class="relative">
-    <button onclick="toggleUserDropdown()" class="w-10 h-10 rounded-full bg-gray-600 text-white font-bold hover:ring-2 ring-blue-500 transition">👤</button>
-    <div id="user-dropdown" class="absolute right-0 mt-2 w-32 bg-white dark:bg-[#2a2a2a] rounded-lg shadow-lg py-2 hidden z-50">
-      <button onclick="logoutUser()" class="block w-full text-left px-4 py-2 hover:bg-gray-200 dark:hover:bg-gray-700 rounded">Logout</button>
-    </div>
-  </div>
-</nav>
-
-<!-- Mobile Sidebar -->
-<div id="mobile-sidebar" class="fixed top-0 left-0 h-full w-64 bg-[#f4f4f4] dark:bg-[#1a1a1a] z-40 shadow-lg transform -translate-x-full transition-transform duration-300 md:hidden">
-  <div class="p-4 space-y-4">
-    <button onclick="switchExam()" class="w-full text-left px-4 py-2 bg-gray-200 dark:bg-gray-800 rounded">🔄 Switch Exam</button>
-    <a href="performance.html"><button class="w-full text-left px-4 py-2 bg-gray-200 dark:bg-gray-800 rounded">📈 Performance</button></a>
-    <a href="braingames.html"><button class="w-full text-left px-4 py-2 bg-gray-200 dark:bg-gray-800 rounded">🧠 BrainGames</button></a>
-    <div class="bg-gray-200 dark:bg-gray-800 p-3 rounded">
-      <h3 class="font-semibold mb-1">⏳ Days Until Exam</h3>
-      <p id="days-left-mobile" class="font-bold text-center">-- days</p>
-    </div>
-    <button onclick="toggleTheme()" class="w-full text-left px-4 py-2 bg-gray-200 dark:bg-gray-800 rounded">🌓 Theme</button>
-  </div>
-</div>
-
 <!-- Main Content -->
-<main class="pt-24 md:pt-20 md:ml-64 px-4 space-y-6">
-  <!-- Quote + Study Count + Video Section -->
-  <section class="max-w-2xl mx-auto space-y-4">
-    <div class="text-center text-lg font-semibold mt-6">
-      <p>“100 Days of effort, a lifetime of impact. Start strong. Finish stronger.”</p>
+<main class="md:ml-64 pt-24 px-6">
+  <section class="max-w-3xl mx-auto mb-8 text-center">
+    <p class="text-lg font-semibold mb-4">“100 Days of effort, a lifetime of impact.”</p>
+    <div class="bg-blue-100 text-blue-800 py-3 rounded shadow mb-6">
+      📚 <span id="study-count">5,000</span> students currently studying
     </div>
-    <div class="bg-green-100 dark:bg-green-800 text-green-900 dark:text-green-200 font-semibold text-center py-3 rounded shadow text-base">
-      📚 <span id="study-count">5,000</span> students currently studying!
-    </div>
-    <div class="relative w-full pt-[56.25%] rounded-lg overflow-hidden shadow">
-      <iframe class="absolute top-0 left-0 w-full h-full rounded-lg" src="https://www.youtube.com/embed/5MgBikgcWnY" frameborder="0" allowfullscreen></iframe>
+    <div class="relative w-full pt-[56.25%] rounded overflow-hidden shadow">
+      <iframe class="absolute top-0 left-0 w-full h-full" src="https://www.youtube.com/embed/5MgBikgcWnY" allowfullscreen></iframe>
     </div>
   </section>
 
-  <!-- Quiz Grid -->
   <section>
-    <h2 class="text-xl font-bold mb-4">100 Days Quiz Challenge</h2>
+    <h2 class="text-2xl font-bold mb-4">📘 100 Days Quiz Challenge</h2>
     <div id="quiz-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-      <!-- Quiz Cards Rendered by JS -->
+      <!-- Quiz Cards via JS -->
     </div>
   </section>
 </main>
 
-<script src="js/auth.js"></script>
-<script src="js/dashboard.js"></script>
+<!-- Your Modal -->
+<div id="signup-modal" class="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-50 hidden">
+  <div class="bg-white p-8 rounded-lg shadow-lg w-[90%] max-w-md space-y-6">
+    <h2 class="text-xl font-bold text-center text-blue-600">🎯 Join the Journey</h2>
+    <p class="text-center text-gray-600">Register now and take the first step toward your dream college. 100 steps. One goal.</p>
+    <input type="text" placeholder="Username" class="w-full border px-4 py-2 rounded" />
+    <input type="email" placeholder="Email" class="w-full border px-4 py-2 rounded" />
+    <input type="password" placeholder="Password" class="w-full border px-4 py-2 rounded" />
+    <button class="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700">Register & Start</button>
+    <p class="text-center text-sm text-gray-500">Already registered? <a href="#" class="text-blue-600">Login</a></p>
+  </div>
+</div>
+
 <script>
-function toggleMobileSidebar() {
-  const sidebar = document.getElementById('mobile-sidebar');
-  sidebar.classList.toggle('-translate-x-full');
-}
+  // Show your modal manually
+  function showModal() {
+    document.getElementById("signup-modal").classList.remove("hidden");
+  }
 
-function toggleUserDropdown() {
-  const dropdown = document.getElementById('user-dropdown');
-  dropdown.classList.toggle('hidden');
-  document.addEventListener('click', function handler(e) {
-    if (!e.target.closest('#user-dropdown') && !e.target.closest('button')) {
-      dropdown.classList.add('hidden');
-      document.removeEventListener('click', handler);
-    }
-  });
-}
+  function closeNotification() {
+    document.getElementById("site-notification").classList.add("hidden");
+  }
 
-(function applySavedTheme() {
-  const theme = localStorage.getItem("theme") || "light";
-  if (theme === "dark") document.documentElement.classList.add("dark");
-})();
+  // Animate study count
+  let count = 4970;
+  const display = document.getElementById("study-count");
+  const interval = setInterval(() => {
+    count++;
+    display.textContent = count.toLocaleString();
+    if (count >= 5000) clearInterval(interval);
+  }, 20);
 
-let startCount = 4970;
-const display = document.getElementById("study-count");
-const interval = setInterval(() => {
-  startCount++;
-  display.textContent = startCount.toLocaleString();
-  if (startCount >= 5000) clearInterval(interval);
-}, 20);
+  // 🔒 Show auth overlay if no user logged in
+  const user = JSON.parse(localStorage.getItem("user"));
+  if (!user) {
+    document.getElementById("auth-overlay").classList.remove("hidden");
+  }
+
+  // Auth redirects
+  function openLogin() {
+    window.location.href = "index.html#login";
+  }
+  function openRegister() {
+    window.location.href = "index.html#register";
+  }
 </script>
 
+<script src="js/dashboard.js"></script>
 </body>
 </html>

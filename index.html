@@ -1,93 +1,164 @@
-<!-- UPDATED index.html with OTP Verification UI -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Ultimate Prep | Login/Register</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Login | Ultimate Prep</title>
   <script>
-    // Apply saved theme before anything renders
-    (function () {
-      const theme = localStorage.getItem("theme") || "light";
-      if (theme === "dark") document.documentElement.classList.add("dark");
-    })();
+    // Force light mode
+    document.documentElement.classList.remove("dark");
   </script>
-  
   <script src="https://cdn.tailwindcss.com"></script>
-  <script>tailwind.config = { darkMode: 'class' };</script>
 </head>
-<body class="bg-white dark:bg-[#0f0f0f] text-black dark:text-white min-h-screen flex items-center justify-center">
+<body class="bg-white text-black min-h-screen flex items-center justify-center">
 
-  <div class="bg-[#f4f4f4] dark:bg-[#1a1a1a] p-8 rounded-lg shadow-lg w-full max-w-md space-y-6">
-    <h1 class="text-2xl font-bold text-center">🚀 Welcome to Ultimate Prep</h1>
+<div class="bg-[#f4f4f4] p-8 rounded-lg shadow-lg w-full max-w-md space-y-6">
+  <h1 class="text-2xl font-bold text-center text-blue-600">🚀 Welcome to Ultimate Prep</h1>
 
-    <!-- Login Form -->
-    <div id="login-section">
-      <h2 class="text-lg font-semibold mb-2">Login to your account</h2>
-      <input id="login-username" type="text" placeholder="Username" class="w-full px-4 py-2 rounded mb-2 bg-gray-200 dark:bg-gray-700" />
-      <input id="login-password" type="password" placeholder="Password" class="w-full px-4 py-2 rounded mb-4 bg-gray-200 dark:bg-gray-700" />
-      <button onclick="loginUser()" class="w-full bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded font-bold">Login</button>
-      <p class="text-sm text-center mt-4">Not registered? <a href="#" onclick="toggleForms('register')" class="text-blue-600 dark:text-blue-400 underline">Create an account</a></p>
-    </div>
-
-    <!-- Register Form (Hidden Initially) -->
-    <div id="register-section" class="hidden">
-      <h2 class="text-lg font-semibold mb-2">Create a new account</h2>
-      <input id="username" type="text" placeholder="Username" class="w-full px-4 py-2 rounded mb-2 bg-gray-200 dark:bg-gray-700" />
-      <input id="email" type="email" placeholder="Email Address" class="w-full px-4 py-2 rounded mb-2 bg-gray-200 dark:bg-gray-700" />
-      <input id="password" type="password" placeholder="Password" class="w-full px-4 py-2 rounded mb-2 bg-gray-200 dark:bg-gray-700" />
-
-      <div class="flex gap-2 mb-2">
-        <button onclick="sendFakeOtp()" id="otp-btn" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded text-sm">Send OTP</button>
-        <span id="otp-timer" class="text-sm text-gray-600 hidden">Resend in <span id="timer-count">60</span>s</span>
-      </div>
-      <input id="otp-input" type="text" placeholder="Enter OTP (123456)" class="w-full px-4 py-2 rounded mb-2 bg-gray-200 dark:bg-gray-700 hidden" />
-      <button onclick="verifyFakeOtp()" id="verify-btn" class="hidden w-full bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded font-bold">Verify OTP</button>
-
-      <button onclick="registerUser()" id="register-final-btn" class="hidden w-full mt-4 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded font-bold">Register</button>
-      <p class="text-sm text-center mt-4">Already have an account? <a href="#" onclick="toggleForms('login')" class="text-blue-600 dark:text-blue-400 underline">Back to Login</a></p>
-    </div>
-
+  <!-- Login Form -->
+  <div id="login-section">
+    <h2 class="text-lg font-semibold mb-2">Login</h2>
+    <input id="login-username" type="text" placeholder="Username" class="w-full px-4 py-2 rounded mb-2 bg-white border border-gray-300" />
+    <input id="login-password" type="password" placeholder="Password" class="w-full px-4 py-2 rounded mb-4 bg-white border border-gray-300" />
+    <button onclick="loginUser()" class="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded font-bold">Login</button>
+    <p class="text-sm text-center mt-4">New here? <a href="#" onclick="toggleForms('register')" class="text-blue-600 underline">Sign up</a></p>
   </div>
 
-  <script src="js/auth.js"></script>
-  <script>
-    function toggleForms(view) {
-      document.getElementById("login-section").classList.toggle("hidden", view === "register");
-      document.getElementById("register-section").classList.toggle("hidden", view === "login");
-    }
+  <!-- Register Form -->
+  <div id="register-section" class="hidden">
+    <h2 class="text-lg font-semibold mb-2">Register</h2>
+    <input id="username" type="text" placeholder="Username" class="w-full px-4 py-2 rounded mb-2 bg-white border border-gray-300" />
+    <input id="email" type="email" placeholder="Email Address" class="w-full px-4 py-2 rounded mb-2 bg-white border border-gray-300" />
+    <input id="password" type="password" placeholder="Password" class="w-full px-4 py-2 rounded mb-2 bg-white border border-gray-300" />
 
-    function sendFakeOtp() {
+    <div class="flex gap-2 mb-2">
+      <button onclick="sendOtp()" id="otp-btn" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded text-sm">Send OTP</button>
+      <span id="otp-timer" class="text-sm text-gray-600 hidden">Resend in <span id="timer-count">60</span>s</span>
+    </div>
+    <input id="otp-input" type="text" placeholder="Enter OTP" class="w-full px-4 py-2 rounded mb-2 bg-white border border-gray-300 hidden" />
+    <button onclick="verifyOtp()" id="verify-btn" class="hidden w-full bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded font-bold">Verify OTP</button>
+    <button onclick="registerUser()" id="register-final-btn" class="hidden w-full mt-4 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded font-bold">Register</button>
+    <p class="text-sm text-center mt-4">Have an account? <a href="#" onclick="toggleForms('login')" class="text-blue-600 underline">Back to login</a></p>
+  </div>
+</div>
+
+<script>
+const API_BASE = "https://ultimate-backend-vyse.onrender.com/api/auth"; // Replace with your backend
+
+function toggleForms(view) {
+  document.getElementById("login-section").classList.toggle("hidden", view === "register");
+  document.getElementById("register-section").classList.toggle("hidden", view === "login");
+}
+
+async function loginUser() {
+  const username = document.getElementById("login-username").value.trim();
+  const password = document.getElementById("login-password").value.trim();
+  if (!username || !password) return alert("❗ Enter all fields.");
+
+  try {
+    const res = await fetch(`${API_BASE}/login`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username, password })
+    });
+    const data = await res.json();
+    if (data.success) {
+      localStorage.setItem("user", JSON.stringify(data.user));
+      localStorage.setItem("isPaidUser", JSON.stringify(data.user.isPremium));
+      window.location.href = "exam-select.html";
+    } else {
+      alert("❌ Invalid credentials");
+    }
+  } catch {
+    alert("⚠️ Login failed");
+  }
+}
+
+async function sendOtp() {
+  const email = document.getElementById("email").value.trim();
+  if (!email) return alert("Enter email to send OTP");
+
+  try {
+    const res = await fetch(`${API_BASE}/send-otp`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email })
+    });
+    const data = await res.json();
+    if (data.success) {
       document.getElementById("otp-input").classList.remove("hidden");
       document.getElementById("verify-btn").classList.remove("hidden");
       document.getElementById("otp-btn").disabled = true;
       document.getElementById("otp-timer").classList.remove("hidden");
 
       let countdown = 60;
-      document.getElementById("timer-count").textContent = countdown;
+      const timerSpan = document.getElementById("timer-count");
       const interval = setInterval(() => {
         countdown--;
-        document.getElementById("timer-count").textContent = countdown;
+        timerSpan.textContent = countdown;
         if (countdown === 0) {
           clearInterval(interval);
           document.getElementById("otp-btn").disabled = false;
           document.getElementById("otp-timer").classList.add("hidden");
         }
       }, 1000);
+    } else {
+      alert("❌ Failed to send OTP");
     }
+  } catch {
+    alert("⚠️ OTP request error");
+  }
+}
 
-    function verifyFakeOtp() {
-      const otp = document.getElementById("otp-input").value.trim();
-      if (otp === "123456") {
-        alert("✅ OTP Verified!");
-        document.getElementById("register-final-btn").classList.remove("hidden");
-        document.getElementById("otp-input").classList.add("hidden");
-        document.getElementById("verify-btn").classList.add("hidden");
-      } else {
-        alert("❌ Incorrect OTP. Try again.");
-      }
+async function verifyOtp() {
+  const email = document.getElementById("email").value.trim();
+  const otp = document.getElementById("otp-input").value.trim();
+  if (!otp) return alert("Enter the OTP you received");
+
+  try {
+    const res = await fetch(`${API_BASE}/verify-otp`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, otp })
+    });
+    const data = await res.json();
+    if (data.success) {
+      alert("✅ OTP Verified!");
+      document.getElementById("register-final-btn").classList.remove("hidden");
+      document.getElementById("otp-input").classList.add("hidden");
+      document.getElementById("verify-btn").classList.add("hidden");
+    } else {
+      alert("❌ Invalid OTP");
     }
-  </script>
+  } catch {
+    alert("⚠️ OTP verification failed");
+  }
+}
 
+async function registerUser() {
+  const username = document.getElementById("username").value.trim();
+  const password = document.getElementById("password").value.trim();
+
+  if (!username || !password) return alert("❗ Fill all fields");
+
+  try {
+    const res = await fetch(`${API_BASE}/register`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username, password })
+    });
+    const data = await res.json();
+    if (data.success) {
+      localStorage.setItem("user", JSON.stringify(data.user));
+      localStorage.setItem("isPaidUser", JSON.stringify(data.user.isPremium));
+      window.location.href = "exam-select.html";
+    } else {
+      alert("❌ Registration failed");
+    }
+  } catch {
+    alert("⚠️ Register error");
+  }
+}
+</script>
 </body>
 </html>

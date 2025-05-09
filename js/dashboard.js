@@ -1,21 +1,26 @@
-// UPDATED dashboard.js with user check, BrainGames integration, and cleaner logic
+// === dashboard.js loaded ===
 console.log("dashboard.js loaded");
 
-// === Apply Saved Theme ===
+// === Apply Saved Theme (default to light) ===
 (function applySavedTheme() {
-  const theme = localStorage.getItem("theme") || "dark";
+  const theme = localStorage.getItem("theme") || "light";
   document.documentElement.classList.toggle("dark", theme === "dark");
 })();
 
-// === Get Current User ===
+// === Get User and Exam Selection ===
 const user = JSON.parse(localStorage.getItem("user"));
+const selectedExam = localStorage.getItem("selectedExam");
+
+// === Check User and Exam Selection ===
 if (!user) {
-  alert("Please login first.");
+  console.warn("🔒 No user found. Redirecting to login...");
   window.location.href = "index.html";
 }
 
-// === Selected Exam ===
-const selectedExam = localStorage.getItem("selectedExam") || "CAT";
+if (!selectedExam) {
+  console.warn("⚠️ No exam selected. Redirecting to exam-select...");
+  window.location.href = "exam-select.html";
+}
 
 // === Update Dashboard Title ===
 const titleEl = document.getElementById("dashboard-title");
@@ -23,13 +28,13 @@ if (titleEl) {
   titleEl.textContent = `Ultimate ${selectedExam} Prep`;
 }
 
-// === Display username in navbar ===
+// === Display Username in Navbar ===
 const usernameDisplay = document.getElementById("username-display");
 if (usernameDisplay) {
   usernameDisplay.textContent = user.username;
 }
 
-// === Show Notification if any ===
+// === Show Notification if Any ===
 (function showNotification() {
   const notification = localStorage.getItem("siteNotification");
   const notificationBox = document.getElementById("site-notification");
@@ -64,13 +69,13 @@ function renderQuizCards() {
     const isUnlocked = day <= 5 || isPaid || progress[`day${day - 1}`]?.completed;
 
     const card = document.createElement("div");
-    card.className = "bg-[#1f1f1f] dark:bg-[#1f1f1f] border dark:border-transparent border-gray-200 rounded p-4 shadow text-center space-y-2 transition-all";
+    card.className = "bg-white border border-gray-200 rounded p-4 shadow text-center space-y-2 transition-all";
 
     let buttonHTML = "";
     if (isUnlocked) {
       buttonHTML = `
         <a href="quiz.html?exam=${selectedExam}&day=${day}">
-          <button class="px-4 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded text-sm font-semibold">
+          <button class="px-4 py-1 bg-yellow-500 hover:bg-yellow-600 text-white rounded text-sm font-semibold">
             ${isCompleted ? "Review" : "Start"}
           </button>
         </a>
@@ -86,7 +91,7 @@ function renderQuizCards() {
     }
 
     card.innerHTML = `
-      <h3 class="font-semibold text-lg text-white dark:text-white">Day ${day} Quiz</h3>
+      <h3 class="font-semibold text-lg text-black">Day ${day} Quiz</h3>
       ${buttonHTML}
     `;
 
@@ -117,17 +122,19 @@ function renderCountdown() {
   if (countdownEl) {
     countdownEl.textContent = `${diffDays} days`;
   }
+
   const countdownElMobile = document.getElementById("days-left-mobile");
-if (countdownElMobile) {
-  countdownElMobile.textContent = `${diffDays} days`;
+  if (countdownElMobile) {
+    countdownElMobile.textContent = `${diffDays} days`;
+  }
 }
 
-}
-
-// === Render Leaderboard (static for now) ===
+// === Render Leaderboard (static) ===
 function renderLeaderboard() {
   const leaderboardContainer = document.querySelector("#leaderboard div.text-sm");
   const userRankEl = document.getElementById("user-rank");
+
+  if (!leaderboardContainer || !user) return;
 
   const leaderboard = [
     { username: "tanya" },
@@ -159,7 +166,9 @@ function renderLeaderboard() {
       </div>
     `).join("");
 
-  userRankEl.textContent = `You are ranked ${userRank}`;
+  if (userRankEl) {
+    userRankEl.textContent = `You are ranked ${userRank}`;
+  }
 }
 
 // === Theme Toggle ===

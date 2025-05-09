@@ -1,66 +1,39 @@
+<!-- exam-select.html (Updated to white theme with same layout/buttons) -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Select Your Exam | Ultimate Prep</title>
-  <script>
-    // Apply saved theme before rendering
-    (function () {
-      const theme = localStorage.getItem("theme") || "light";
-      if (theme === "dark") document.documentElement.classList.add("dark");
-    })();
-  </script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Select Exam | Ultimate Prep</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <script>
-    tailwind.config = { darkMode: 'class' };
-  </script>
 </head>
-<body class="bg-white dark:bg-[#0f0f0f] text-black dark:text-white min-h-screen flex items-center justify-center">
+<body class="bg-white text-black min-h-screen flex items-center justify-center">
 
-  <div class="bg-gray-100 dark:bg-[#1a1a1a] p-8 rounded-lg shadow-lg w-96 space-y-6">
-    <h1 class="text-2xl font-bold text-center text-blue-600 dark:text-blue-400">🎯 Choose Your Exam</h1>
+  <div class="bg-[#f9fafe] border border-blue-200 p-8 rounded-lg shadow-lg w-full max-w-md space-y-6">
+    <h1 class="text-3xl font-bold text-center text-blue-700">🎯 Choose Your Exam</h1>
 
     <div class="space-y-4">
       <!-- Active Exams -->
       <button onclick="selectExam('CAT')" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded font-semibold">CAT</button>
       <button onclick="selectExam('IPMAT')" class="w-full bg-green-600 hover:bg-green-700 text-white py-3 rounded font-semibold">IPMAT</button>
 
-      <!-- Coming Soon (Disabled Buttons) -->
-      <div class="relative group">
-        <button disabled class="w-full bg-yellow-400 text-white py-3 rounded font-semibold cursor-not-allowed opacity-70">SSC CGL 🚧</button>
-        <div class="absolute inset-0 flex items-center justify-center text-xs text-black dark:text-white opacity-0 group-hover:opacity-100 pointer-events-none">Coming Soon</div>
-      </div>
-      <div class="relative group">
-        <button disabled class="w-full bg-purple-400 text-white py-3 rounded font-semibold cursor-not-allowed opacity-70">SBI Clerk 🚧</button>
-        <div class="absolute inset-0 flex items-center justify-center text-xs text-black dark:text-white opacity-0 group-hover:opacity-100 pointer-events-none">Coming Soon</div>
-      </div>
-      <div class="relative group">
-        <button disabled class="w-full bg-pink-400 text-white py-3 rounded font-semibold cursor-not-allowed opacity-70">Bank PO 🚧</button>
-        <div class="absolute inset-0 flex items-center justify-center text-xs text-black dark:text-white opacity-0 group-hover:opacity-100 pointer-events-none">Coming Soon</div>
-      </div>
-      <div class="relative group">
-        <button disabled class="w-full bg-red-400 text-white py-3 rounded font-semibold cursor-not-allowed opacity-70">SNAP 🚧</button>
-        <div class="absolute inset-0 flex items-center justify-center text-xs text-black dark:text-white opacity-0 group-hover:opacity-100 pointer-events-none">Coming Soon</div>
-      </div>
-      <div class="relative group">
-        <button disabled class="w-full bg-indigo-400 text-white py-3 rounded font-semibold cursor-not-allowed opacity-70">NMAT 🚧</button>
-        <div class="absolute inset-0 flex items-center justify-center text-xs text-black dark:text-white opacity-0 group-hover:opacity-100 pointer-events-none">Coming Soon</div>
-      </div>
-      <div class="relative group">
-        <button disabled class="w-full bg-teal-400 text-white py-3 rounded font-semibold cursor-not-allowed opacity-70">CMAT 🚧</button>
-        <div class="absolute inset-0 flex items-center justify-center text-xs text-black dark:text-white opacity-0 group-hover:opacity-100 pointer-events-none">Coming Soon</div>
-      </div>
+      <!-- Coming Soon -->
+      <button disabled class="w-full bg-yellow-400 text-white py-3 rounded font-semibold cursor-not-allowed relative">
+        SSC CGL 🚧
+      </button>
+      <button disabled class="w-full bg-purple-400 text-white py-3 rounded font-semibold cursor-not-allowed">SBI Clerk 🚧</button>
+      <button disabled class="w-full bg-pink-400 text-white py-3 rounded font-semibold cursor-not-allowed">Bank PO 🚧</button>
+      <button disabled class="w-full bg-red-400 text-white py-3 rounded font-semibold cursor-not-allowed">SNAP 🚧</button>
+      <button disabled class="w-full bg-indigo-400 text-white py-3 rounded font-semibold cursor-not-allowed">NMAT 🚧</button>
+      <button disabled class="w-full bg-teal-500 text-white py-3 rounded font-semibold cursor-not-allowed">CMAT 🚧</button>
     </div>
   </div>
 
-<script>
-function selectExam(examName) {
-  localStorage.setItem('selectedExam', examName);
-  alert(`✅ You have selected ${examName} Exam!`);
-  window.location.href = "dashboard.html";
-}
-</script>
-
+  <script>
+    function selectExam(examName) {
+      localStorage.setItem('selectedExam', examName);
+      window.location.href = "dashboard.html";
+    }
+  </script>
 </body>
 </html>
