@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" class="">
+<html lang="en" class="light">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -9,82 +9,85 @@
     tailwind.config = { darkMode: 'class' };
   </script>
 </head>
-<body class="bg-white text-black min-h-screen">
+<body class="bg-white dark:bg-[#0f0f0f] text-black dark:text-white min-h-screen">
 
 <!-- Notification Popup -->
-<div id="site-notification" class="hidden fixed bottom-5 right-5 bg-blue-500 text-white rounded-lg shadow-lg px-6 py-4 flex items-center justify-between gap-4 z-50 transition-all duration-300">
+<div id="site-notification" class="hidden fixed bottom-5 right-5 bg-blue-500 dark:bg-blue-600 text-white rounded-lg shadow-lg px-6 py-4 flex items-center justify-between gap-4 z-50 transition-all duration-300">
   <span id="notification-text" class="text-sm"></span>
   <button onclick="closeNotification()" class="text-white text-xl leading-none">&times;</button>
 </div>
 
 <!-- Desktop Sidebar -->
-<aside class="hidden md:flex w-64 fixed top-0 bottom-0 z-40 bg-[#f4f4f4] text-black flex-col justify-between">
+<aside class="hidden md:flex w-64 fixed top-0 bottom-0 z-40 bg-[#f4f4f4] dark:bg-[#1a1a1a] text-black dark:text-white flex-col justify-between">
   <div class="p-4 space-y-4 overflow-y-auto">
-    <div id="leaderboard" class="bg-[#e0e0e0] p-3 rounded shadow">
+    <div id="leaderboard" class="bg-[#e0e0e0] dark:bg-[#2a2a2a] p-3 rounded shadow">
       <h3 class="font-semibold mb-2">🏆 Top 10</h3>
       <div class="text-sm space-y-1"></div>
-      <hr class="my-2 border-gray-500">
+      <hr class="my-2 border-gray-500 dark:border-gray-600">
       <div id="user-rank" class="text-sm">Your Rank: —</div>
     </div>
-    <div id="countdown" class="bg-[#e0e0e0] p-3 rounded shadow">
+
+    <div id="countdown" class="bg-[#e0e0e0] dark:bg-[#2a2a2a] p-3 rounded shadow">
       <h3 class="font-semibold mb-2">Days Until Exam ⏳</h3>
       <p id="days-left" class="text-lg font-bold">-- days</p>
     </div>
+
     <a href="braingames.html">
-      <button class="w-full flex items-center justify-between px-3 py-2 bg-[#e0e0e0] hover:bg-purple-600 hover:text-white rounded">
+      <button class="w-full flex items-center justify-between px-3 py-2 bg-[#e0e0e0] dark:bg-[#2a2a2a] hover:bg-purple-600 hover:text-white dark:hover:bg-purple-600 rounded">
         BrainGames <span>🧠</span>
       </button>
     </a>
   </div>
+
   <div class="p-4 space-y-2">
     <a href="performance.html">
-      <button class="w-full flex items-center justify-between px-3 py-2 bg-[#e0e0e0] hover:bg-blue-600 hover:text-white rounded">
+      <button class="w-full flex items-center justify-between px-3 py-2 bg-[#e0e0e0] dark:bg-[#2a2a2a] hover:bg-blue-600 hover:text-white dark:hover:bg-blue-600 rounded">
         Performance <span>📈</span>
       </button>
     </a>
-    <button onclick="toggleTheme()" class="w-full flex items-center justify-between px-3 py-2 bg-[#e0e0e0] hover:bg-blue-600 hover:text-white rounded">
+    <button onclick="toggleTheme()" class="w-full flex items-center justify-between px-3 py-2 bg-[#e0e0e0] dark:bg-[#2a2a2a] hover:bg-blue-600 hover:text-white dark:hover:bg-blue-600 rounded">
       Theme Mode <span>🌓</span>
     </button>
-    <button onclick="switchExam()" class="w-full flex items-center justify-between px-3 py-2 bg-[#e0e0e0] hover:bg-blue-600 hover:text-white rounded">
+    <button onclick="switchExam()" class="w-full flex items-center justify-between px-3 py-2 bg-[#e0e0e0] dark:bg-[#2a2a2a] hover:bg-blue-600 hover:text-white dark:hover:bg-blue-600 rounded">
       Switch Exam <span>🔄</span>
     </button>
   </div>
 </aside>
 
 <!-- Navbar -->
-<nav class="fixed top-0 left-0 right-0 md:left-64 z-50 bg-[#f4f4f4] px-4 py-3 shadow flex justify-between items-center">
+<nav class="fixed top-0 left-0 right-0 md:left-64 z-50 bg-[#f4f4f4] dark:bg-[#1a1a1a] px-4 py-3 shadow flex justify-between items-center">
   <button onclick="toggleMobileSidebar()" class="md:hidden text-2xl">☰</button>
   <h1 id="dashboard-title" class="text-lg font-bold">Ultimate Prep</h1>
   <div class="relative">
-    <button onclick="toggleLogoutMenu()" id="user-button" class="w-10 h-10 rounded-full bg-gray-600 text-white font-bold hover:ring-2 ring-blue-500 transition">👤</button>
-    <div id="logout-menu" class="absolute right-0 mt-2 w-32 bg-white rounded-lg shadow-lg py-2 hidden">
-      <button onclick="logoutUser()" class="block w-full text-left px-4 py-2 hover:bg-gray-200 rounded">Logout</button>
+    <button onclick="toggleUserDropdown()" class="w-10 h-10 rounded-full bg-gray-600 text-white font-bold hover:ring-2 ring-blue-500 transition">👤</button>
+    <div id="user-dropdown" class="absolute right-0 mt-2 w-32 bg-white dark:bg-[#2a2a2a] rounded-lg shadow-lg py-2 hidden z-50">
+      <button onclick="logoutUser()" class="block w-full text-left px-4 py-2 hover:bg-gray-200 dark:hover:bg-gray-700 rounded">Logout</button>
     </div>
   </div>
 </nav>
 
 <!-- Mobile Sidebar -->
-<div id="mobile-sidebar" class="fixed top-0 left-0 h-full w-64 bg-[#f4f4f4] z-40 shadow-lg transform -translate-x-full transition-transform duration-300 md:hidden">
+<div id="mobile-sidebar" class="fixed top-0 left-0 h-full w-64 bg-[#f4f4f4] dark:bg-[#1a1a1a] z-40 shadow-lg transform -translate-x-full transition-transform duration-300 md:hidden">
   <div class="p-4 space-y-4">
-    <button onclick="switchExam()" class="w-full text-left px-4 py-2 bg-gray-200 rounded">🔄 Switch Exam</button>
-    <a href="performance.html"><button class="w-full text-left px-4 py-2 bg-gray-200 rounded">📈 Performance</button></a>
-    <a href="braingames.html"><button class="w-full text-left px-4 py-2 bg-gray-200 rounded">🧠 BrainGames</button></a>
-    <div class="bg-gray-200 p-3 rounded">
+    <button onclick="switchExam()" class="w-full text-left px-4 py-2 bg-gray-200 dark:bg-gray-800 rounded">🔄 Switch Exam</button>
+    <a href="performance.html"><button class="w-full text-left px-4 py-2 bg-gray-200 dark:bg-gray-800 rounded">📈 Performance</button></a>
+    <a href="braingames.html"><button class="w-full text-left px-4 py-2 bg-gray-200 dark:bg-gray-800 rounded">🧠 BrainGames</button></a>
+    <div class="bg-gray-200 dark:bg-gray-800 p-3 rounded">
       <h3 class="font-semibold mb-1">⏳ Days Until Exam</h3>
       <p id="days-left-mobile" class="font-bold text-center">-- days</p>
     </div>
-    <button onclick="toggleTheme()" class="w-full text-left px-4 py-2 bg-gray-200 rounded">🌓 Theme</button>
+    <button onclick="toggleTheme()" class="w-full text-left px-4 py-2 bg-gray-200 dark:bg-gray-800 rounded">🌓 Theme</button>
   </div>
 </div>
 
 <!-- Main Content -->
-<main class="pt-20 md:pt-20 md:ml-64 px-4 space-y-6">
+<main class="pt-24 md:pt-20 md:ml-64 px-4 space-y-6">
   <!-- Quote + Study Count + Video Section -->
-  <section class="max-w-2xl mx-auto space-y-6 mt-8">
-    <div class="text-center text-lg font-semibold">
+  <section class="max-w-2xl mx-auto space-y-4">
+    <div class="text-center text-lg font-semibold mt-6">
       <p>“100 Days of effort, a lifetime of impact. Start strong. Finish stronger.”</p>
     </div>
-    <div class="bg-green-100 text-green-900 font-semibold text-center py-3 rounded shadow text-base">
+    <div class="bg-green-100 dark:bg-green-800 text-green-900 dark:text-green-200 font-semibold text-center py-3 rounded shadow text-base">
       📚 <span id="study-count">5,000</span> students currently studying!
     </div>
     <div class="relative w-full pt-[56.25%] rounded-lg overflow-hidden shadow">
@@ -105,19 +108,25 @@
 <script src="js/dashboard.js"></script>
 <script>
 function toggleMobileSidebar() {
-  document.getElementById('mobile-sidebar').classList.toggle('-translate-x-full');
+  const sidebar = document.getElementById('mobile-sidebar');
+  sidebar.classList.toggle('-translate-x-full');
 }
 
-function toggleLogoutMenu() {
-  const menu = document.getElementById('logout-menu');
-  menu.classList.toggle('hidden');
-  document.addEventListener('click', function outsideClick(e) {
-    if (!menu.contains(e.target) && !document.getElementById('user-button').contains(e.target)) {
-      menu.classList.add('hidden');
-      document.removeEventListener('click', outsideClick);
+function toggleUserDropdown() {
+  const dropdown = document.getElementById('user-dropdown');
+  dropdown.classList.toggle('hidden');
+  document.addEventListener('click', function handler(e) {
+    if (!e.target.closest('#user-dropdown') && !e.target.closest('button')) {
+      dropdown.classList.add('hidden');
+      document.removeEventListener('click', handler);
     }
   });
 }
+
+(function applySavedTheme() {
+  const theme = localStorage.getItem("theme") || "light";
+  if (theme === "dark") document.documentElement.classList.add("dark");
+})();
 
 let startCount = 4970;
 const display = document.getElementById("study-count");
@@ -126,10 +135,6 @@ const interval = setInterval(() => {
   display.textContent = startCount.toLocaleString();
   if (startCount >= 5000) clearInterval(interval);
 }, 20);
-
-// Default theme set to light
-localStorage.setItem("theme", "light");
-document.documentElement.classList.remove("dark");
 </script>
 
 </body>
