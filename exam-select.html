@@ -1,37 +1,43 @@
-<!-- exam-select.html (Updated to white theme with same layout/buttons) -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Select Exam | Ultimate Prep</title>
+  <script>
+    document.documentElement.classList.remove("dark");
+
+    // Check if user is logged in and exam is selected
+    const user = JSON.parse(localStorage.getItem("user"));
+    const selectedExam = localStorage.getItem("selectedExam");
+
+    if (!user) {
+      window.location.href = "index.html";
+    } else if (selectedExam) {
+      window.location.href = "dashboard.html";
+    }
+  </script>
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-white text-black min-h-screen flex items-center justify-center">
+<body class="bg-white text-black min-h-screen flex items-center justify-center font-sans">
 
-  <div class="bg-[#f9fafe] border border-blue-200 p-8 rounded-lg shadow-lg w-full max-w-md space-y-6">
-    <h1 class="text-3xl font-bold text-center text-blue-700">🎯 Choose Your Exam</h1>
+  <div class="text-center space-y-6 max-w-xl mx-auto p-4">
+    <h1 class="text-3xl sm:text-4xl font-bold text-blue-600">🎓 Choose Your Exam</h1>
+    <p class="text-gray-700">Select the exam you're preparing for to start your 100-day journey.</p>
 
-    <div class="space-y-4">
-      <!-- Active Exams -->
-      <button onclick="selectExam('CAT')" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded font-semibold">CAT</button>
-      <button onclick="selectExam('IPMAT')" class="w-full bg-green-600 hover:bg-green-700 text-white py-3 rounded font-semibold">IPMAT</button>
-
-      <!-- Coming Soon -->
-      <button disabled class="w-full bg-yellow-400 text-white py-3 rounded font-semibold cursor-not-allowed relative">
-        SSC CGL 🚧
-      </button>
-      <button disabled class="w-full bg-purple-400 text-white py-3 rounded font-semibold cursor-not-allowed">SBI Clerk 🚧</button>
-      <button disabled class="w-full bg-pink-400 text-white py-3 rounded font-semibold cursor-not-allowed">Bank PO 🚧</button>
-      <button disabled class="w-full bg-red-400 text-white py-3 rounded font-semibold cursor-not-allowed">SNAP 🚧</button>
-      <button disabled class="w-full bg-indigo-400 text-white py-3 rounded font-semibold cursor-not-allowed">NMAT 🚧</button>
-      <button disabled class="w-full bg-teal-500 text-white py-3 rounded font-semibold cursor-not-allowed">CMAT 🚧</button>
+    <div class="grid grid-cols-2 sm:grid-cols-3 gap-4 mt-6">
+      <button onclick="selectExam('CAT')" class="bg-blue-100 hover:bg-blue-200 px-4 py-2 rounded text-blue-700 font-semibold">CAT</button>
+      <button onclick="selectExam('IPMAT')" class="bg-blue-100 hover:bg-blue-200 px-4 py-2 rounded text-blue-700 font-semibold">IPMAT</button>
+      <button onclick="selectExam('SSC')" class="bg-blue-100 hover:bg-blue-200 px-4 py-2 rounded text-blue-700 font-semibold">SSC</button>
+      <button onclick="selectExam('SBI')" class="bg-blue-100 hover:bg-blue-200 px-4 py-2 rounded text-blue-700 font-semibold">SBI</button>
+      <button onclick="selectExam('SNAP')" class="bg-blue-100 hover:bg-blue-200 px-4 py-2 rounded text-blue-700 font-semibold">SNAP</button>
+      <button onclick="selectExam('CMAT')" class="bg-blue-100 hover:bg-blue-200 px-4 py-2 rounded text-blue-700 font-semibold">CMAT</button>
     </div>
   </div>
 
   <script>
-    function selectExam(examName) {
-      localStorage.setItem('selectedExam', examName);
+    function selectExam(exam) {
+      localStorage.setItem("selectedExam", exam);
       window.location.href = "dashboard.html";
     }
   </script>
