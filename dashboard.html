@@ -15,8 +15,45 @@
   <button onclick="closeNotification()" class="text-white text-xl leading-none">&times;</button>
 </div>
 
-<!-- Mobile Sidebar Toggle Button -->
-<nav class="fixed top-0 left-0 right-0 z-50 bg-[#f4f4f4] dark:bg-[#1a1a1a] px-4 py-3 shadow flex justify-between items-center">
+<!-- Desktop Sidebar -->
+<aside class="hidden md:flex w-64 fixed top-0 bottom-0 z-40 bg-[#f4f4f4] dark:bg-[#1a1a1a] text-black dark:text-white flex-col justify-between">
+  <div class="p-4 space-y-4 overflow-y-auto">
+    <div id="leaderboard" class="bg-[#e0e0e0] dark:bg-[#2a2a2a] p-3 rounded shadow">
+      <h3 class="font-semibold mb-2">🏆 Top 10</h3>
+      <div class="text-sm space-y-1"></div>
+      <hr class="my-2 border-gray-500 dark:border-gray-600">
+      <div id="user-rank" class="text-sm">Your Rank: —</div>
+    </div>
+
+    <div id="countdown" class="bg-[#e0e0e0] dark:bg-[#2a2a2a] p-3 rounded shadow">
+      <h3 class="font-semibold mb-2">Days Until Exam ⏳</h3>
+      <p id="days-left" class="text-lg font-bold">-- days</p>
+    </div>
+
+    <a href="braingames.html">
+      <button class="w-full flex items-center justify-between px-3 py-2 bg-[#e0e0e0] dark:bg-[#2a2a2a] hover:bg-purple-600 hover:text-white dark:hover:bg-purple-600 rounded">
+        BrainGames <span>🧠</span>
+      </button>
+    </a>
+  </div>
+
+  <div class="p-4 space-y-2">
+    <a href="performance.html">
+      <button class="w-full flex items-center justify-between px-3 py-2 bg-[#e0e0e0] dark:bg-[#2a2a2a] hover:bg-blue-600 hover:text-white dark:hover:bg-blue-600 rounded">
+        Performance <span>📈</span>
+      </button>
+    </a>
+    <button onclick="toggleTheme()" class="w-full flex items-center justify-between px-3 py-2 bg-[#e0e0e0] dark:bg-[#2a2a2a] hover:bg-blue-600 hover:text-white dark:hover:bg-blue-600 rounded">
+      Theme Mode <span>🌓</span>
+    </button>
+    <button onclick="switchExam()" class="w-full flex items-center justify-between px-3 py-2 bg-[#e0e0e0] dark:bg-[#2a2a2a] hover:bg-blue-600 hover:text-white dark:hover:bg-blue-600 rounded">
+      Switch Exam <span>🔄</span>
+    </button>
+  </div>
+</aside>
+
+<!-- Navbar -->
+<nav class="fixed top-0 left-0 right-0 md:left-64 z-50 bg-[#f4f4f4] dark:bg-[#1a1a1a] px-4 py-3 shadow flex justify-between items-center">
   <button onclick="toggleMobileSidebar()" class="md:hidden text-2xl">☰</button>
   <h1 id="dashboard-title" class="text-lg font-bold">Ultimate Prep</h1>
   <div class="relative group">
@@ -27,7 +64,7 @@
   </div>
 </nav>
 
-<!-- Mobile Sidebar Drawer -->
+<!-- Mobile Sidebar -->
 <div id="mobile-sidebar" class="fixed top-0 left-0 h-full w-64 bg-[#f4f4f4] dark:bg-[#1a1a1a] z-40 shadow-lg transform -translate-x-full transition-transform duration-300 md:hidden">
   <div class="p-4 space-y-4">
     <button onclick="switchExam()" class="w-full text-left px-4 py-2 bg-gray-200 dark:bg-gray-800 rounded">🔄 Switch Exam</button>
@@ -35,14 +72,14 @@
     <a href="braingames.html"><button class="w-full text-left px-4 py-2 bg-gray-200 dark:bg-gray-800 rounded">🧠 BrainGames</button></a>
     <div class="bg-gray-200 dark:bg-gray-800 p-3 rounded">
       <h3 class="font-semibold mb-1">⏳ Days Until Exam</h3>
-      <p id="days-left" class="font-bold text-center">-- days</p>
+      <p id="days-left-mobile" class="font-bold text-center">-- days</p>
     </div>
     <button onclick="toggleTheme()" class="w-full text-left px-4 py-2 bg-gray-200 dark:bg-gray-800 rounded">🌓 Theme</button>
   </div>
 </div>
 
 <!-- Main Content -->
-<main class="pt-16 px-4 space-y-6">
+<main class="pt-16 md:pt-20 md:ml-64 px-4 space-y-6">
   <!-- Quote + Study Count + Video Section -->
   <section class="max-w-2xl mx-auto space-y-4">
     <div class="text-center text-lg font-semibold">
