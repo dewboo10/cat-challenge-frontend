@@ -1,3 +1,5 @@
+// === Dashboard.js FINAL Combined Auth Version ===
+
 document.addEventListener("DOMContentLoaded", () => {
   const user = JSON.parse(localStorage.getItem("user"));
   const selectedExam = localStorage.getItem("selectedExam");
@@ -12,14 +14,12 @@ document.addEventListener("DOMContentLoaded", () => {
   renderQuizCards(user, selectedExam);
   renderLeaderboard(user);
 
-  // Show modal if not logged in
   if (!user) {
     setTimeout(() => {
       document.getElementById("guest-modal")?.classList.remove("hidden");
     }, 5000);
   }
 
-  // Animate counter
   let count = 4970;
   const display = document.getElementById("study-count");
   const interval = setInterval(() => {
@@ -28,12 +28,12 @@ document.addEventListener("DOMContentLoaded", () => {
     if (count >= 5000) clearInterval(interval);
   }, 20);
 });
+
 function updateNavbarUser(user) {
   const navbarUser = document.getElementById("navbar-user");
   if (!navbarUser) return;
 
   if (user) {
-    // Logged in: show profile + logout dropdown
     navbarUser.innerHTML = `
       <div class="relative">
         <button id="user-btn" class="flex items-center gap-2 px-3 py-1 bg-white text-blue-600 rounded shadow hover:bg-blue-100 font-medium">
@@ -51,12 +51,11 @@ function updateNavbarUser(user) {
 
     userBtn.addEventListener("mouseenter", () => menu.classList.remove("hidden"));
     userBtn.addEventListener("mouseleave", () => setTimeout(() => {
-      if (!menu.matches(':hover')) menu.classList.add("hidden");
+      if (!menu.matches(":hover")) menu.classList.add("hidden");
     }, 100));
     menu.addEventListener("mouseenter", () => menu.classList.remove("hidden"));
     menu.addEventListener("mouseleave", () => menu.classList.add("hidden"));
   } else {
-    // Not logged in: show sign up button (opens popup or redirects)
     navbarUser.innerHTML = `
       <button onclick="showSignupPopup()" class="bg-white text-blue-600 px-4 py-1 rounded hover:bg-blue-100 font-semibold text-sm">
         Sign Up
@@ -64,7 +63,6 @@ function updateNavbarUser(user) {
     `;
   }
 }
-
 
 function renderCountdown(exam) {
   const examDates = {
@@ -75,7 +73,6 @@ function renderCountdown(exam) {
     SNAP: "2025-12-15",
     CMAT: "2025-08-01",
   };
-
   const target = new Date(`${examDates[exam] || "2025-11-24"}T00:00:00`);
   const now = new Date();
   const diff = Math.max(Math.ceil((target - now) / (1000 * 60 * 60 * 24)), 0);
@@ -85,22 +82,17 @@ function renderCountdown(exam) {
 function renderQuizCards(user, exam) {
   const container = document.getElementById("quiz-grid");
   if (!container) return;
-
   const isPaid = JSON.parse(localStorage.getItem("isPaidUser") || "false");
   const progressKey = `progress_${exam}_${user?.username || "guest"}`;
   const progress = JSON.parse(localStorage.getItem(progressKey) || "{}");
-
   container.innerHTML = "";
-
   for (let day = 1; day <= 100; day++) {
     const isCompleted = progress[`day${day}`]?.completed;
     const unlocked = user
       ? (day <= 5 || isPaid || progress[`day${day - 1}`]?.completed)
       : day <= 5;
-
     const card = document.createElement("div");
     card.className = "bg-white border border-gray-200 rounded p-4 shadow text-center space-y-2";
-
     const buttonHTML = unlocked
       ? `<a href="quiz.html?exam=${exam}&day=${day}">
           <button class="px-4 py-1 bg-yellow-500 hover:bg-yellow-600 text-white rounded text-sm font-semibold">
@@ -112,22 +104,16 @@ function renderQuizCards(user, exam) {
             Buy Premium
           </button>
         </a>`;
-
     card.innerHTML = `<h3 class="font-semibold text-lg text-black">Day ${day} Quiz</h3>${buttonHTML}`;
     container.appendChild(card);
   }
 }
 
 function renderLeaderboard(user) {
-  const data = [
-    "tanya", "anil", "vishal", "deepika", "rahul",
-    "manvi", "keshav", "riya", "dinesh", "shreya"
-  ];
+  const data = ["tanya", "anil", "vishal", "deepika", "rahul", "manvi", "keshav", "riya", "dinesh", "shreya"];
   const leaderboard = user ? [...new Set([...data, user.username])] : data;
-
   const el = document.getElementById("leaderboard-list");
   if (!el) return;
-
   el.innerHTML = leaderboard
     .slice(0, 10)
     .map((name, i) => `
@@ -143,34 +129,102 @@ function logoutUser() {
   localStorage.removeItem("selectedExam");
   location.href = "index.html";
 }
+
 function showLoginPopup() {
-  // If you already use auth-modal.js, make sure it has this function
-  if (typeof showAuthModal === "function") {
-    showAuthModal("login");
-  } else {
-    window.location.href = "auth.html#login";
-  }
+  showAuthModal();
 }
 
 function showSignupPopup() {
-  if (typeof showAuthModal === "function") {
-    showAuthModal("signup");
-  } else {
-    window.location.href = "auth.html#register";
-  }
+  showAuthModal();
 }
-function showLoginPopup() {
-  if (typeof showAuthModal === "function") {
-    showAuthModal("login");
+
+// === Modal Auth Flow ===
+const API_BASE = "https://ultimate-backend-vyse.onrender.com/api/auth";
+
+function showAuthModal() {
+  document.getElementById("auth-modal").classList.remove("hidden");
+  showStep(1);
+}
+
+function closeAuthModal() {
+  document.getElementById("auth-modal").classList.add("hidden");
+}
+
+function showStep(step) {
+  [1, 2, 3].forEach(s => document.getElementById(`auth-step-${s}`).classList.add("hidden"));
+  document.getElementById(`auth-step-${step}`).classList.remove("hidden");
+}
+
+async function sendOtp() {
+  const email = document.getElementById("auth-email").value.trim();
+  if (!email) return alert("Enter a valid email");
+  const res = await fetch(`${API_BASE}/send-otp`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email })
+  });
+  const data = await res.json();
+  if (data.success) {
+    alert("📨 OTP sent!");
+    showStep(2);
+    startOtpTimer();
   } else {
-    window.location.href = "auth.html#login";
+    alert("❌ " + data.error);
   }
 }
 
-function showSignupPopup() {
-  if (typeof showAuthModal === "function") {
-    showAuthModal("signup");
+function startOtpTimer() {
+  const otpBtn = document.getElementById("otp-btn");
+  const otpTimer = document.getElementById("otp-timer");
+  const countEl = document.getElementById("timer-count");
+  otpBtn.disabled = true;
+  otpTimer.classList.remove("hidden");
+  let time = 60;
+  const interval = setInterval(() => {
+    time--;
+    countEl.textContent = time;
+    if (time <= 0) {
+      clearInterval(interval);
+      otpBtn.disabled = false;
+      otpTimer.classList.add("hidden");
+    }
+  }, 1000);
+}
+
+async function verifyOtp() {
+  const email = document.getElementById("auth-email").value.trim();
+  const otp = document.getElementById("otp-input").value.trim();
+  const res = await fetch(`${API_BASE}/verify-otp`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email, otp })
+  });
+  const data = await res.json();
+  if (data.success) {
+    alert("✅ OTP verified!");
+    showStep(3);
   } else {
-    window.location.href = "auth.html#register";
+    alert("❌ " + data.error);
+  }
+}
+
+async function registerUser() {
+  const username = document.getElementById("auth-username").value.trim();
+  const password = document.getElementById("auth-password").value.trim();
+  if (!username || !password) return alert("Fill in all fields");
+  const res = await fetch(`${API_BASE}/register`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ username, password })
+  });
+  const data = await res.json();
+  if (data.success) {
+    localStorage.setItem("user", JSON.stringify(data.user));
+    localStorage.setItem("isPaidUser", data.user.isPremium);
+    alert(`🎉 Welcome ${data.user.username}`);
+    closeAuthModal();
+    location.reload();
+  } else {
+    alert("❌ " + data.error);
   }
 }

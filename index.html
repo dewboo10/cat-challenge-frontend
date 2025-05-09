@@ -5,31 +5,59 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Ultimate Prep | 100 Days Challenge</title>
   <script>
-    document.documentElement.classList.remove("dark"); // force light mode
-
+    document.documentElement.classList.remove("dark");
     const exam = localStorage.getItem("selectedExam");
-    if (exam) {
-      window.location.href = "dashboard.html";
-    }
+    if (exam) window.location.href = "dashboard.html";
   </script>
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-white text-black font-sans min-h-screen flex items-center justify-center">
 
-  <div class="text-center space-y-6 p-6 max-w-xl mx-auto">
-    <h1 class="text-4xl sm:text-5xl font-bold text-blue-600">🎯 100 Days to Your Dream Exam</h1>
-    <p class="text-gray-700 text-lg">Join thousands of aspirants. Practice. Improve. Succeed.</p>
-    
-    <div class="bg-blue-100 text-blue-800 py-2 rounded shadow text-sm">
-      📚 <span id="study-count">4,978</span> students are already practicing
-    </div>
-
-    <button onclick="startChallenge()" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded font-semibold text-lg transition-all">
-      🚀 Get Started
-    </button>
-
-    <p class="text-xs text-gray-500 mt-2">Track your progress, get daily quizzes, and unlock BrainGames</p>
+<!-- ✅ Main Landing UI -->
+<div class="text-center space-y-6 p-6 max-w-xl mx-auto">
+  <h1 class="text-4xl sm:text-5xl font-bold text-blue-600">🎯 100 Days to Your Dream Exam</h1>
+  <p class="text-gray-700 text-lg">Join thousands of aspirants. Practice. Improve. Succeed.</p>
+  <div class="bg-blue-100 text-blue-800 py-2 rounded shadow text-sm">
+    📚 <span id="study-count">4,978</span> students are already practicing
   </div>
+  <button onclick="startChallenge()" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded font-semibold text-lg transition-all">
+    🚀 Get Started
+  </button>
+  <p class="text-xs text-gray-500 mt-2">Track your progress, get daily quizzes, and unlock BrainGames</p>
+  <p class="text-sm text-gray-700">
+    Not registered? <button onclick="showAuthModal()" class="text-blue-600 underline">Sign Up Here</button>
+  </p>
+</div>
+
+<!-- ✅ Auth Modal -->
+<div id="auth-modal" class="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 hidden">
+  <div class="bg-white w-[90%] max-w-sm p-6 rounded shadow-lg space-y-4 text-center relative">
+    <button onclick="closeAuthModal()" class="absolute top-2 right-3 text-xl font-bold text-gray-600 hover:text-black">×</button>
+    <div id="auth-step-1" class="space-y-3">
+      <h2 class="text-xl font-bold text-blue-600">🔐 Verify Email</h2>
+      <input id="auth-email" type="email" placeholder="Enter email" class="w-full px-3 py-2 border rounded" />
+      <button onclick="sendOtp()" id="otp-btn" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded font-semibold">
+        Send OTP
+      </button>
+      <div id="otp-timer" class="text-sm text-gray-500 hidden">Resend in <span id="timer-count">60</span>s</div>
+    </div>
+    <div id="auth-step-2" class="space-y-3 hidden">
+      <h2 class="text-lg font-bold text-blue-600">✉️ Enter OTP</h2>
+      <input id="otp-input" type="text" maxlength="6" placeholder="6-digit OTP" class="w-full px-3 py-2 border rounded" />
+      <button onclick="verifyOtp()" class="w-full bg-green-600 hover:bg-green-700 text-white py-2 rounded font-semibold">
+        Verify OTP
+      </button>
+    </div>
+    <div id="auth-step-3" class="space-y-3 hidden">
+      <h2 class="text-lg font-bold text-blue-600">📝 Register Account</h2>
+      <input id="auth-username" placeholder="Username" class="w-full px-3 py-2 border rounded" />
+      <input id="auth-password" type="password" placeholder="Password" class="w-full px-3 py-2 border rounded" />
+      <button onclick="registerUser()" class="w-full bg-purple-600 hover:bg-purple-700 text-white py-2 rounded font-semibold">
+        Register
+      </button>
+    </div>
+  </div>
+</div>
 
 <script>
 function startChallenge() {
@@ -43,7 +71,96 @@ const interval = setInterval(() => {
   display.textContent = count.toLocaleString();
   if (count >= 5000) clearInterval(interval);
 }, 20);
-</script>
 
+const API_BASE = "https://ultimate-backend-vyse.onrender.com/api/auth";
+
+function showAuthModal() {
+  document.getElementById("auth-modal").classList.remove("hidden");
+  showStep(1);
+}
+
+function closeAuthModal() {
+  document.getElementById("auth-modal").classList.add("hidden");
+}
+
+function showStep(step) {
+  [1, 2, 3].forEach(s => document.getElementById(`auth-step-${s}`).classList.add("hidden"));
+  document.getElementById(`auth-step-${step}`).classList.remove("hidden");
+}
+
+async function sendOtp() {
+  const email = document.getElementById("auth-email").value.trim();
+  if (!email) return alert("Enter a valid email");
+  const res = await fetch(`${API_BASE}/send-otp`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email })
+  });
+  const data = await res.json();
+  if (data.success) {
+    alert("📨 OTP sent!");
+    showStep(2);
+    startOtpTimer();
+  } else {
+    alert("❌ " + data.error);
+  }
+}
+
+function startOtpTimer() {
+  const otpBtn = document.getElementById("otp-btn");
+  const otpTimer = document.getElementById("otp-timer");
+  const countEl = document.getElementById("timer-count");
+  otpBtn.disabled = true;
+  otpTimer.classList.remove("hidden");
+  let time = 60;
+  const interval = setInterval(() => {
+    time--;
+    countEl.textContent = time;
+    if (time <= 0) {
+      clearInterval(interval);
+      otpBtn.disabled = false;
+      otpTimer.classList.add("hidden");
+    }
+  }, 1000);
+}
+
+async function verifyOtp() {
+  const email = document.getElementById("auth-email").value.trim();
+  const otp = document.getElementById("otp-input").value.trim();
+  const res = await fetch(`${API_BASE}/verify-otp`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email, otp })
+  });
+  const data = await res.json();
+  if (data.success) {
+    alert("✅ OTP verified!");
+    showStep(3);
+  } else {
+    alert("❌ " + data.error);
+  }
+}
+
+async function registerUser() {
+  const username = document.getElementById("auth-username").value.trim();
+  const password = document.getElementById("auth-password").value.trim();
+  if (!username || !password) return alert("Fill in all fields");
+  const res = await fetch(`${API_BASE}/register`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ username, password })
+  });
+  const data = await res.json();
+  if (data.success) {
+    localStorage.setItem("user", JSON.stringify(data.user));
+    localStorage.setItem("isPaidUser", data.user.isPremium);
+    alert(`🎉 Welcome ${data.user.username}`);
+    closeAuthModal();
+    location.reload();
+  } else {
+    alert("❌ " + data.error);
+  }
+}
+</script>
 </body>
 </html>
