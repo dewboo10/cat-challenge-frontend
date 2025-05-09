@@ -5,38 +5,36 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Dashboard | Ultimate Prep</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <script>tailwind.config = { darkMode: 'class' }</script>
   <script>
     document.documentElement.classList.remove("dark");
   </script>
 </head>
-<body class="bg-white text-black min-h-screen font-sans">
+<body class="bg-white text-black font-sans min-h-screen">
 
-<!-- 🔒 Guest Modal After 5s -->
-<div id="guest-modal" class="fixed inset-0 bg-black bg-opacity-70 backdrop-blur-sm z-50 hidden items-center justify-center">
-  <div class="bg-white p-8 rounded-lg shadow-lg w-[90%] max-w-md space-y-6 text-center">
-    <h2 class="text-2xl font-bold text-blue-600">🎯 100 Steps Toward Your Dream</h2>
-    <p class="text-gray-700">Track your performance. Unlock all quizzes.<br>Login or sign up now!</p>
+<!-- 🔒 Guest Fullscreen Modal -->
+<div id="guest-modal" class="fixed inset-0 z-50 hidden bg-black/70 backdrop-blur-sm flex items-center justify-center">
+  <div class="relative bg-white p-6 sm:p-8 rounded-lg shadow-lg w-[90%] max-w-md text-center space-y-6">
+    <button onclick="document.getElementById('guest-modal').classList.add('hidden')" class="absolute top-2 right-3 text-xl font-bold text-gray-600 hover:text-black">×</button>
+    <h2 class="text-2xl font-bold text-blue-600 flex items-center justify-center gap-2">
+      <span>🎯</span> <span>Unlock Full Access</span>
+    </h2>
+    <p class="text-gray-700 text-sm">Track performance, unlock all quizzes, and more.</p>
     <div class="flex gap-4 justify-center">
-      <a href="index.html#login" class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded font-semibold">Login</a>
-      <a href="index.html#register" class="bg-green-600 hover:bg-green-700 text-white px-5 py-2 rounded font-semibold">Sign Up</a>
+      <button onclick="showLoginPopup()" class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded font-semibold">Login</button>
+      <button onclick="showSignupPopup()" class="bg-green-600 hover:bg-green-700 text-white px-5 py-2 rounded font-semibold">Sign Up</button>
     </div>
   </div>
 </div>
 
-<!-- Notification -->
-<div id="site-notification" class="hidden fixed bottom-5 right-5 bg-blue-600 text-white rounded shadow-lg px-6 py-4 z-50">
-  <span id="notification-text" class="text-sm"></span>
-</div>
 
 <!-- Navbar -->
-<nav class="w-full fixed top-0 left-0 right-0 bg-blue-600 text-white px-6 py-4 shadow flex justify-between items-center z-40">
+<nav class="fixed top-0 left-0 right-0 bg-blue-600 text-white px-6 py-4 shadow flex justify-between items-center z-40">
   <h1 class="text-xl font-bold">Ultimate Prep</h1>
-  <div id="navbar-user" class="relative group">
-    <!-- Filled by JS -->
-  </div>
+  <div id="navbar-user" class="relative group"></div>
 </nav>
 
-<!-- Sidebar -->
+<!-- Sidebar (desktop only) -->
 <aside class="hidden md:flex w-64 fixed top-16 bottom-0 bg-blue-50 border-r border-blue-100 p-4 flex-col justify-between z-30">
   <div class="space-y-6">
     <div class="bg-white p-4 rounded shadow">
@@ -79,42 +77,5 @@
 
 <script src="js/theme.js"></script>
 <script src="js/dashboard.js"></script>
-<script>
-  // Study count animation
-  let count = 4970;
-  const display = document.getElementById("study-count");
-  const interval = setInterval(() => {
-    count++;
-    display.textContent = count.toLocaleString();
-    if (count >= 5000) clearInterval(interval);
-  }, 20);
-
-  // Guest reminder modal after 5s
-  const user = localStorage.getItem("user");
-  if (!user) {
-    setTimeout(() => {
-      const modal = document.getElementById("guest-modal");
-      if (modal) modal.classList.remove("hidden");
-    }, 5000);
-  }
-
-  // Populate Navbar User if logged in
-  const navbarUser = document.getElementById("navbar-user");
-  if (user && navbarUser) {
-    const parsedUser = JSON.parse(user);
-    navbarUser.innerHTML = `
-      <div class="relative group">
-        <button class="flex items-center gap-2 px-3 py-1 bg-white text-blue-600 rounded shadow hover:bg-blue-100 font-medium">
-          <span>${parsedUser.username}</span>
-          <img src="https://api.dicebear.com/7.x/initials/svg?seed=${parsedUser.username}" alt="👤" class="w-6 h-6 rounded-full" />
-        </button>
-        <div class="absolute top-full mt-1 right-0 bg-white border border-gray-200 rounded shadow px-4 py-2 text-sm text-black hidden group-hover:block z-50"
-          onmouseover="this.classList.add('block')" onmouseleave="this.classList.remove('block')">
-          <button onclick="logoutUser()" class="hover:text-red-500">🚪 Logout</button>
-        </div>
-      </div>
-    `;
-  }
-</script>
 </body>
 </html>
