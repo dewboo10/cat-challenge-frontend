@@ -1,4 +1,4 @@
-// FINAL UPDATED auth.js with Backend Integration
+// FINAL UPDATED auth.js with Backend Integration and Exam Redirect
 
 const API_BASE = "https://ultimate-backend-vyse.onrender.com/api/auth";
 // Replace with your deployed backend URL
@@ -25,7 +25,7 @@ async function loginUser() {
       localStorage.setItem("user", JSON.stringify(data.user));
       localStorage.setItem("isPaidUser", JSON.stringify(data.user.isPremium));
       alert("✅ Login successful!");
-      window.location.href = "dashboard.html";
+      window.location.href = "exam-select.html";
     } else {
       alert("❌ Invalid credentials.");
     }
@@ -64,7 +64,7 @@ async function registerUser() {
       localStorage.setItem("user", JSON.stringify(data.user));
       localStorage.setItem("isPaidUser", JSON.stringify(data.user.isPremium));
       alert("✅ Account created successfully!");
-      window.location.href = "dashboard.html";
+      window.location.href = "exam-select.html";
     } else {
       alert(data.error || "❌ Registration failed.");
     }
