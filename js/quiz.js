@@ -136,7 +136,7 @@ function loadQuestion() {
     div.innerHTML = `
       <input type="radio" name="option" value="${opt}">
       <label>${question.options[opt]}</label>
-    `;
+      `;
     container.appendChild(div);
   });
 
@@ -202,45 +202,31 @@ function submitQuiz() {
   isSubmitted = true;
 
   const user = JSON.parse(localStorage.getItem("user"));
-  const progressKey = `progress_${selectedExam}_${user.username}`;
-  const performanceKey = `performance_${selectedExam}_${user.username}`;
+  if (!user) {
+    alert("Login required to submit.");
+    return;
+  }
 
-  // Save Quiz Progress
-  const progress = JSON.parse(localStorage.getItem(progressKey) || "{}");
-  progress[`day${currentDay}`] = { completed: true };
-  localStorage.setItem(progressKey, JSON.stringify(progress));
-
-  unlockNextDay(progressKey);
-
-  // Save Performance
-  const sectionData = JSON.parse(localStorage.getItem(performanceKey) || "{}") || {};
-  const sections = ["Quant", "VARC", "LRDI"];
-
-  sections.forEach(sec => {
-    const sectionQs = questions.filter(q => q.section === sec);
-    let correct = 0;
-    let attempted = 0;
-
-    if (sectionQs.length > 0) {
-      sectionQs.forEach((q, i) => {
-        if (selectedAnswers[sec]?.[i]) {
-          attempted++;
-          if (selectedAnswers[sec][i] === q.correct) correct++;
-        }
-      });
-
-      if (!sectionData[sec]) sectionData[sec] = { correct: 0, attempted: 0, timeSpent: 0 };
-      sectionData[sec].correct += correct;
-      sectionData[sec].attempted += attempted;
-      sectionData[sec].timeSpent += timeSpentPerSection[sec];
-    }
-  });
-
-  sectionData.totalQuizzes = (sectionData.totalQuizzes || 0) + 1;
-
-  localStorage.setItem(performanceKey, JSON.stringify(sectionData));
-
-  showReviewLayout();
+  // Submit to backend
+  fetch("https://ultimate-backend-vyse.onrender.com", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      username: user.username,
+      exam: selectedExam,
+      day: currentDay,
+      selectedAnswers,
+    }),
+  })
+    .then((res) => res.json())
+    .then((data) => {
+      console.log(data);
+      showReviewLayout(); // load review after successful submit
+    })
+    .catch((err) => {
+      console.error("❌ Submission error:", err);
+      alert("Submission failed. Try again.");
+    });
 }
 
 function unlockNextDay(progressKey) {
