@@ -83,12 +83,19 @@ function renderQuizCards(user, exam) {
   const container = document.getElementById("quiz-grid");
   if (!container) return;
   container.innerHTML = "";
+
   const isPaid = JSON.parse(localStorage.getItem("isPaidUser") || "false");
 
   for (let day = 1; day <= 100; day++) {
     const card = document.createElement("div");
     card.className = "bg-white border border-gray-200 rounded p-4 shadow text-center space-y-2";
     const title = `<h3 class='font-semibold text-lg text-black'>Day ${day} Quiz</h3>`;
+
+    if (!isPaid && day > 5) {
+      card.innerHTML = `${title}<a href='payment.html'><button class='px-4 py-1 bg-gray-400 hover:bg-gray-500 text-white rounded text-sm font-semibold'>Buy Premium</button></a>`;
+      container.appendChild(card);
+      continue;
+    }
 
     if (user) {
       fetch(`https://ultimate-backend-vyse.onrender.com/api/quiz/attempt?username=${user.username}&exam=${exam}&day=${day}`)
@@ -103,19 +110,8 @@ function renderQuizCards(user, exam) {
           card.innerHTML = `${title}<a href='quiz.html?exam=${exam}&day=${day}'><button class='px-4 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded text-sm font-semibold'>Start</button></a>`;
         });
     } else {
-      const progressKey = `progress_${exam}_guest`;
-      const progress = JSON.parse(localStorage.getItem(progressKey) || "{}");
-      const isCompleted = progress[`day${day}`]?.completed;
-      const unlocked = day <= 5 || isPaid || progress[`day${day - 1}`]?.completed;
-
-      const btnText = isCompleted ? "Review" : "Start";
-      const btnClass = isCompleted ? "bg-green-600 hover:bg-green-700" : "bg-blue-600 hover:bg-blue-700";
-
-      const buttonHTML = unlocked
-        ? `<a href='quiz.html?exam=${exam}&day=${day}'><button class='px-4 py-1 ${btnClass} text-white rounded text-sm font-semibold'>${btnText}</button></a>`
-        : `<a href='payment.html'><button class='px-4 py-1 bg-gray-400 hover:bg-gray-500 text-white rounded text-sm font-semibold'>Buy Premium</button></a>`;
-
-      card.innerHTML = `${title}${buttonHTML}`;
+      // Guest fallback (only allow Day 1–5)
+      card.innerHTML = `${title}<a href='quiz.html?exam=${exam}&day=${day}'><button class='px-4 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded text-sm font-semibold'>Start</button></a>`;
     }
 
     container.appendChild(card);

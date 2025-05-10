@@ -103,6 +103,8 @@ function startSectionTimer() {
 }
 
 function autoSwitchSection() {
+  if (isSubmitted) return; // Prevent auto-switch in review mode
+
   clearInterval(interval);
   if (currentSection === "Quant") currentSection = "VARC";
   else if (currentSection === "VARC") currentSection = "LRDI";
@@ -263,7 +265,8 @@ function loadReviewQuestion() {
 function switchSection(section) {
   currentSection = section;
   currentQuestionIndex = 0;
-  isSubmitted ? loadReviewQuestion() : loadQuestion();
+  if (isSubmitted) loadReviewQuestion();
+  else loadQuestion();
 }
 
 function quitQuiz() {
