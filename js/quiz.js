@@ -1,4 +1,5 @@
-// FINAL UPGRADED quiz.js with Performance Tracking
+
+// FINAL quiz.js with Backend Submission, Review Mode, Persistent Answers, and UI Fixes
 
 // === Extract exam and day from URL ===
 const urlParams = new URLSearchParams(window.location.search);
@@ -7,6 +8,7 @@ const currentDay = urlParams.get('day') || "1";
 
 // === State Variables ===
 let questions = [];
+let questionsLoaded = false;
 let currentSection = "Quant";
 let currentQuestionIndex = 0;
 let sectionTimers = { Quant: 40 * 60, VARC: 30 * 60, LRDI: 30 * 60 };
@@ -17,39 +19,51 @@ let interval;
 let sectionStartTime = Date.now();
 let timeSpentPerSection = { Quant: 0, VARC: 0, LRDI: 0 };
 
-// === Apply Saved Theme ===
+// === Theme & Username Setup ===
 (function applySavedTheme() {
   const theme = localStorage.getItem("theme") || "dark";
   document.documentElement.classList.toggle("dark", theme === "dark");
 })();
 
-// === Set Username on Quiz Panel ===
 (function setUsername() {
   const user = JSON.parse(localStorage.getItem("user"));
   const usernameEl = document.getElementById('profile-username');
-  if (user && usernameEl) {
-    usernameEl.textContent = user.username;
-  }
+  if (user && usernameEl) usernameEl.textContent = user.username;
 })();
 
+// === Load Questions Dynamically ===
 (function loadQuestions() {
   const script = document.createElement('script');
   script.src = `questions/${selectedExam}/questionsDay${currentDay}.js`;
   script.onload = () => {
-    console.log("✅ Questions loaded for", selectedExam, "Day", currentDay);
-
     if (window.questions && Array.isArray(window.questions) && window.questions.length > 0) {
       questions = window.questions;
       questionsLoaded = true;
 
-      const btn = document.getElementById("start-btn");
-      if (btn) {
-        btn.disabled = false;
-        btn.classList.remove("bg-gray-400");
-        btn.classList.add("bg-blue-600", "hover:bg-blue-700");
+      // Check if already submitted from backend
+      const user = JSON.parse(localStorage.getItem("user"));
+      if (user) {
+        fetch(`https://ultimate-backend-vyse.onrender.com/api/quiz/attempt?username=${user.username}&exam=${selectedExam}&day=${currentDay}`)
+          .then(res => res.json())
+          .then(data => {
+            if (data?.completed) {
+              selectedAnswers = data.selectedAnswers || {};
+              isSubmitted = true;
+              showReviewLayout();
+            }
+          })
+          .catch(() => {
+            // Not submitted, enable start
+            const btn = document.getElementById("start-btn");
+            if (btn) {
+              btn.disabled = false;
+              btn.classList.remove("bg-gray-400");
+              btn.classList.add("bg-blue-600", "hover:bg-blue-700");
+            }
+          });
       }
     } else {
-      console.error("❌ window.questions is not properly loaded.");
+      console.error("❌ window.questions is missing or empty.");
     }
   };
   script.onerror = () => {
@@ -58,6 +72,7 @@ let timeSpentPerSection = { Quant: 0, VARC: 0, LRDI: 0 };
   document.head.appendChild(script);
 })();
 
+// === Start Quiz Handler ===
 function waitForQuestionsThenStart() {
   if (!questionsLoaded || !questions.length) {
     alert("Questions are still loading. Please wait...");
@@ -66,10 +81,9 @@ function waitForQuestionsThenStart() {
   startQuiz();
 }
 
-// === Start Quiz ===
 function startQuiz() {
-  document.getElementById("start-screen").classList.add("hidden");
-  document.getElementById("quiz-panel").classList.remove("hidden");
+  document.getElementById("start-screen")?.classList.add("hidden");
+  document.getElementById("quiz-panel")?.classList.remove("hidden");
   sectionStartTime = Date.now();
   loadQuestion();
   startSectionTimer();
@@ -81,13 +95,11 @@ function startSectionTimer() {
   const timerEl = document.getElementById("timer");
 
   interval = setInterval(() => {
-    if (!sectionTimers[currentSection]) sectionTimers[currentSection] = 0;
     if (sectionTimers[currentSection] <= 0) {
       captureSectionTime();
       autoSwitchSection();
       return;
     }
-
     sectionTimers[currentSection]--;
     const min = Math.floor(sectionTimers[currentSection] / 60);
     const sec = sectionTimers[currentSection] % 60;
@@ -114,7 +126,7 @@ function captureSectionTime() {
   timeSpentPerSection[currentSection] += elapsed;
 }
 
-// === Load Current Question ===
+// === Load Current Question and Restore Answer ===
 function loadQuestion() {
   const sectionQs = questions.filter(q => q.section === currentSection);
   const question = sectionQs[currentQuestionIndex];
@@ -136,32 +148,26 @@ function loadQuestion() {
     div.innerHTML = `
       <input type="radio" name="option" value="${opt}">
       <label>${question.options[opt]}</label>
-      `;
+    `;
     container.appendChild(div);
   });
+
+  const saved = selectedAnswers[currentSection]?.[currentQuestionIndex];
+  if (saved) {
+    const radios = document.querySelectorAll('input[name="option"]');
+    radios.forEach(r => {
+      if (r.value === saved) r.checked = true;
+    });
+  }
 
   updateOverview();
 }
 
-// === Update Navigator Overview ===
-function updateOverview() {
-  const overview = document.getElementById('question-overview');
-  overview.innerHTML = "";
-  const sectionQs = questions.filter(q => q.section === currentSection);
+// === Track Answer Selection ===
+document.getElementById('options-container')?.addEventListener('change', () => {
+  saveAnswer();
+});
 
-  sectionQs.forEach((_, i) => {
-    const btn = document.createElement('button');
-    btn.className = "text-sm rounded w-full mb-1 px-2 py-1";
-    btn.textContent = i + 1;
-    btn.onclick = () => {
-      currentQuestionIndex = i;
-      loadQuestion();
-    };
-    overview.appendChild(btn);
-  });
-}
-
-// === Answer Handling ===
 function saveAnswer() {
   const selected = document.querySelector('input[name="option"]:checked');
   if (!selected) return;
@@ -193,6 +199,24 @@ function goToNext() {
   }
 }
 
+// === Overview ===
+function updateOverview() {
+  const overview = document.getElementById('question-overview');
+  overview.innerHTML = "";
+  const sectionQs = questions.filter(q => q.section === currentSection);
+
+  sectionQs.forEach((_, i) => {
+    const btn = document.createElement('button');
+    btn.className = "text-sm rounded w-full mb-1 px-2 py-1";
+    btn.textContent = i + 1;
+    btn.onclick = () => {
+      currentQuestionIndex = i;
+      loadQuestion();
+    };
+    overview.appendChild(btn);
+  });
+}
+
 // === Submit Quiz ===
 function submitQuiz() {
   clearInterval(interval);
@@ -200,14 +224,9 @@ function submitQuiz() {
   if (!confirm("Are you sure you want to submit?")) return;
 
   isSubmitted = true;
-
   const user = JSON.parse(localStorage.getItem("user"));
-  if (!user) {
-    alert("Login required to submit.");
-    return;
-  }
+  if (!user) return alert("Login required");
 
-  // Submit to backend
   fetch("https://ultimate-backend-vyse.onrender.com/api/quiz/submit", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -215,33 +234,24 @@ function submitQuiz() {
       username: user.username,
       exam: selectedExam,
       day: currentDay,
-      selectedAnswers,
-    }),
-  })
-    .then((res) => res.json())
-    .then((data) => {
-      console.log(data);
-      showReviewLayout(); // load review after successful submit
+      selectedAnswers
     })
-    .catch((err) => {
+  })
+    .then(res => res.json())
+    .then(() => showReviewLayout())
+    .catch(err => {
       console.error("❌ Submission error:", err);
       alert("Submission failed. Try again.");
     });
 }
 
-function unlockNextDay(progressKey) {
-  const progress = JSON.parse(localStorage.getItem(progressKey) || "{}");
-  const nextDay = parseInt(currentDay) + 1;
-  if (!progress[`day${nextDay}`]) {
-    progress[`day${nextDay}`] = { completed: false };
-    localStorage.setItem(progressKey, JSON.stringify(progress));
-  }
-}
-
-// === Review Layout ===
+// === Review Mode Layout ===
 function showReviewLayout() {
+  document.getElementById("start-screen")?.classList.add("hidden");
+  document.getElementById("quiz-panel")?.classList.remove("hidden");
   document.getElementById('control-buttons')?.classList.add('hidden');
   document.getElementById('timer')?.classList.add('hidden');
+
   loadReviewQuestion();
 }
 
@@ -253,7 +263,9 @@ function loadReviewQuestion() {
   document.getElementById('section-name').textContent = currentSection;
   document.getElementById('question-number').textContent = currentQuestionIndex + 1;
   document.getElementById('passage-text').textContent = question.passage || '';
-  document.getElementById('video-review').innerHTML = question.video ? `<iframe class='w-full h-48 rounded' src='${question.video}' frameborder='0' allowfullscreen></iframe>` : '';
+  document.getElementById('video-review').innerHTML = question.video
+    ? `<iframe class='w-full h-48 rounded' src='${question.video}' frameborder='0' allowfullscreen></iframe>`
+    : '';
   document.getElementById('question-text').textContent = question.q;
   document.getElementById('written-explanation').innerHTML = `<p class='text-sm'>${question.explanation}</p>`;
 
@@ -278,11 +290,11 @@ function loadReviewQuestion() {
   updateOverview();
 }
 
+// === Misc ===
 function switchSection(section) {
   currentSection = section;
   currentQuestionIndex = 0;
-  if (isSubmitted) loadReviewQuestion();
-  else loadQuestion();
+  isSubmitted ? loadReviewQuestion() : loadQuestion();
 }
 
 function quitQuiz() {
