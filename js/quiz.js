@@ -32,15 +32,39 @@ let timeSpentPerSection = { Quant: 0, VARC: 0, LRDI: 0 };
   }
 })();
 
-// === Load Questions Dynamically ===
 (function loadQuestions() {
   const script = document.createElement('script');
   script.src = `questions/${selectedExam}/questionsDay${currentDay}.js`;
   script.onload = () => {
     console.log("✅ Questions loaded for", selectedExam, "Day", currentDay);
+
+    if (window.questions && Array.isArray(window.questions) && window.questions.length > 0) {
+      questions = window.questions;
+      questionsLoaded = true;
+
+      const btn = document.getElementById("start-btn");
+      if (btn) {
+        btn.disabled = false;
+        btn.classList.remove("bg-gray-400");
+        btn.classList.add("bg-blue-600", "hover:bg-blue-700");
+      }
+    } else {
+      console.error("❌ window.questions is not properly loaded.");
+    }
+  };
+  script.onerror = () => {
+    console.error("❌ Failed to load questions script:", script.src);
   };
   document.head.appendChild(script);
 })();
+
+function waitForQuestionsThenStart() {
+  if (!questionsLoaded || !questions.length) {
+    alert("Questions are still loading. Please wait...");
+    return;
+  }
+  startQuiz();
+}
 
 // === Start Quiz ===
 function startQuiz() {

@@ -1,6 +1,6 @@
 // questions/questionsDay1.js
 
-const questions = [
+window.questions =  [
     // ==== Quant Section (8 Questions) ====
     {
       section: "Quant",
