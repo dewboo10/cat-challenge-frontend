@@ -21,29 +21,33 @@
   <div id="navbar-user" class="relative group"></div>
 </nav>
 
-<!-- ✅ Sidebar for Desktop -->
+<!-- ✅ Sidebar for Desktop (with leaderboard) -->
 <aside class="hidden md:flex w-64 fixed top-16 bottom-0 bg-blue-50 border-r border-blue-100 p-4 flex-col justify-between z-30">
   <div class="space-y-6">
+    <div class="bg-white p-4 rounded shadow">
+      <h3 class="font-semibold mb-2">🏆 Top 10 Performers</h3>
+      <div id="leaderboard-list" class="space-y-1 text-sm"></div>
+    </div>
     <div class="bg-white p-4 rounded shadow">
       <h3 class="font-semibold mb-2">⏳ Days Until Exam</h3>
       <p id="days-left" class="text-2xl font-bold text-center">--</p>
     </div>
-    <a href="performance.html">
-      <button class="w-full px-3 py-2 bg-blue-100 hover:bg-blue-200 rounded">📈 Performance</button>
-    </a>
-    <a href="#" onclick="switchExam()">
-      <button class="w-full px-3 py-2 bg-blue-100 hover:bg-blue-200 rounded">🔄 Switch Exam</button>
-    </a>
+  </div>
+  <div class="space-y-2">
+    <a href="performance.html" class="block w-full px-3 py-2 bg-blue-100 hover:bg-blue-200 rounded text-center">📈 Performance</a>
+    <a href="#" onclick="switchExam()" class="block w-full px-3 py-2 bg-blue-100 hover:bg-blue-200 rounded text-center">🔄 Switch Exam</a>
   </div>
 </aside>
 
-<!-- ✅ Sidebar for Mobile -->
+<!-- ✅ Sidebar for Mobile (without leaderboard) -->
 <div id="mobile-sidebar" class="md:hidden fixed top-16 left-0 w-64 bg-blue-50 h-[calc(100vh-4rem)] border-r border-blue-100 shadow z-40 hidden flex flex-col justify-between p-4">
   <div class="space-y-6">
     <div class="bg-white p-4 rounded shadow">
       <h3 class="font-semibold mb-2">⏳ Days Until Exam</h3>
       <p id="days-left-mobile" class="text-2xl font-bold text-center">--</p>
     </div>
+  </div>
+  <div class="space-y-2">
     <a href="performance.html">
       <button class="w-full px-3 py-2 bg-blue-100 hover:bg-blue-200 rounded">📈 Performance</button>
     </a>
@@ -53,7 +57,6 @@
   </div>
 </div>
 
-<!-- ✅ JS for Mobile Sidebar -->
 <script>
   function toggleMobileSidebar() {
     document.getElementById("mobile-sidebar")?.classList.toggle("hidden");
@@ -63,6 +66,26 @@
     localStorage.removeItem("selectedExam");
     location.href = "exam-select.html";
   }
+
+  function renderMobileCountdown() {
+    const exam = localStorage.getItem("selectedExam") || "CAT";
+    const examDates = {
+      CAT: "2025-11-24",
+      IPMAT: "2025-05-20",
+      SSC: "2025-06-15",
+      SBI: "2025-07-10",
+      SNAP: "2025-12-15",
+      CMAT: "2025-08-01",
+    };
+    const target = new Date(`${examDates[exam]}T00:00:00`);
+    const now = new Date();
+    const diff = Math.max(Math.ceil((target - now) / (1000 * 60 * 60 * 24)), 0);
+    document.getElementById("days-left-mobile").textContent = `${diff} days`;
+  }
+
+  document.addEventListener("DOMContentLoaded", () => {
+    renderMobileCountdown();
+  });
 </script>
 
 <!-- Main Content -->
