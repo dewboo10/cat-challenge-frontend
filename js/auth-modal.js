@@ -1,5 +1,5 @@
-// ✅ auth-modal.js: Modal display and flow control (UI only)
-    
+
+
 function showAuthModal(tab = "signup") {
     document.getElementById("auth-modal").classList.remove("hidden");
     switchTab(tab);

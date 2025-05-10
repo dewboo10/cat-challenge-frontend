@@ -1,4 +1,4 @@
-// ✅ auth.js — backend logic only
+
 
 const API_BASE = "https://ultimate-backend-vyse.onrender.com/api/auth";
 
