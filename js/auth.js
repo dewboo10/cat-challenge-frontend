@@ -60,17 +60,17 @@ async function verifyOtp() {
     alert("❌ " + data.error);
   }
 }
-
 async function registerUser() {
   const username = document.getElementById("auth-username").value.trim();
   const password = document.getElementById("auth-password").value.trim();
+  const email = document.getElementById("auth-email").value.trim(); // 🔥
 
   if (!username || !password) return alert("Fill in all fields");
 
   const res = await fetch(`${API_BASE}/register`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ username, password })
+    body: JSON.stringify({ username, password, email }) // 🔥 include email
   });
 
   const data = await res.json();

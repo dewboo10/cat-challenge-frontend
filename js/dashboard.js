@@ -138,9 +138,6 @@ function showSignupPopup() {
   showAuthModal();
 }
 
-// === Modal Auth Flow ===
-const API_BASE = "https://ultimate-backend-vyse.onrender.com/api/auth";
-
 function showAuthModal() {
   document.getElementById("auth-modal").classList.remove("hidden");
   showStep(1);
