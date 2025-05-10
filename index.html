@@ -7,8 +7,16 @@
   <script>
     document.documentElement.classList.remove("dark");
     const exam = localStorage.getItem("selectedExam");
-    if (exam) window.location.href = "dashboard.html";
-  </script>
+const user = localStorage.getItem("user");
+
+if (exam && user) {
+  window.location.href = "dashboard.html";
+} else if (exam && !user) {
+  window.location.href = "dashboard.html"; // guest mode
+}
+// else: stay on index.html
+
+</script>
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-white text-black font-sans min-h-screen flex items-center justify-center">

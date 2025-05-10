@@ -35,7 +35,18 @@
   </div>
   <div class="space-y-2">
     <a href="performance.html" class="block w-full px-3 py-2 bg-blue-100 hover:bg-blue-200 rounded text-center">📈 Performance</a>
-    <a href="exam-select.html" class="block w-full px-3 py-2 bg-blue-100 hover:bg-blue-200 rounded text-center">🔄 Switch Exam</a>
+    <!-- <a href="exam-select.html" class="block w-full px-3 py-2 bg-blue-100 hover:bg-blue-200 rounded text-center">🔄 Switch Exam</a> -->
+    <a href="#" onclick="event.preventDefault(); switchExam();" class="block w-full px-3 py-2 bg-blue-100 hover:bg-blue-200 rounded text-center">🔄 Switch Exam</a>
+
+    <script>
+      function switchExam() {
+        localStorage.removeItem("selectedExam");
+        localStorage.removeItem("progress_CAT_guest");
+        location.href = "exam-select.html";
+      }
+    </script>
+    
+    
   </div>
 </aside>
 
