@@ -1,5 +1,4 @@
-
-// FINAL quiz.js with Backend Submission, Review Mode, Persistent Answers, and UI Fixes
+// ✅ Full Updated quiz.js with Section Switching, Review Fixes, Explanations, and Navigator Colors
 
 // === Extract exam and day from URL ===
 const urlParams = new URLSearchParams(window.location.search);
@@ -19,7 +18,7 @@ let interval;
 let sectionStartTime = Date.now();
 let timeSpentPerSection = { Quant: 0, VARC: 0, LRDI: 0 };
 
-// === Theme & Username Setup ===
+// === Theme and User Setup ===
 (function applySavedTheme() {
   const theme = localStorage.getItem("theme") || "dark";
   document.documentElement.classList.toggle("dark", theme === "dark");
@@ -27,21 +26,20 @@ let timeSpentPerSection = { Quant: 0, VARC: 0, LRDI: 0 };
 
 (function setUsername() {
   const user = JSON.parse(localStorage.getItem("user"));
-  const usernameEl = document.getElementById('profile-username');
+  const usernameEl = document.getElementById("profile-username");
   if (user && usernameEl) usernameEl.textContent = user.username;
 })();
 
 // === Load Questions Dynamically ===
 (function loadQuestions() {
-  const script = document.createElement('script');
+  const script = document.createElement("script");
   script.src = `questions/${selectedExam}/questionsDay${currentDay}.js`;
   script.onload = () => {
     if (window.questions && Array.isArray(window.questions) && window.questions.length > 0) {
       questions = window.questions;
       questionsLoaded = true;
-
-      // Check if already submitted from backend
       const user = JSON.parse(localStorage.getItem("user"));
+
       if (user) {
         fetch(`https://ultimate-backend-vyse.onrender.com/api/quiz/attempt?username=${user.username}&exam=${selectedExam}&day=${currentDay}`)
           .then(res => res.json())
@@ -49,35 +47,34 @@ let timeSpentPerSection = { Quant: 0, VARC: 0, LRDI: 0 };
             if (data?.completed) {
               selectedAnswers = data.selectedAnswers || {};
               isSubmitted = true;
+              document.getElementById("start-screen")?.classList.add("hidden");
+              document.getElementById("quiz-panel")?.classList.remove("hidden");
               showReviewLayout();
+            } else {
+              enableStart();
             }
           })
-          .catch(() => {
-            // Not submitted, enable start
-            const btn = document.getElementById("start-btn");
-            if (btn) {
-              btn.disabled = false;
-              btn.classList.remove("bg-gray-400");
-              btn.classList.add("bg-blue-600", "hover:bg-blue-700");
-            }
-          });
+          .catch(() => enableStart());
+      } else {
+        enableStart();
       }
-    } else {
-      console.error("❌ window.questions is missing or empty.");
     }
   };
-  script.onerror = () => {
-    console.error("❌ Failed to load questions script:", script.src);
-  };
+  script.onerror = () => console.error("❌ Failed to load questions file");
   document.head.appendChild(script);
 })();
 
-// === Start Quiz Handler ===
-function waitForQuestionsThenStart() {
-  if (!questionsLoaded || !questions.length) {
-    alert("Questions are still loading. Please wait...");
-    return;
+function enableStart() {
+  const btn = document.getElementById("start-btn");
+  if (btn) {
+    btn.disabled = false;
+    btn.classList.remove("bg-gray-400");
+    btn.classList.add("bg-blue-600", "hover:bg-blue-700");
   }
+}
+
+function waitForQuestionsThenStart() {
+  if (!questionsLoaded || !questions.length) return alert("Questions are still loading.");
   startQuiz();
 }
 
@@ -89,11 +86,9 @@ function startQuiz() {
   startSectionTimer();
 }
 
-// === Timer Management ===
 function startSectionTimer() {
   clearInterval(interval);
   const timerEl = document.getElementById("timer");
-
   interval = setInterval(() => {
     if (sectionTimers[currentSection] <= 0) {
       captureSectionTime();
@@ -103,9 +98,7 @@ function startSectionTimer() {
     sectionTimers[currentSection]--;
     const min = Math.floor(sectionTimers[currentSection] / 60);
     const sec = sectionTimers[currentSection] % 60;
-    if (timerEl) {
-      timerEl.textContent = `${min}:${sec.toString().padStart(2, '0')}`;
-    }
+    if (timerEl) timerEl.textContent = `${min}:${sec.toString().padStart(2, "0")}`;
   }, 1000);
 }
 
@@ -113,7 +106,7 @@ function autoSwitchSection() {
   clearInterval(interval);
   if (currentSection === "Quant") currentSection = "VARC";
   else if (currentSection === "VARC") currentSection = "LRDI";
-  else submitQuiz();
+  else return submitQuiz();
 
   sectionStartTime = Date.now();
   currentQuestionIndex = 0;
@@ -126,50 +119,51 @@ function captureSectionTime() {
   timeSpentPerSection[currentSection] += elapsed;
 }
 
-// === Load Current Question and Restore Answer ===
 function loadQuestion() {
   const sectionQs = questions.filter(q => q.section === currentSection);
   const question = sectionQs[currentQuestionIndex];
   if (!question) return;
 
-  document.getElementById('section-name').textContent = currentSection;
-  document.getElementById('question-number').textContent = currentQuestionIndex + 1;
-  document.getElementById('passage-text').textContent = question.passage || '';
-  document.getElementById('video-review').innerHTML = '';
-  document.getElementById('question-text').textContent = question.q;
-  document.getElementById('written-explanation').innerHTML = '';
+  document.getElementById("section-name").textContent = currentSection;
+  document.getElementById("question-number").textContent = currentQuestionIndex + 1;
+  document.getElementById("passage-text").textContent = question.passage || '';
+  document.getElementById("question-text").textContent = question.q;
+  document.getElementById("written-explanation").innerHTML = isSubmitted ? `<p>${question.explanation}</p>` : '';
+  document.getElementById("video-review").innerHTML = isSubmitted && question.video
+    ? `<iframe class='w-full h-48 rounded' src='${question.video}' frameborder='0' allowfullscreen></iframe>`
+    : '';
 
-  const container = document.getElementById('options-container');
+  const container = document.getElementById("options-container");
   container.innerHTML = "";
-
   ["A", "B", "C", "D"].forEach(opt => {
-    const div = document.createElement('div');
-    div.className = "flex items-center gap-2";
-    div.innerHTML = `
-      <input type="radio" name="option" value="${opt}">
-      <label>${question.options[opt]}</label>
-    `;
+    const div = document.createElement("div");
+    let colorClass = "";
+
+    if (isSubmitted) {
+      const userAns = selectedAnswers[currentSection]?.[currentQuestionIndex];
+      if (opt === question.correct) colorClass = "text-green-500 font-bold";
+      else if (opt === userAns) colorClass = "text-red-500 font-semibold";
+    }
+
+    div.className = `flex items-center gap-2 ${colorClass}`;
+    div.innerHTML = `<input type='radio' name='option' value='${opt}' ${isSubmitted ? "disabled" : ""}>
+                     <label>${question.options[opt]}</label>`;
     container.appendChild(div);
   });
 
   const saved = selectedAnswers[currentSection]?.[currentQuestionIndex];
   if (saved) {
-    const radios = document.querySelectorAll('input[name="option"]');
-    radios.forEach(r => {
-      if (r.value === saved) r.checked = true;
-    });
+    const radios = document.querySelectorAll("input[name='option']");
+    radios.forEach(r => r.value === saved && (r.checked = true));
   }
 
   updateOverview();
 }
 
-// === Track Answer Selection ===
-document.getElementById('options-container')?.addEventListener('change', () => {
-  saveAnswer();
-});
+document.getElementById("options-container")?.addEventListener("change", () => saveAnswer());
 
 function saveAnswer() {
-  const selected = document.querySelector('input[name="option"]:checked');
+  const selected = document.querySelector("input[name='option']:checked");
   if (!selected) return;
   if (!selectedAnswers[currentSection]) selectedAnswers[currentSection] = {};
   selectedAnswers[currentSection][currentQuestionIndex] = selected.value;
@@ -199,16 +193,27 @@ function goToNext() {
   }
 }
 
-// === Overview ===
 function updateOverview() {
-  const overview = document.getElementById('question-overview');
+  const overview = document.getElementById("question-overview");
   overview.innerHTML = "";
   const sectionQs = questions.filter(q => q.section === currentSection);
 
   sectionQs.forEach((_, i) => {
-    const btn = document.createElement('button');
+    const btn = document.createElement("button");
     btn.className = "text-sm rounded w-full mb-1 px-2 py-1";
     btn.textContent = i + 1;
+    const key = `${currentSection}_${i}`;
+
+    if (isSubmitted) {
+      const ans = selectedAnswers[currentSection]?.[i];
+      if (ans) btn.classList.add("bg-green-100");
+      else btn.classList.add("bg-gray-300");
+    } else {
+      if (markedForReview.has(key)) btn.classList.add("bg-yellow-200");
+      else if (selectedAnswers[currentSection]?.[i]) btn.classList.add("bg-green-100");
+      else btn.classList.add("bg-gray-300");
+    }
+
     btn.onclick = () => {
       currentQuestionIndex = i;
       loadQuestion();
@@ -217,7 +222,6 @@ function updateOverview() {
   });
 }
 
-// === Submit Quiz ===
 function submitQuiz() {
   clearInterval(interval);
   captureSectionTime();
@@ -245,52 +249,17 @@ function submitQuiz() {
     });
 }
 
-// === Review Mode Layout ===
 function showReviewLayout() {
-  document.getElementById("start-screen")?.classList.add("hidden");
+  document.getElementById("control-buttons")?.classList.add("hidden");
+  document.getElementById("timer")?.classList.add("hidden");
   document.getElementById("quiz-panel")?.classList.remove("hidden");
-  document.getElementById('control-buttons')?.classList.add('hidden');
-  document.getElementById('timer')?.classList.add('hidden');
-
   loadReviewQuestion();
 }
 
 function loadReviewQuestion() {
-  const sectionQs = questions.filter(q => q.section === currentSection);
-  const question = sectionQs[currentQuestionIndex];
-  if (!question) return;
-
-  document.getElementById('section-name').textContent = currentSection;
-  document.getElementById('question-number').textContent = currentQuestionIndex + 1;
-  document.getElementById('passage-text').textContent = question.passage || '';
-  document.getElementById('video-review').innerHTML = question.video
-    ? `<iframe class='w-full h-48 rounded' src='${question.video}' frameborder='0' allowfullscreen></iframe>`
-    : '';
-  document.getElementById('question-text').textContent = question.q;
-  document.getElementById('written-explanation').innerHTML = `<p class='text-sm'>${question.explanation}</p>`;
-
-  const container = document.getElementById('options-container');
-  container.innerHTML = "";
-
-  ["A", "B", "C", "D"].forEach(opt => {
-    const div = document.createElement('div');
-    div.className = "flex items-center gap-2";
-
-    let colorClass = "";
-    if (question.correct === opt) {
-      colorClass = "text-green-500 font-bold";
-    } else if (selectedAnswers[currentSection]?.[currentQuestionIndex] === opt) {
-      colorClass = "text-red-500 font-semibold";
-    }
-
-    div.innerHTML = `<input type='radio' disabled><label class='${colorClass}'>${question.options[opt]}</label>`;
-    container.appendChild(div);
-  });
-
-  updateOverview();
+  loadQuestion();
 }
 
-// === Misc ===
 function switchSection(section) {
   currentSection = section;
   currentQuestionIndex = 0;

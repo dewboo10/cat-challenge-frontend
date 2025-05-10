@@ -1,4 +1,4 @@
-// === Dashboard.js FINAL Combined Auth Version ===
+// ✅ Fully Updated Dashboard.js with Backend Review Check and Guest Fallback + Auth Modal Logic
 
 document.addEventListener("DOMContentLoaded", () => {
   const user = JSON.parse(localStorage.getItem("user"));
@@ -82,29 +82,42 @@ function renderCountdown(exam) {
 function renderQuizCards(user, exam) {
   const container = document.getElementById("quiz-grid");
   if (!container) return;
-  const isPaid = JSON.parse(localStorage.getItem("isPaidUser") || "false");
-  const progressKey = `progress_${exam}_${user?.username || "guest"}`;
-  const progress = JSON.parse(localStorage.getItem(progressKey) || "{}");
   container.innerHTML = "";
+  const isPaid = JSON.parse(localStorage.getItem("isPaidUser") || "false");
+
   for (let day = 1; day <= 100; day++) {
-    const isCompleted = progress[`day${day}`]?.completed;
-    const unlocked = user
-      ? (day <= 5 || isPaid || progress[`day${day - 1}`]?.completed)
-      : day <= 5;
     const card = document.createElement("div");
     card.className = "bg-white border border-gray-200 rounded p-4 shadow text-center space-y-2";
-    const buttonHTML = unlocked
-      ? `<a href="quiz.html?exam=${exam}&day=${day}">
-          <button class="px-4 py-1 bg-yellow-500 hover:bg-yellow-600 text-white rounded text-sm font-semibold">
-            ${isCompleted ? "Review" : "Start"}
-          </button>
-        </a>`
-      : `<a href="payment.html">
-          <button class="px-4 py-1 bg-gray-400 hover:bg-gray-500 text-white rounded text-sm font-semibold">
-            Buy Premium
-          </button>
-        </a>`;
-    card.innerHTML = `<h3 class="font-semibold text-lg text-black">Day ${day} Quiz</h3>${buttonHTML}`;
+    const title = `<h3 class='font-semibold text-lg text-black'>Day ${day} Quiz</h3>`;
+
+    if (user) {
+      fetch(`https://ultimate-backend-vyse.onrender.com/api/quiz/attempt?username=${user.username}&exam=${exam}&day=${day}`)
+        .then(res => res.ok ? res.json() : null)
+        .then(data => {
+          const completed = data?.completed;
+          const btnText = completed ? "Review" : "Start";
+          const btnClass = completed ? "bg-green-600 hover:bg-green-700" : "bg-blue-600 hover:bg-blue-700";
+          card.innerHTML = `${title}<a href='quiz.html?exam=${exam}&day=${day}'><button class='px-4 py-1 ${btnClass} text-white rounded text-sm font-semibold'>${btnText}</button></a>`;
+        })
+        .catch(() => {
+          card.innerHTML = `${title}<a href='quiz.html?exam=${exam}&day=${day}'><button class='px-4 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded text-sm font-semibold'>Start</button></a>`;
+        });
+    } else {
+      const progressKey = `progress_${exam}_guest`;
+      const progress = JSON.parse(localStorage.getItem(progressKey) || "{}");
+      const isCompleted = progress[`day${day}`]?.completed;
+      const unlocked = day <= 5 || isPaid || progress[`day${day - 1}`]?.completed;
+
+      const btnText = isCompleted ? "Review" : "Start";
+      const btnClass = isCompleted ? "bg-green-600 hover:bg-green-700" : "bg-blue-600 hover:bg-blue-700";
+
+      const buttonHTML = unlocked
+        ? `<a href='quiz.html?exam=${exam}&day=${day}'><button class='px-4 py-1 ${btnClass} text-white rounded text-sm font-semibold'>${btnText}</button></a>`
+        : `<a href='payment.html'><button class='px-4 py-1 bg-gray-400 hover:bg-gray-500 text-white rounded text-sm font-semibold'>Buy Premium</button></a>`;
+
+      card.innerHTML = `${title}${buttonHTML}`;
+    }
+
     container.appendChild(card);
   }
 }
@@ -130,13 +143,10 @@ function logoutUser() {
   location.href = "index.html";
 }
 
-function showLoginPopup() {
-  showAuthModal();
-}
+// === Auth Modal Flow ===
 
-function showSignupPopup() {
-  showAuthModal();
-}
+function showLoginPopup() { showAuthModal(); }
+function showSignupPopup() { showAuthModal(); }
 
 function showAuthModal() {
   document.getElementById("auth-modal").classList.remove("hidden");
