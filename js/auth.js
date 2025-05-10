@@ -1,4 +1,4 @@
-
+// ✅ auth.js — with OTP memory fix for registration
 
 const API_BASE = "https://ultimate-backend-vyse.onrender.com/api/auth";
 
@@ -56,21 +56,25 @@ async function verifyOtp() {
   if (data.success) {
     alert("✅ OTP verified!");
     switchStep(3);
+
+    // ✅ Store verified email to use in register step
+    document.getElementById("auth-email-hidden").value = email;
   } else {
     alert("❌ " + data.error);
   }
 }
+
 async function registerUser() {
   const username = document.getElementById("auth-username").value.trim();
   const password = document.getElementById("auth-password").value.trim();
-  const email = document.getElementById("auth-email").value.trim(); // 🔥
+  const email = document.getElementById("auth-email-hidden").value.trim(); // ✅ Use verified email
 
   if (!username || !password) return alert("Fill in all fields");
 
   const res = await fetch(`${API_BASE}/register`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ username, password, email }) // 🔥 include email
+    body: JSON.stringify({ username, password, email })
   });
 
   const data = await res.json();
