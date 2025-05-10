@@ -208,7 +208,7 @@ function submitQuiz() {
   }
 
   // Submit to backend
-  fetch("https://ultimate-backend-vyse.onrender.com", {
+  fetch("https://ultimate-backend-vyse.onrender.com/api/quiz/submit", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
