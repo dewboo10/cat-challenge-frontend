@@ -12,43 +12,58 @@
 </head>
 <body class="bg-white text-black font-sans min-h-screen">
 
-<!-- Navbar -->
+<!-- ✅ Navbar with Mobile Toggle -->
 <nav class="fixed top-0 left-0 right-0 bg-blue-600 text-white px-6 py-4 shadow flex justify-between items-center z-40">
-  <h1 class="text-xl font-bold">Ultimate Prep</h1>
+  <div class="flex items-center gap-4">
+    <button class="md:hidden text-2xl" onclick="toggleMobileSidebar()">☰</button>
+    <h1 class="text-xl font-bold">Ultimate Prep</h1>
+  </div>
   <div id="navbar-user" class="relative group"></div>
 </nav>
 
-<!-- Sidebar (desktop only) -->
+<!-- ✅ Sidebar for Desktop -->
 <aside class="hidden md:flex w-64 fixed top-16 bottom-0 bg-blue-50 border-r border-blue-100 p-4 flex-col justify-between z-30">
   <div class="space-y-6">
-    <div class="bg-white p-4 rounded shadow">
-      <h3 class="font-semibold mb-2">🏆 Top 10 Performers</h3>
-      <div id="leaderboard-list" class="space-y-1 text-sm"></div>
-    </div>
     <div class="bg-white p-4 rounded shadow">
       <h3 class="font-semibold mb-2">⏳ Days Until Exam</h3>
       <p id="days-left" class="text-2xl font-bold text-center">--</p>
     </div>
-    <a href="braingames.html">
-      <button class="w-full px-3 py-2 bg-blue-100 hover:bg-blue-200 rounded">🧠 BrainGames</button>
+    <a href="performance.html">
+      <button class="w-full px-3 py-2 bg-blue-100 hover:bg-blue-200 rounded">📈 Performance</button>
+    </a>
+    <a href="#" onclick="switchExam()">
+      <button class="w-full px-3 py-2 bg-blue-100 hover:bg-blue-200 rounded">🔄 Switch Exam</button>
     </a>
   </div>
-  <div class="space-y-2">
-    <a href="performance.html" class="block w-full px-3 py-2 bg-blue-100 hover:bg-blue-200 rounded text-center">📈 Performance</a>
-    <!-- <a href="exam-select.html" class="block w-full px-3 py-2 bg-blue-100 hover:bg-blue-200 rounded text-center">🔄 Switch Exam</a> -->
-    <a href="#" onclick="event.preventDefault(); switchExam();" class="block w-full px-3 py-2 bg-blue-100 hover:bg-blue-200 rounded text-center">🔄 Switch Exam</a>
-
-    <script>
-      function switchExam() {
-        localStorage.removeItem("selectedExam");
-        localStorage.removeItem("progress_CAT_guest");
-        location.href = "exam-select.html";
-      }
-    </script>
-    
-    
-  </div>
 </aside>
+
+<!-- ✅ Sidebar for Mobile -->
+<div id="mobile-sidebar" class="md:hidden fixed top-16 left-0 w-64 bg-blue-50 h-[calc(100vh-4rem)] border-r border-blue-100 shadow z-40 hidden flex flex-col justify-between p-4">
+  <div class="space-y-6">
+    <div class="bg-white p-4 rounded shadow">
+      <h3 class="font-semibold mb-2">⏳ Days Until Exam</h3>
+      <p id="days-left-mobile" class="text-2xl font-bold text-center">--</p>
+    </div>
+    <a href="performance.html">
+      <button class="w-full px-3 py-2 bg-blue-100 hover:bg-blue-200 rounded">📈 Performance</button>
+    </a>
+    <a href="#" onclick="switchExam()">
+      <button class="w-full px-3 py-2 bg-blue-100 hover:bg-blue-200 rounded">🔄 Switch Exam</button>
+    </a>
+  </div>
+</div>
+
+<!-- ✅ JS for Mobile Sidebar -->
+<script>
+  function toggleMobileSidebar() {
+    document.getElementById("mobile-sidebar")?.classList.toggle("hidden");
+  }
+
+  function switchExam() {
+    localStorage.removeItem("selectedExam");
+    location.href = "exam-select.html";
+  }
+</script>
 
 <!-- Main Content -->
 <main class="md:ml-64 pt-24 px-6">

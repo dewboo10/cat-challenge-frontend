@@ -1,25 +1,36 @@
-// ✅ auth.js — with OTP memory fix for registration
+// ✅ Updated auth.js — safer OTP sending with debounce and UI feedback
 
 const API_BASE = "https://ultimate-backend-vyse.onrender.com/api/auth";
 
 async function sendOtp() {
   const email = document.getElementById("auth-email").value.trim();
+  const otpBtn = document.getElementById("otp-btn");
+
   if (!email) return alert("Enter a valid email");
+  otpBtn.disabled = true;
+  otpBtn.innerText = "Sending...";
 
-  const res = await fetch(`${API_BASE}/send-otp`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ email })
-  });
+  try {
+    const res = await fetch(`${API_BASE}/send-otp`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email })
+    });
+    const data = await res.json();
 
-  const data = await res.json();
-  if (data.success) {
-    alert("📨 OTP sent!");
-    switchStep(2);
-    startOtpTimer();
-  } else {
-    alert("❌ " + data.error);
+    if (data.success) {
+      alert("📨 OTP sent!");
+      showStep(2);
+      startOtpTimer();
+    } else {
+      alert("❌ " + data.error);
+    }
+  } catch (err) {
+    alert("❌ Failed to connect. Try again.");
   }
+
+  otpBtn.disabled = false;
+  otpBtn.innerText = "Send OTP";
 }
 
 function startOtpTimer() {
@@ -41,6 +52,7 @@ function startOtpTimer() {
     }
   }, 1000);
 }
+
 
 async function verifyOtp() {
   const email = document.getElementById("auth-email").value.trim();
