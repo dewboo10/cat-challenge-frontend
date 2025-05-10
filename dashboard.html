@@ -12,22 +12,6 @@
 </head>
 <body class="bg-white text-black font-sans min-h-screen">
 
-<!-- 🔒 Guest Fullscreen Modal -->
-<div id="guest-modal" class="fixed inset-0 z-50 hidden bg-black/70 backdrop-blur-sm flex items-center justify-center">
-  <div class="relative bg-white p-6 sm:p-8 rounded-lg shadow-lg w-[90%] max-w-md text-center space-y-6">
-    <button onclick="document.getElementById('guest-modal').classList.add('hidden')" class="absolute top-2 right-3 text-xl font-bold text-gray-600 hover:text-black">×</button>
-    <h2 class="text-2xl font-bold text-blue-600 flex items-center justify-center gap-2">
-      <span>🎯</span> <span>Unlock Full Access</span>
-    </h2>
-    <p class="text-gray-700 text-sm">Track performance, unlock all quizzes, and more.</p>
-    <div class="flex gap-4 justify-center">
-      <button onclick="showLoginPopup()" class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded font-semibold">Login</button>
-      <button onclick="showSignupPopup()" class="bg-green-600 hover:bg-green-700 text-white px-5 py-2 rounded font-semibold">Sign Up</button>
-    </div>
-  </div>
-</div>
-
-
 <!-- Navbar -->
 <nav class="fixed top-0 left-0 right-0 bg-blue-600 text-white px-6 py-4 shadow flex justify-between items-center z-40">
   <h1 class="text-xl font-bold">Ultimate Prep</h1>
@@ -75,45 +59,62 @@
   </section>
 </main>
 
-<script src="js/theme.js"></script>
-<script src="js/dashboard.js"></script>
-<!-- ✅ Auth Signup Modal -->
+<!-- 🔒 Guest Modal -->
+<div id="guest-modal" class="fixed inset-0 z-50 hidden bg-black/70 backdrop-blur-sm flex items-center justify-center">
+  <div class="relative bg-white p-6 sm:p-8 rounded-lg shadow-lg w-[90%] max-w-md text-center space-y-6">
+    <button onclick="document.getElementById('guest-modal').classList.add('hidden')" class="absolute top-2 right-3 text-xl font-bold text-gray-600 hover:text-black">×</button>
+    <h2 class="text-2xl font-bold text-blue-600 flex items-center justify-center gap-2">
+      <span>🎯</span> <span>Unlock Full Access</span>
+    </h2>
+    <p class="text-gray-700 text-sm">Track performance, unlock all quizzes, and more.</p>
+    <div class="flex gap-4 justify-center">
+      <button onclick="showAuthModal('login')" class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded font-semibold">Login</button>
+      <button onclick="showAuthModal('signup')" class="bg-green-600 hover:bg-green-700 text-white px-5 py-2 rounded font-semibold">Sign Up</button>
+    </div>
+  </div>
+</div>
+
+<!-- ✅ Combined Auth Modal Markup Here -->
 <div id="auth-modal" class="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 hidden">
   <div class="bg-white w-[90%] max-w-sm p-6 rounded shadow-lg space-y-4 text-center relative">
-
     <button onclick="closeAuthModal()" class="absolute top-2 right-3 text-xl font-bold text-gray-600 hover:text-black">×</button>
 
-    <!-- Step 1: Email -->
-    <div id="auth-step-1" class="space-y-3">
-      <h2 class="text-xl font-bold text-blue-600">🔐 Verify Email</h2>
-      <input id="auth-email" type="email" placeholder="Enter email" class="w-full px-3 py-2 border rounded" />
-      <button onclick="sendOtp()" id="otp-btn" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded font-semibold">
-        Send OTP
-      </button>
+    <div class="flex justify-center gap-4 mb-4 text-sm font-semibold">
+      <button onclick="switchTab('login')" id="tab-login" class="text-blue-600 underline">Login</button>
+      <button onclick="switchTab('signup')" id="tab-signup" class="text-gray-500">Sign Up</button>
+    </div>
+
+    <div id="auth-login" class="space-y-3 hidden">
+      <input id="login-username" type="text" placeholder="Username" class="w-full px-3 py-2 border rounded" />
+      <input id="login-password" type="password" placeholder="Password" class="w-full px-3 py-2 border rounded" />
+      <button onclick="loginUser()" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded font-semibold">Login</button>
+      <p class="text-xs text-gray-500">New here? <button onclick="switchTab('signup')" class="text-blue-600 underline">Create account</button></p>
+    </div>
+
+    <div id="auth-step-1" class="space-y-3 hidden">
+      <input id="auth-email" type="email" placeholder="Enter your email" class="w-full px-3 py-2 border rounded" />
+      <button onclick="sendOtp()" id="otp-btn" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded font-semibold">Send OTP</button>
       <div id="otp-timer" class="text-sm text-gray-500 hidden">Resend in <span id="timer-count">60</span>s</div>
     </div>
 
-    <!-- Step 2: OTP -->
     <div id="auth-step-2" class="space-y-3 hidden">
-      <h2 class="text-lg font-bold text-blue-600">✉️ Enter OTP</h2>
-      <input id="otp-input" type="text" maxlength="6" placeholder="6-digit OTP" class="w-full px-3 py-2 border rounded" />
-      <button onclick="verifyOtp()" id="verify-btn" class="w-full bg-green-600 hover:bg-green-700 text-white py-2 rounded font-semibold">
-        Verify OTP
-      </button>
+      <input id="otp-input" type="text" maxlength="6" placeholder="Enter 6-digit OTP" class="w-full px-3 py-2 border rounded" />
+      <button onclick="verifyOtp()" class="w-full bg-green-600 hover:bg-green-700 text-white py-2 rounded font-semibold">Verify OTP</button>
     </div>
 
-    <!-- Step 3: Username + Password -->
     <div id="auth-step-3" class="space-y-3 hidden">
-      <h2 class="text-lg font-bold text-blue-600">📝 Register Account</h2>
-      <input id="auth-username" placeholder="Username" class="w-full px-3 py-2 border rounded" />
-      <input id="auth-password" type="password" placeholder="Password" class="w-full px-3 py-2 border rounded" />
-      <button onclick="registerUser()" id="register-final-btn" class="w-full bg-purple-600 hover:bg-purple-700 text-white py-2 rounded font-semibold">
-        Register
-      </button>
+      <input id="auth-username" placeholder="Choose username" class="w-full px-3 py-2 border rounded" />
+      <input id="auth-password" type="password" placeholder="Set password" class="w-full px-3 py-2 border rounded" />
+      <button onclick="registerUser()" class="w-full bg-purple-600 hover:bg-purple-700 text-white py-2 rounded font-semibold">Register</button>
     </div>
-
   </div>
 </div>
+
+<!-- Scripts -->
+<script src="js/theme.js"></script>
+<script src="js/dashboard.js"></script>
+<script src="js/auth-modal.js"></script>
+<script src="js/auth.js"></script>
 
 </body>
 </html>
