@@ -1,11 +1,12 @@
 <!DOCTYPE html>
+
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Odd One Out – BrainGames</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <style>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Odd One Out – BrainGames</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
     .flash-green {
       background-color: #dcfce7 !important;
       border-color: #16a34a !important;
@@ -23,24 +24,20 @@
     }
   </style>
 </head>
-<body class="bg-gradient-to-br from-blue-50 to-white text-gray-800 min-h-screen flex items-center justify-center p-4">
-  <div class="w-full max-w-lg p-6 bg-white shadow-xl rounded-2xl border border-blue-200 text-center">
-    <h1 class="text-2xl font-bold text-blue-700 mb-4">❓ Odd One Out</h1>
-
-    <div class="mb-4 text-sm text-gray-500 flex justify-between">
-      <p>⏱ Time Left: <span id="timer" class="font-semibold">180s</span></p>
-      <p>🏆 Score: <span id="score" class="font-semibold">0</span></p>
-    </div>
-
-    <div id="question" class="text-base font-medium mb-4 animate-fade-in">Loading...</div>
-    <div id="options" class="space-y-2 mb-4"></div>
-
-    <button id="retryBtn" class="w-full bg-green-600 hover:bg-green-700 text-white py-2 rounded-md font-medium hidden">
+<body class="bg-white min-h-screen flex items-center justify-center text-gray-800 p-4"><div class="flex flex-col lg:flex-row gap-8 max-w-7xl w-full"><div class="flex-1 bg-white p-6 shadow-xl rounded-2xl border border-blue-200">
+<div class="text-green-600 font-semibold mb-3" id="best-score">Your Best Score: loading...</div><div class="w-full max-w-lg p-6 bg-white shadow-xl rounded-2xl border border-blue-200 text-center">
+<h1 class="text-2xl font-bold text-blue-700 mb-4">❓ Odd One Out</h1>
+<div class="mb-4 text-sm text-gray-500 flex justify-between">
+<p>⏱ Time Left: <span class="font-semibold" id="timer">180s</span></p>
+<p>🏆 Score: <span class="font-semibold" id="score">0</span></p>
+</div>
+<div class="text-base font-medium mb-4 animate-fade-in" id="question">Loading...</div>
+<div class="space-y-2 mb-4" id="options"></div>
+<button class="w-full bg-green-600 hover:bg-green-700 text-white py-2 rounded-md font-medium hidden" id="retryBtn">
       Retry
     </button>
-  </div>
-
-  <script>
+</div>
+<script>
     const questions = [
       { prompt: "Choose the odd one out:", options: ["Apple", "Banana", "Carrot", "Mango"], answer: "Carrot" },
       { prompt: "Choose the odd one out:", options: ["Dog", "Cat", "Lion", "Crocodile"], answer: "Crocodile" },
@@ -148,5 +145,47 @@
     retryBtn.addEventListener("click", startGame);
     window.onload = startGame;
   </script>
-</body>
+</div>
+<div class="w-full lg:w-72 bg-gray-50 border border-gray-200 p-4 rounded-xl shadow">
+<h2 class="font-bold mb-3 text-blue-700">🏆 Leaderboard</h2>
+<ul class="text-sm text-gray-700 space-y-2" id="leaderboard"></ul>
+</div>
+</div><script>
+    const API_BASE = "http://localhost:5000/api/brain-games"; // Change to your deployed backend
+
+    const username = localStorage.getItem("username");
+    const isLoggedIn = localStorage.getItem("isLoggedIn") === "true";
+
+    async function fetchUserBestScore(gameId) {
+      try {
+        const res = await fetch(`${API_BASE}/user?username=${username}&gameId=${gameId}`);
+        const data = await res.json();
+        document.getElementById("best-score").textContent = `Your Best Score: ${data.score || 0}`;
+      } catch {
+        document.getElementById("best-score").textContent = "Login to track score.";
+      }
+    }
+
+    async function fetchLeaderboard(gameId) {
+      try {
+        const res = await fetch(`${API_BASE}/top?gameId=${gameId}`);
+        const data = await res.json();
+        const lb = document.getElementById("leaderboard");
+        lb.innerHTML = data.map((s, i) => `<li>${i + 1}. ${s.username} – ${s.score}</li>`).join("");
+      } catch {
+        document.getElementById("leaderboard").innerHTML = "<li>Could not load leaderboard.</li>";
+      }
+    }
+
+    window.addEventListener("DOMContentLoaded", () => {
+      const gameId = window.location.pathname.split("/").pop().replace(".html", "");
+      if (isLoggedIn && username) {
+        fetchUserBestScore(gameId);
+        fetchLeaderboard(gameId);
+      } else {
+        const bs = document.getElementById("best-score");
+        if (bs) bs.textContent = "Login to track score.";
+      }
+    });
+    </script></body>
 </html>

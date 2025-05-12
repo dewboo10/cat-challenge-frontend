@@ -1,33 +1,29 @@
 <!-- games/flag-flash.html -->
 <!DOCTYPE html>
+
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>🌍 Flag Flash</title>
-  <script src="https://cdn.tailwindcss.com"></script>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>🌍 Flag Flash</title>
+<script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-white text-black min-h-screen">
-  <header class="p-4 border-b border-blue-200 bg-white flex justify-between items-center">
-    <h1 class="text-xl font-bold text-blue-600">🌍 Flag Flash</h1>
-    <button onclick="goBack()" class="text-sm text-blue-500 underline">Back</button>
-  </header>
-
-  <main class="p-6 max-w-xl mx-auto text-center space-y-6">
-    <p class="text-sm text-gray-600">Guess the correct country for the flag shown!</p>
-
-    <div id="flag-container" class="w-48 h-32 mx-auto border"></div>
-    <div id="choices" class="grid grid-cols-2 gap-4"></div>
-
-    <div id="feedback" class="text-center text-lg font-semibold hidden"></div>
-    <div class="text-center">
-      <button onclick="nextFlag()" id="next-btn" class="bg-green-600 text-white px-4 py-2 rounded font-semibold hidden">Next</button>
-    </div>
-
-    <p class="text-sm text-gray-500">Score: <span id="score">0</span></p>
-  </main>
-
-  <script>
+<body class="bg-white min-h-screen flex items-center justify-center text-gray-800 p-4"><div class="flex flex-col lg:flex-row gap-8 max-w-7xl w-full"><div class="flex-1 bg-white p-6 shadow-xl rounded-2xl border border-blue-200">
+<div class="text-green-600 font-semibold mb-3" id="best-score">Your Best Score: loading...</div><header class="p-4 border-b border-blue-200 bg-white flex justify-between items-center">
+<h1 class="text-xl font-bold text-blue-600">🌍 Flag Flash</h1>
+<button class="text-sm text-blue-500 underline" onclick="goBack()">Back</button>
+</header>
+<main class="p-6 max-w-xl mx-auto text-center space-y-6">
+<p class="text-sm text-gray-600">Guess the correct country for the flag shown!</p>
+<div class="w-48 h-32 mx-auto border" id="flag-container"></div>
+<div class="grid grid-cols-2 gap-4" id="choices"></div>
+<div class="text-center text-lg font-semibold hidden" id="feedback"></div>
+<div class="text-center">
+<button class="bg-green-600 text-white px-4 py-2 rounded font-semibold hidden" id="next-btn" onclick="nextFlag()">Next</button>
+</div>
+<p class="text-sm text-gray-500">Score: <span id="score">0</span></p>
+</main>
+<script>
     const flags = [
       { country: "India", url: "https://flagcdn.com/w320/in.png" },
       { country: "USA", url: "https://flagcdn.com/w320/us.png" },
@@ -110,5 +106,47 @@
 
     loadFlag();
   </script>
-</body>
+</div>
+<div class="w-full lg:w-72 bg-gray-50 border border-gray-200 p-4 rounded-xl shadow">
+<h2 class="font-bold mb-3 text-blue-700">🏆 Leaderboard</h2>
+<ul class="text-sm text-gray-700 space-y-2" id="leaderboard"></ul>
+</div>
+</div><script>
+    const API_BASE = "http://localhost:5000/api/brain-games"; // Change to your deployed backend
+
+    const username = localStorage.getItem("username");
+    const isLoggedIn = localStorage.getItem("isLoggedIn") === "true";
+
+    async function fetchUserBestScore(gameId) {
+      try {
+        const res = await fetch(`${API_BASE}/user?username=${username}&gameId=${gameId}`);
+        const data = await res.json();
+        document.getElementById("best-score").textContent = `Your Best Score: ${data.score || 0}`;
+      } catch {
+        document.getElementById("best-score").textContent = "Login to track score.";
+      }
+    }
+
+    async function fetchLeaderboard(gameId) {
+      try {
+        const res = await fetch(`${API_BASE}/top?gameId=${gameId}`);
+        const data = await res.json();
+        const lb = document.getElementById("leaderboard");
+        lb.innerHTML = data.map((s, i) => `<li>${i + 1}. ${s.username} – ${s.score}</li>`).join("");
+      } catch {
+        document.getElementById("leaderboard").innerHTML = "<li>Could not load leaderboard.</li>";
+      }
+    }
+
+    window.addEventListener("DOMContentLoaded", () => {
+      const gameId = window.location.pathname.split("/").pop().replace(".html", "");
+      if (isLoggedIn && username) {
+        fetchUserBestScore(gameId);
+        fetchLeaderboard(gameId);
+      } else {
+        const bs = document.getElementById("best-score");
+        if (bs) bs.textContent = "Login to track score.";
+      }
+    });
+    </script></body>
 </html>

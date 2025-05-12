@@ -1,11 +1,12 @@
 <!DOCTYPE html>
+
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Input-Output Machine – BrainGames</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <style>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Input-Output Machine – BrainGames</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
     .step-box {
       @apply bg-blue-100 border border-blue-300 rounded px-4 py-2 my-1;
     }
@@ -14,30 +15,25 @@
     }
   </style>
 </head>
-<body class="bg-gradient-to-br from-blue-50 to-white min-h-screen flex items-center justify-center text-gray-800 p-4">
-  <div class="w-full max-w-2xl bg-white p-6 rounded-2xl shadow-xl border border-blue-200">
-    <h1 class="text-2xl font-bold text-blue-700 text-center mb-4">⚙️ Input-Output Machine</h1>
-
-    <div class="text-sm text-gray-500 text-center mb-4">
-      ⏱ Time Left: <span id="timer" class="font-semibold">180s</span> | 🏆 Score: <span id="score" class="font-semibold">0</span>
-    </div>
-
-    <div id="scenario" class="mb-4">
-      <!-- Machine steps here -->
-    </div>
-
-    <div class="mb-4 text-center">
-      <p class="mb-2 font-medium">What will be the final output?</p>
-      <input id="userInput" type="text" class="border border-blue-300 rounded px-4 py-2 w-full max-w-xs" placeholder="Enter your answer">
-    </div>
-
-    <div class="flex justify-center">
-      <button onclick="checkAnswer()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded mr-2">Submit</button>
-      <button id="retryBtn" onclick="startGame()" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded hidden">Retry</button>
-    </div>
-  </div>
-
-  <script>
+<body class="bg-white min-h-screen flex items-center justify-center text-gray-800 p-4"><div class="flex flex-col lg:flex-row gap-8 max-w-7xl w-full"><div class="flex-1 bg-white p-6 shadow-xl rounded-2xl border border-blue-200">
+<div class="text-green-600 font-semibold mb-3" id="best-score">Your Best Score: loading...</div><div class="w-full max-w-2xl bg-white p-6 rounded-2xl shadow-xl border border-blue-200">
+<h1 class="text-2xl font-bold text-blue-700 text-center mb-4">⚙️ Input-Output Machine</h1>
+<div class="text-sm text-gray-500 text-center mb-4">
+      ⏱ Time Left: <span class="font-semibold" id="timer">180s</span> | 🏆 Score: <span class="font-semibold" id="score">0</span>
+</div>
+<div class="mb-4" id="scenario">
+<!-- Machine steps here -->
+</div>
+<div class="mb-4 text-center">
+<p class="mb-2 font-medium">What will be the final output?</p>
+<input class="border border-blue-300 rounded px-4 py-2 w-full max-w-xs" id="userInput" placeholder="Enter your answer" type="text"/>
+</div>
+<div class="flex justify-center">
+<button class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded mr-2" onclick="checkAnswer()">Submit</button>
+<button class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded hidden" id="retryBtn" onclick="startGame()">Retry</button>
+</div>
+</div>
+<script>
     const machines = [
       {
         input: "goat",
@@ -145,5 +141,47 @@
       startTimer();
     };
   </script>
-</body>
+</div>
+<div class="w-full lg:w-72 bg-gray-50 border border-gray-200 p-4 rounded-xl shadow">
+<h2 class="font-bold mb-3 text-blue-700">🏆 Leaderboard</h2>
+<ul class="text-sm text-gray-700 space-y-2" id="leaderboard"></ul>
+</div>
+</div><script>
+    const API_BASE = "http://localhost:5000/api/brain-games"; // Change to your deployed backend
+
+    const username = localStorage.getItem("username");
+    const isLoggedIn = localStorage.getItem("isLoggedIn") === "true";
+
+    async function fetchUserBestScore(gameId) {
+      try {
+        const res = await fetch(`${API_BASE}/user?username=${username}&gameId=${gameId}`);
+        const data = await res.json();
+        document.getElementById("best-score").textContent = `Your Best Score: ${data.score || 0}`;
+      } catch {
+        document.getElementById("best-score").textContent = "Login to track score.";
+      }
+    }
+
+    async function fetchLeaderboard(gameId) {
+      try {
+        const res = await fetch(`${API_BASE}/top?gameId=${gameId}`);
+        const data = await res.json();
+        const lb = document.getElementById("leaderboard");
+        lb.innerHTML = data.map((s, i) => `<li>${i + 1}. ${s.username} – ${s.score}</li>`).join("");
+      } catch {
+        document.getElementById("leaderboard").innerHTML = "<li>Could not load leaderboard.</li>";
+      }
+    }
+
+    window.addEventListener("DOMContentLoaded", () => {
+      const gameId = window.location.pathname.split("/").pop().replace(".html", "");
+      if (isLoggedIn && username) {
+        fetchUserBestScore(gameId);
+        fetchLeaderboard(gameId);
+      } else {
+        const bs = document.getElementById("best-score");
+        if (bs) bs.textContent = "Login to track score.";
+      }
+    });
+    </script></body>
 </html>
