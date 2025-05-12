@@ -1,17 +1,18 @@
-<!-- FINAL NEW auth.html - Login/Register Page -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Login | Ultimate Prep</title><script>
-    // Apply saved theme before anything renders
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Login | Ultimate Prep</title>
+
+  <!-- Theme loader -->
+  <script>
     (function () {
       const theme = localStorage.getItem("theme") || "light";
       if (theme === "dark") document.documentElement.classList.add("dark");
     })();
   </script>
-  
+
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = { darkMode: 'class' };
@@ -26,8 +27,10 @@
   <p class="text-center text-sm text-gray-500">Login to continue your preparation journey</p>
 
   <div class="space-y-4">
-    <input id="email" type="email" placeholder="Email" class="w-full px-4 py-2 rounded bg-white dark:bg-[#0f0f0f] border border-gray-300 dark:border-gray-700">
-    <input id="password" type="password" placeholder="Password" class="w-full px-4 py-2 rounded bg-white dark:bg-[#0f0f0f] border border-gray-300 dark:border-gray-700">
+    <input id="email" type="email" placeholder="Email"
+      class="w-full px-4 py-2 rounded bg-white dark:bg-[#0f0f0f] border border-gray-300 dark:border-gray-700">
+    <input id="password" type="password" placeholder="Password"
+      class="w-full px-4 py-2 rounded bg-white dark:bg-[#0f0f0f] border border-gray-300 dark:border-gray-700">
   </div>
 
   <button onclick="loginUser()" class="w-full px-6 py-3 mt-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded">
@@ -35,14 +38,17 @@
   </button>
 
   <p class="text-center text-sm mt-4">
-    Don't have an account? <a href="#" onclick="registerUser()" class="text-blue-500 hover:underline">Register here</a>
+    Don't have an account?
+    <a href="#" onclick="registerUser()" class="text-blue-500 hover:underline">Register here</a>
   </p>
 
 </div>
 
+<!-- ✅ Real Backend Logic -->
 <script>
-// Simulated LocalStorage User Auth
-function loginUser() {
+const API_BASE = "https://ultimate-backend-vyse.onrender.com/api/auth";
+
+async function loginUser() {
   const email = document.getElementById("email").value.trim();
   const password = document.getElementById("password").value.trim();
 
@@ -51,17 +57,33 @@ function loginUser() {
     return;
   }
 
-  const savedUser = JSON.parse(localStorage.getItem("user"));
+  try {
+    const res = await fetch(`${API_BASE}/login`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username: email, password }) // backend expects username
+    });
 
-  if (savedUser && savedUser.email === email && savedUser.password === password) {
-    alert("✅ Login Successful!");
-    window.location.href = "exam-select.html";
-  } else {
-    alert("🚫 Invalid email or password!");
+    const data = await res.json();
+
+    if (data.success) {
+      localStorage.setItem("user", JSON.stringify(data.user));
+      localStorage.setItem("isLoggedIn", "true");
+      localStorage.setItem("username", data.user.username);
+      localStorage.setItem("isPaidUser", data.user.isPremium);
+
+      alert(`✅ Welcome ${data.user.username}`);
+      window.location.href = "exam-select.html";
+    } else {
+      alert("🚫 " + data.error);
+    }
+  } catch (err) {
+    alert("❌ Login failed. Try again.");
+    console.error(err);
   }
 }
 
-function registerUser() {
+async function registerUser() {
   const email = prompt("Enter your Email:");
   const password = prompt("Set a Password:");
 
@@ -70,14 +92,32 @@ function registerUser() {
     return;
   }
 
-  const userObj = {
-    email: email,
-    password: password,
-    username: email.split("@")[0] // Simple username from email before @
-  };
+  const username = email.split("@")[0];
 
-  localStorage.setItem("user", JSON.stringify(userObj));
-  alert("✅ Registration Successful! Now Login.");
+  try {
+    const res = await fetch(`${API_BASE}/register`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password, username })
+    });
+
+    const data = await res.json();
+
+    if (data.success) {
+      localStorage.setItem("user", JSON.stringify(data.user));
+      localStorage.setItem("isLoggedIn", "true");
+      localStorage.setItem("username", data.user.username);
+      localStorage.setItem("isPaidUser", data.user.isPremium);
+
+      alert(`🎉 Registered as ${data.user.username}`);
+      window.location.href = "exam-select.html";
+    } else {
+      alert("❌ " + data.error);
+    }
+  } catch (err) {
+    alert("❌ Registration failed.");
+    console.error(err);
+  }
 }
 </script>
 
