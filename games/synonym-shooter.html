@@ -5,7 +5,7 @@
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
 <title>Synonym Shooter</title>
-<script src="https://cdn.tailwindcss.com"></script>
+
 <style>
     .flash-green { background-color: #dcfce7 !important; border-color: #16a34a !important; }
     .flash-red { background-color: #fee2e2 !important; border-color: #dc2626 !important; }
@@ -35,163 +35,47 @@
 <button class="mt-2 bg-indigo-600 text-white px-4 py-2 rounded font-semibold" onclick="startGame()">Play Again</button>
 </div>
 </main>
-<script>
-    const wordList = [
-      { word: "Brave", synonym: "Courageous", choices: ["Coward", "Courageous", "Lazy", "Weak"] },
-      { word: "Happy", synonym: "Joyful", choices: ["Sad", "Joyful", "Angry", "Tense"] },
-      { word: "Fast", synonym: "Quick", choices: ["Slow", "Lazy", "Quick", "Late"] },
-      { word: "Big", synonym: "Large", choices: ["Small", "Tall", "Wide", "Large"] },
-      { word: "Smart", synonym: "Intelligent", choices: ["Dull", "Intelligent", "Rude", "Lazy"] }
-    ];
 
-    const targetWord = document.getElementById('target-word');
-    const optionsEl = document.getElementById('options');
-    const feedback = document.getElementById('feedback');
-    const nextBtn = document.getElementById('next-btn');
-    const timeEl = document.getElementById('time-left');
-    const scoreEl = document.getElementById('score');
-    const retrySection = document.getElementById('retrySection');
-    const finalScore = document.getElementById('finalScore');
-
-    const userLoggedIn = localStorage.getItem("isLoggedIn") === "true";
-    const loggedInUserId = localStorage.getItem("userId");
-
-    let score = 0;
-    let timeLeft = 180;
-    let currentIndex = 0;
-    let timer;
-
-    function shuffle(arr) {
-      return arr.sort(() => 0.5 - Math.random());
-    }
-
-    function loadWord() {
-      const entry = wordList[currentIndex];
-      targetWord.textContent = entry.word;
-      optionsEl.innerHTML = '';
-      feedback.classList.add('hidden');
-      nextBtn.classList.add('hidden');
-
-      shuffle(entry.choices).forEach(choice => {
-        const btn = document.createElement('button');
-        btn.textContent = choice;
-        btn.className = 'bg-blue-100 hover:bg-blue-200 rounded px-4 py-2 text-blue-700 font-medium';
-        btn.onclick = () => handleAnswer(choice === entry.synonym, btn);
-        optionsEl.appendChild(btn);
-      });
-    }
-
-    function handleAnswer(correct, btn) {
-      feedback.textContent = correct ? '✅ Correct!' : '❌ Incorrect!';
-      feedback.className = `text-center text-lg font-semibold ${correct ? 'text-green-600' : 'text-red-600'}`;
-      feedback.classList.remove('hidden');
-
-      if (correct) {
-        score++;
-        scoreEl.textContent = score;
-        btn.classList.add('flash-green');
-        nextBtn.classList.remove('hidden');
-      } else {
-        btn.classList.add('flash-red');
-      }
-
-      Array.from(optionsEl.children).forEach(b => b.disabled = true);
-    }
-
-    function nextWord() {
-      currentIndex = (currentIndex + 1) % wordList.length;
-      loadWord();
-    }
-
-    function startTimer() {
-      clearInterval(timer);
-      timer = setInterval(() => {
-        timeLeft--;
-        timeEl.textContent = timeLeft;
-        if (timeLeft <= 0) endGame();
-      }, 1000);
-    }
-
-    function startGame() {
-      score = 0;
-      timeLeft = 180;
-      currentIndex = 0;
-      scoreEl.textContent = score;
-      timeEl.textContent = timeLeft;
-      retrySection.classList.add('hidden');
-      loadWord();
-      startTimer();
-    }
-
-    function endGame() {
-      clearInterval(timer);
-      finalScore.textContent = score;
-      retrySection.classList.remove('hidden');
-      targetWord.textContent = '';
-      optionsEl.innerHTML = '';
-      feedback.classList.add('hidden');
-
-      if (userLoggedIn && loggedInUserId) {
-        fetch("/api/brain-games/update-score", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            userId: loggedInUserId,
-            gameId: "synonym-shooter",
-            score: score,
-            timestamp: new Date().toISOString()
-          })
-        }).then(res => console.log("Score synced")).catch(err => console.error("Sync error", err));
-      }
-    }
-
-    function goBack() {
-      window.location.href = '../braingames.html';
-    }
-
-    window.onload = startGame;
-  </script>
 </div>
 <div class="w-full lg:w-72 bg-gray-50 border border-gray-200 p-4 rounded-xl shadow">
 <h2 class="font-bold mb-3 text-blue-700">🏆 Leaderboard</h2>
 <ul class="text-sm text-gray-700 space-y-2" id="leaderboard"></ul>
 </div>
 </div><script>
-    const API_BASE = "http://localhost:5000/api/brain-games"; // Change to your deployed backend
+const API_BASE = "https://ultimate-backend-vyse.onrender.com/api/brain-games";
+const username = localStorage.getItem("username");
+const isLoggedIn = localStorage.getItem("isLoggedIn") === "true";
 
-    const username = localStorage.getItem("username");
-    const isLoggedIn = localStorage.getItem("isLoggedIn") === "true";
+async function fetchUserBestScore(gameId) {
+  try {
+    const res = await fetch(`${API_BASE}/user?username=${username}&gameId=${gameId}`);
+    const data = await res.json();
+    document.getElementById("best-score").textContent = `Your Best Score: ${data.score || 0}`;
+  } catch {
+    document.getElementById("best-score").textContent = "Login to track score.";
+  }
+}
 
-    async function fetchUserBestScore(gameId) {
-      try {
-        const res = await fetch(`${API_BASE}/user?username=${username}&gameId=${gameId}`);
-        const data = await res.json();
-        document.getElementById("best-score").textContent = `Your Best Score: ${data.score || 0}`;
-      } catch {
-        document.getElementById("best-score").textContent = "Login to track score.";
-      }
-    }
+async function fetchLeaderboard(gameId) {
+  try {
+    const res = await fetch(`${API_BASE}/top?gameId=${gameId}`);
+    const data = await res.json();
+    const lb = document.getElementById("leaderboard");
+    lb.innerHTML = data.map((s, i) => `<li>${i + 1}. ${s.username} – ${s.score}</li>`).join("");
+  } catch {
+    document.getElementById("leaderboard").innerHTML = "<li>Could not load leaderboard.</li>";
+  }
+}
 
-    async function fetchLeaderboard(gameId) {
-      try {
-        const res = await fetch(`${API_BASE}/top?gameId=${gameId}`);
-        const data = await res.json();
-        const lb = document.getElementById("leaderboard");
-        lb.innerHTML = data.map((s, i) => `<li>${i + 1}. ${s.username} – ${s.score}</li>`).join("");
-      } catch {
-        document.getElementById("leaderboard").innerHTML = "<li>Could not load leaderboard.</li>";
-      }
-    }
-
-    window.addEventListener("DOMContentLoaded", () => {
-      const gameId = window.location.pathname.split("/").pop().replace(".html", "");
-      if (isLoggedIn && username) {
-        fetchUserBestScore(gameId);
-        fetchLeaderboard(gameId);
-      } else {
-        const bs = document.getElementById("best-score");
-        if (bs) bs.textContent = "Login to track score.";
-      }
-    });
+window.addEventListener("DOMContentLoaded", () => {
+  const gameId = window.location.pathname.split("/").pop().replace(".html", "");
+  if (isLoggedIn && username) {
+    fetchUserBestScore(gameId);
+    fetchLeaderboard(gameId);
+  } else {
+    const bs = document.getElementById("best-score");
+    if (bs) bs.textContent = "Login to track score.";
+  }
+});
     </script></body>
 </html>

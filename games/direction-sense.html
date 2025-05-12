@@ -5,7 +5,7 @@
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
 <title>Direction Sense Trainer – BrainGames</title>
-<script src="https://cdn.tailwindcss.com"></script>
+
 <style>
     .grid-cell {
       width: 2.5rem;
@@ -42,177 +42,47 @@
 </div>
 <button class="w-full bg-green-600 hover:bg-green-700 text-white py-2 rounded font-medium hidden" id="retryBtn" onclick="startGame()">Retry</button>
 </div>
-<script>
-    const gridSize = 5;
-    let timer = 180;
-    let score = 0;
-    let interval;
-    let player = { x: 2, y: 2 };
-    let goal = { x: 2, y: 2 };
-    let moveQueue = [];
 
-    const timerEl = document.getElementById('timer');
-    const scoreEl = document.getElementById('score');
-    const instructionEl = document.getElementById('instruction');
-    const retryBtn = document.getElementById('retryBtn');
-    const userLoggedIn = localStorage.getItem("isLoggedIn") === "true";
-    const loggedInUserId = localStorage.getItem("userId");
-
-    const levels = [
-      { moves: ['up','up','right','down','down'], instruction: "Go 2 North, 1 East, 2 South." },
-      { moves: ['left','left','up','right'], instruction: "Go 2 West, 1 North, 1 East." },
-      { moves: ['right','right','up','left','down'], instruction: "2 East, 1 North, 1 West, 1 South." },
-    ];
-
-    function drawGrid() {
-      const grid = document.getElementById("grid");
-      grid.innerHTML = "";
-      for (let y = 0; y < gridSize; y++) {
-        for (let x = 0; x < gridSize; x++) {
-          const cell = document.createElement("div");
-          cell.className = "grid-cell";
-          if (x === player.x && y === player.y) {
-            cell.classList.add("player");
-            cell.textContent = "🧍";
-          } else if (x === goal.x && y === goal.y) {
-            cell.classList.add("goal");
-            cell.textContent = "🎯";
-          }
-          grid.appendChild(cell);
-        }
-      }
-    }
-
-    function move(dir) {
-      if (!moveQueue.length) return;
-      const expected = moveQueue.shift();
-      if (dir !== expected) {
-        instructionEl.textContent = "❌ Wrong move! Resetting.";
-        setTimeout(startGame, 1000);
-        return;
-      }
-
-      switch (dir) {
-        case 'up': player.y = Math.max(0, player.y - 1); break;
-        case 'down': player.y = Math.min(gridSize - 1, player.y + 1); break;
-        case 'left': player.x = Math.max(0, player.x - 1); break;
-        case 'right': player.x = Math.min(gridSize - 1, player.x + 1); break;
-      }
-
-      drawGrid();
-
-      if (moveQueue.length === 0) {
-        instructionEl.textContent = "✅ Correct path!";
-        score++;
-        scoreEl.textContent = score;
-        setTimeout(startGame, 1000);
-      }
-    }
-
-    function startTimer() {
-      clearInterval(interval);
-      interval = setInterval(() => {
-        timer--;
-        timerEl.textContent = `${timer}s`;
-        if (timer <= 0) {
-          clearInterval(interval);
-          instructionEl.textContent = `Time's up! Final Score: ${score}`;
-          retryBtn.classList.remove('hidden');
-
-          // 🔐 Save score if user is logged in
-          if (userLoggedIn && loggedInUserId) {
-            fetch("/api/brain-games/update-score", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                userId: loggedInUserId,
-                gameId: "direction-sense",
-                score: score
-              })
-            })
-            .then(res => res.json())
-            .then(data => {
-              if (data.success) {
-                console.log("✅ Score saved to backend:", data.bestScore);
-              } else {
-                console.error("❌ Score save failed:", data.message);
-              }
-            })
-            .catch(err => console.error("❌ Network error:", err));
-          }
-        }
-      }, 1000);
-    }
-
-    function startGame() {
-      const challenge = levels[Math.floor(Math.random() * levels.length)];
-      moveQueue = [...challenge.moves];
-      instructionEl.textContent = challenge.instruction;
-      player = { x: 2, y: 2 };
-
-      goal = { x: 2, y: 2 };
-      for (let move of moveQueue) {
-        switch (move) {
-          case 'up': goal.y = Math.max(0, goal.y - 1); break;
-          case 'down': goal.y = Math.min(gridSize - 1, goal.y + 1); break;
-          case 'left': goal.x = Math.max(0, goal.x - 1); break;
-          case 'right': goal.x = Math.min(gridSize - 1, goal.x + 1); break;
-        }
-      }
-      drawGrid();
-      retryBtn.classList.add('hidden');
-    }
-
-    window.onload = () => {
-      timer = 180;
-      score = 0;
-      timerEl.textContent = "180s";
-      scoreEl.textContent = "0";
-      startGame();
-      startTimer();
-    }
-  </script>
 </div>
 <div class="w-full lg:w-72 bg-gray-50 border border-gray-200 p-4 rounded-xl shadow">
 <h2 class="font-bold mb-3 text-blue-700">🏆 Leaderboard</h2>
 <ul class="text-sm text-gray-700 space-y-2" id="leaderboard"></ul>
 </div>
 </div><script>
-    const API_BASE = "http://localhost:5000/api/brain-games"; // Change to your deployed backend
+const API_BASE = "https://ultimate-backend-vyse.onrender.com/api/brain-games";
+const username = localStorage.getItem("username");
+const isLoggedIn = localStorage.getItem("isLoggedIn") === "true";
 
-    const username = localStorage.getItem("username");
-    const isLoggedIn = localStorage.getItem("isLoggedIn") === "true";
+async function fetchUserBestScore(gameId) {
+  try {
+    const res = await fetch(`${API_BASE}/user?username=${username}&gameId=${gameId}`);
+    const data = await res.json();
+    document.getElementById("best-score").textContent = `Your Best Score: ${data.score || 0}`;
+  } catch {
+    document.getElementById("best-score").textContent = "Login to track score.";
+  }
+}
 
-    async function fetchUserBestScore(gameId) {
-      try {
-        const res = await fetch(`${API_BASE}/user?username=${username}&gameId=${gameId}`);
-        const data = await res.json();
-        document.getElementById("best-score").textContent = `Your Best Score: ${data.score || 0}`;
-      } catch {
-        document.getElementById("best-score").textContent = "Login to track score.";
-      }
-    }
+async function fetchLeaderboard(gameId) {
+  try {
+    const res = await fetch(`${API_BASE}/top?gameId=${gameId}`);
+    const data = await res.json();
+    const lb = document.getElementById("leaderboard");
+    lb.innerHTML = data.map((s, i) => `<li>${i + 1}. ${s.username} – ${s.score}</li>`).join("");
+  } catch {
+    document.getElementById("leaderboard").innerHTML = "<li>Could not load leaderboard.</li>";
+  }
+}
 
-    async function fetchLeaderboard(gameId) {
-      try {
-        const res = await fetch(`${API_BASE}/top?gameId=${gameId}`);
-        const data = await res.json();
-        const lb = document.getElementById("leaderboard");
-        lb.innerHTML = data.map((s, i) => `<li>${i + 1}. ${s.username} – ${s.score}</li>`).join("");
-      } catch {
-        document.getElementById("leaderboard").innerHTML = "<li>Could not load leaderboard.</li>";
-      }
-    }
-
-    window.addEventListener("DOMContentLoaded", () => {
-      const gameId = window.location.pathname.split("/").pop().replace(".html", "");
-      if (isLoggedIn && username) {
-        fetchUserBestScore(gameId);
-        fetchLeaderboard(gameId);
-      } else {
-        const bs = document.getElementById("best-score");
-        if (bs) bs.textContent = "Login to track score.";
-      }
-    });
+window.addEventListener("DOMContentLoaded", () => {
+  const gameId = window.location.pathname.split("/").pop().replace(".html", "");
+  if (isLoggedIn && username) {
+    fetchUserBestScore(gameId);
+    fetchLeaderboard(gameId);
+  } else {
+    const bs = document.getElementById("best-score");
+    if (bs) bs.textContent = "Login to track score.";
+  }
+});
     </script></body>
 </html>

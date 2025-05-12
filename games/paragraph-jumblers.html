@@ -5,7 +5,7 @@
 <meta charset="utf-8"/>
 <title>Paragraph Jumblers – BrainGames | Exam Prep</title>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-<script src="https://cdn.tailwindcss.com"></script>
+
 <style>
     .draggable { cursor: grab; }
     .dragging { opacity: 0.5; }
@@ -35,191 +35,47 @@
       Retry
     </button>
 </div>
-<script>
-    const questions = [
-      [
-        "The sun was setting behind the mountains.",
-        "Birds returned to their nests.",
-        "The sky turned a warm shade of orange.",
-        "Children headed home after playing."
-      ],
-      [
-        "Water boils at 100°C.",
-        "This property is used in cooking.",
-        "It turns into steam above that point.",
-        "Boiling is a physical change."
-      ],
-      [
-        "I started preparing for the CAT exam.",
-        "Every day, I solved a mock test.",
-        "I tracked my progress in a dashboard.",
-        "Eventually, my scores began to improve."
-      ]
-    ];
 
-    const sentenceContainer = document.getElementById("sentenceContainer");
-    const timerEl = document.getElementById("timer").querySelector("span");
-    const scoreEl = document.getElementById("score").querySelector("span");
-    const checkBtn = document.getElementById("checkBtn");
-    const retryBtn = document.getElementById("retryBtn");
-
-    const userLoggedIn = localStorage.getItem("isLoggedIn") === "true";
-    const loggedInUserId = localStorage.getItem("userId");
-
-    let original = [], current = [], dragging = null;
-    let score = 0, timeLeft = 180, timerInterval;
-
-    function shuffle(arr) {
-      return [...arr].sort(() => 0.5 - Math.random());
-    }
-
-    function renderSentences() {
-      sentenceContainer.innerHTML = "";
-      current.forEach((sentence, index) => {
-        const div = document.createElement("div");
-        div.className = "p-2 border rounded-md bg-gray-50 draggable";
-        div.draggable = true;
-        div.textContent = sentence;
-
-        div.addEventListener("dragstart", () => {
-          dragging = div;
-          div.classList.add("dragging");
-        });
-
-        div.addEventListener("dragend", () => {
-          dragging = null;
-          div.classList.remove("dragging");
-        });
-
-        div.addEventListener("dragover", (e) => e.preventDefault());
-
-        div.addEventListener("drop", (e) => {
-          e.preventDefault();
-          if (!dragging || dragging === div) return;
-          const children = Array.from(sentenceContainer.children);
-          const draggedIndex = children.indexOf(dragging);
-          const droppedIndex = children.indexOf(div);
-          [current[draggedIndex], current[droppedIndex]] = [current[droppedIndex], current[draggedIndex]];
-          renderSentences();
-        });
-
-        sentenceContainer.appendChild(div);
-      });
-    }
-
-    function loadQuestion() {
-      const question = questions[Math.floor(Math.random() * questions.length)];
-      original = [...question];
-      current = shuffle(question);
-      renderSentences();
-    }
-
-    function checkOrder() {
-      let isCorrect = true;
-      Array.from(sentenceContainer.children).forEach((div, i) => {
-        div.classList.remove("correct", "wrong");
-        if (current[i] === original[i]) {
-          div.classList.add("correct");
-        } else {
-          div.classList.add("wrong");
-          isCorrect = false;
-        }
-      });
-
-      if (isCorrect) {
-        score++;
-        scoreEl.textContent = score;
-        setTimeout(loadQuestion, 1000);
-      }
-    }
-
-    function startTimer() {
-      clearInterval(timerInterval);
-      timerInterval = setInterval(() => {
-        timeLeft--;
-        timerEl.textContent = `${timeLeft}s`;
-        if (timeLeft <= 0) endGame();
-      }, 1000);
-    }
-
-    function endGame() {
-      clearInterval(timerInterval);
-      sentenceContainer.innerHTML = `<p class="text-base text-gray-700">Time's up! Final score: ${score}</p>`;
-      retryBtn.classList.remove("hidden");
-
-      if (userLoggedIn && loggedInUserId) {
-        fetch("/api/brain-games/update-score", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ userId: loggedInUserId, gameId: "paragraph-jumblers", score })
-        })
-        .then(res => res.json())
-        .then(data => {
-          if (data.success) {
-            console.log("✅ Score saved to backend:", data.bestScore);
-          } else {
-            console.error("❌ Score save failed:", data.message);
-          }
-        })
-        .catch(err => console.error("❌ Network error:", err));
-      }
-    }
-
-    function startGame() {
-      score = 0;
-      timeLeft = 180;
-      scoreEl.textContent = 0;
-      timerEl.textContent = "180s";
-      retryBtn.classList.add("hidden");
-      loadQuestion();
-      startTimer();
-    }
-
-    checkBtn.addEventListener("click", checkOrder);
-    retryBtn.addEventListener("click", startGame);
-    window.onload = startGame;
-  </script>
 </div>
 <div class="w-full lg:w-72 bg-gray-50 border border-gray-200 p-4 rounded-xl shadow">
 <h2 class="font-bold mb-3 text-blue-700">🏆 Leaderboard</h2>
 <ul class="text-sm text-gray-700 space-y-2" id="leaderboard"></ul>
 </div>
 </div><script>
-    const API_BASE = "http://localhost:5000/api/brain-games"; // Change to your deployed backend
+const API_BASE = "https://ultimate-backend-vyse.onrender.com/api/brain-games";
+const username = localStorage.getItem("username");
+const isLoggedIn = localStorage.getItem("isLoggedIn") === "true";
 
-    const username = localStorage.getItem("username");
-    const isLoggedIn = localStorage.getItem("isLoggedIn") === "true";
+async function fetchUserBestScore(gameId) {
+  try {
+    const res = await fetch(`${API_BASE}/user?username=${username}&gameId=${gameId}`);
+    const data = await res.json();
+    document.getElementById("best-score").textContent = `Your Best Score: ${data.score || 0}`;
+  } catch {
+    document.getElementById("best-score").textContent = "Login to track score.";
+  }
+}
 
-    async function fetchUserBestScore(gameId) {
-      try {
-        const res = await fetch(`${API_BASE}/user?username=${username}&gameId=${gameId}`);
-        const data = await res.json();
-        document.getElementById("best-score").textContent = `Your Best Score: ${data.score || 0}`;
-      } catch {
-        document.getElementById("best-score").textContent = "Login to track score.";
-      }
-    }
+async function fetchLeaderboard(gameId) {
+  try {
+    const res = await fetch(`${API_BASE}/top?gameId=${gameId}`);
+    const data = await res.json();
+    const lb = document.getElementById("leaderboard");
+    lb.innerHTML = data.map((s, i) => `<li>${i + 1}. ${s.username} – ${s.score}</li>`).join("");
+  } catch {
+    document.getElementById("leaderboard").innerHTML = "<li>Could not load leaderboard.</li>";
+  }
+}
 
-    async function fetchLeaderboard(gameId) {
-      try {
-        const res = await fetch(`${API_BASE}/top?gameId=${gameId}`);
-        const data = await res.json();
-        const lb = document.getElementById("leaderboard");
-        lb.innerHTML = data.map((s, i) => `<li>${i + 1}. ${s.username} – ${s.score}</li>`).join("");
-      } catch {
-        document.getElementById("leaderboard").innerHTML = "<li>Could not load leaderboard.</li>";
-      }
-    }
-
-    window.addEventListener("DOMContentLoaded", () => {
-      const gameId = window.location.pathname.split("/").pop().replace(".html", "");
-      if (isLoggedIn && username) {
-        fetchUserBestScore(gameId);
-        fetchLeaderboard(gameId);
-      } else {
-        const bs = document.getElementById("best-score");
-        if (bs) bs.textContent = "Login to track score.";
-      }
-    });
+window.addEventListener("DOMContentLoaded", () => {
+  const gameId = window.location.pathname.split("/").pop().replace(".html", "");
+  if (isLoggedIn && username) {
+    fetchUserBestScore(gameId);
+    fetchLeaderboard(gameId);
+  } else {
+    const bs = document.getElementById("best-score");
+    if (bs) bs.textContent = "Login to track score.";
+  }
+});
     </script></body>
 </html>

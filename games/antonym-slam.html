@@ -5,7 +5,7 @@
 <meta charset="utf-8"/>
 <title>Antonym Slam – BrainGames | Exam Prep</title>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-<script src="https://cdn.tailwindcss.com"></script>
+
 <style>
     .flash-red { background-color: #fee2e2 !important; border-color: #dc2626 !important; }
     .flash-green { background-color: #dcfce7 !important; border-color: #16a34a !important; }
@@ -21,161 +21,47 @@
 <button class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-md font-medium" id="submitBtn">Submit</button>
 <button class="w-full bg-green-600 hover:bg-green-700 text-white py-2 rounded-md font-medium mt-4 hidden" id="retryBtn">Retry</button>
 </div>
-<script>
-    const antonymPairs = [
-      { word: "happy", antonym: "sad" },
-      { word: "increase", antonym: "decrease" },
-      { word: "strong", antonym: "weak" },
-      { word: "begin", antonym: "end" },
-      { word: "above", antonym: "below" },
-      { word: "empty", antonym: "full" },
-      { word: "soft", antonym: "hard" },
-      { word: "win", antonym: "lose" },
-      { word: "fast", antonym: "slow" },
-    ];
 
-    let score = 0;
-    let timeLeft = 180;
-    let correctAnswer = '';
-    let timerInterval = null;
-
-    const timerEl = document.getElementById('timer').querySelector('span');
-    const scoreEl = document.getElementById('score').querySelector('span');
-    const questionEl = document.getElementById('question');
-    const answerInput = document.getElementById('answerInput');
-    const submitBtn = document.getElementById('submitBtn');
-    const retryBtn = document.getElementById('retryBtn');
-
-    const userLoggedIn = localStorage.getItem("isLoggedIn") === "true";
-    const loggedInUserId = localStorage.getItem("userId");
-
-    function generateQuestion() {
-      const q = antonymPairs[Math.floor(Math.random() * antonymPairs.length)];
-      correctAnswer = q.antonym.toLowerCase();
-      questionEl.textContent = `What's the antonym of "${q.word}"?`;
-    }
-
-    function flash(type) {
-      answerInput.classList.add(type === 'correct' ? 'flash-green' : 'flash-red');
-      setTimeout(() => {
-        answerInput.classList.remove('flash-green', 'flash-red');
-      }, 400);
-    }
-
-    function checkAnswer() {
-      const userAnswer = answerInput.value.trim().toLowerCase();
-      if (userAnswer === correctAnswer) {
-        score++;
-        scoreEl.textContent = score;
-        flash('correct');
-      } else {
-        flash('wrong');
-      }
-      answerInput.value = '';
-      generateQuestion();
-    }
-
-    function startTimer() {
-      timerInterval = setInterval(() => {
-        timeLeft--;
-        timerEl.textContent = `${timeLeft}s`;
-        if (timeLeft <= 0) endGame();
-      }, 1000);
-    }
-
-    function startGame() {
-      score = 0;
-      timeLeft = 180;
-      scoreEl.textContent = 0;
-      timerEl.textContent = `180s`;
-      retryBtn.classList.add('hidden');
-      answerInput.disabled = false;
-      submitBtn.disabled = false;
-      answerInput.focus();
-      generateQuestion();
-      clearInterval(timerInterval);
-      startTimer();
-    }
-
-    function endGame() {
-      clearInterval(timerInterval);
-      questionEl.textContent = `Time's up! You scored ${score}`;
-      answerInput.disabled = true;
-      submitBtn.disabled = true;
-      retryBtn.classList.remove('hidden');
-
-      // 🔐 Save score if user is logged in
-      if (userLoggedIn && loggedInUserId) {
-        fetch("/api/brain-games/update-score", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            userId: loggedInUserId,
-            gameId: "antonym-slam",
-            score: score
-          })
-        })
-        .then(res => res.json())
-        .then(data => {
-          if (data.success) {
-            console.log("✅ Score saved to backend:", data.bestScore);
-          } else {
-            console.error("❌ Score save failed:", data.message);
-          }
-        })
-        .catch(err => console.error("❌ Network error saving score:", err));
-      }
-    }
-
-    submitBtn.addEventListener('click', checkAnswer);
-    retryBtn.addEventListener('click', startGame);
-    answerInput.addEventListener('keypress', (e) => {
-      if (e.key === 'Enter') checkAnswer();
-    });
-
-    window.onload = startGame;
-  </script>
 </div>
 <div class="w-full lg:w-72 bg-gray-50 border border-gray-200 p-4 rounded-xl shadow">
 <h2 class="font-bold mb-3 text-blue-700">🏆 Leaderboard</h2>
 <ul class="text-sm text-gray-700 space-y-2" id="leaderboard"></ul>
 </div>
 </div><script>
-    const API_BASE = "http://localhost:5000/api/brain-games"; // Change to your deployed backend
+const API_BASE = "https://ultimate-backend-vyse.onrender.com/api/brain-games";
+const username = localStorage.getItem("username");
+const isLoggedIn = localStorage.getItem("isLoggedIn") === "true";
 
-    const username = localStorage.getItem("username");
-    const isLoggedIn = localStorage.getItem("isLoggedIn") === "true";
+async function fetchUserBestScore(gameId) {
+  try {
+    const res = await fetch(`${API_BASE}/user?username=${username}&gameId=${gameId}`);
+    const data = await res.json();
+    document.getElementById("best-score").textContent = `Your Best Score: ${data.score || 0}`;
+  } catch {
+    document.getElementById("best-score").textContent = "Login to track score.";
+  }
+}
 
-    async function fetchUserBestScore(gameId) {
-      try {
-        const res = await fetch(`${API_BASE}/user?username=${username}&gameId=${gameId}`);
-        const data = await res.json();
-        document.getElementById("best-score").textContent = `Your Best Score: ${data.score || 0}`;
-      } catch {
-        document.getElementById("best-score").textContent = "Login to track score.";
-      }
-    }
+async function fetchLeaderboard(gameId) {
+  try {
+    const res = await fetch(`${API_BASE}/top?gameId=${gameId}`);
+    const data = await res.json();
+    const lb = document.getElementById("leaderboard");
+    lb.innerHTML = data.map((s, i) => `<li>${i + 1}. ${s.username} – ${s.score}</li>`).join("");
+  } catch {
+    document.getElementById("leaderboard").innerHTML = "<li>Could not load leaderboard.</li>";
+  }
+}
 
-    async function fetchLeaderboard(gameId) {
-      try {
-        const res = await fetch(`${API_BASE}/top?gameId=${gameId}`);
-        const data = await res.json();
-        const lb = document.getElementById("leaderboard");
-        lb.innerHTML = data.map((s, i) => `<li>${i + 1}. ${s.username} – ${s.score}</li>`).join("");
-      } catch {
-        document.getElementById("leaderboard").innerHTML = "<li>Could not load leaderboard.</li>";
-      }
-    }
-
-    window.addEventListener("DOMContentLoaded", () => {
-      const gameId = window.location.pathname.split("/").pop().replace(".html", "");
-      if (isLoggedIn && username) {
-        fetchUserBestScore(gameId);
-        fetchLeaderboard(gameId);
-      } else {
-        const bs = document.getElementById("best-score");
-        if (bs) bs.textContent = "Login to track score.";
-      }
-    });
+window.addEventListener("DOMContentLoaded", () => {
+  const gameId = window.location.pathname.split("/").pop().replace(".html", "");
+  if (isLoggedIn && username) {
+    fetchUserBestScore(gameId);
+    fetchLeaderboard(gameId);
+  } else {
+    const bs = document.getElementById("best-score");
+    if (bs) bs.textContent = "Login to track score.";
+  }
+});
     </script></body>
 </html>
