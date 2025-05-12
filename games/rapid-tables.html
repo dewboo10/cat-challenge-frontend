@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Rapid Tables Blitz</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-white text-black min-h-screen">
+  <header class="p-4 border-b border-blue-200 bg-white flex justify-between items-center">
+    <h1 class="text-xl font-bold text-blue-600">⚡ Rapid Tables Blitz</h1>
+    <button onclick="goBack()" class="text-sm text-blue-500 underline">Back</button>
+  </header>
+
+  <main class="p-6 max-w-md mx-auto space-y-4 text-center">
+    <p class="text-sm text-gray-600">Answer as many multiplication facts as you can!</p>
+
+    <div id="question" class="text-2xl font-bold text-blue-700">6 × 8</div>
+
+    <input id="answer" type="number" placeholder="Your answer..." class="mt-2 w-full px-4 py-2 border rounded text-center" onkeydown="handleKey(event)" />
+
+    <div id="feedback" class="text-center text-lg font-semibold hidden"></div>
+
+    <div class="flex justify-between text-sm text-gray-600 pt-2">
+      <span>Correct: <span id="correct-count">0</span></span>
+      <span>Time Left: <span id="time-left">180</span>s</span>
+    </div>
+
+    <div id="end-screen" class="hidden mt-6">
+      <p class="text-lg font-bold text-green-600">⏱️ Time's up!</p>
+      <p class="text-sm">You got <span id="final-score">0</span> correct.</p>
+      <button onclick="restartGame()" class="mt-4 bg-blue-600 text-white px-4 py-2 rounded font-semibold">Play Again</button>
+    </div>
+  </main>
+
+  <script>
+    let timer;
+    let time = 180;
+    let correct = 0;
+    let a = 0, b = 0;
+    const userLoggedIn = localStorage.getItem("isLoggedIn") === "true";
+    const loggedInUserId = localStorage.getItem("userId");
+
+    function generateQuestion() {
+      a = Math.floor(Math.random() * 50) + 1;
+      b = Math.floor(Math.random() * 50) + 1;
+      document.getElementById('question').textContent = `${a} × ${b}`;
+      document.getElementById('answer').value = '';
+    }
+
+    function handleKey(event) {
+      if (event.key === 'Enter') checkAnswer();
+    }
+
+    function checkAnswer() {
+      const userAns = parseInt(document.getElementById('answer').value);
+      const correctAns = a * b;
+      const feedback = document.getElementById('feedback');
+
+      if (userAns === correctAns) {
+        correct++;
+        feedback.textContent = '✅ Correct!';
+        feedback.className = 'text-green-600 font-semibold';
+      } else {
+        feedback.textContent = '❌ Incorrect';
+        feedback.className = 'text-red-600 font-semibold';
+      }
+
+      feedback.classList.remove('hidden');
+      setTimeout(() => feedback.classList.add('hidden'), 800);
+      document.getElementById('correct-count').textContent = correct;
+      generateQuestion();
+    }
+
+    function startGame() {
+      generateQuestion();
+      timer = setInterval(() => {
+        time--;
+        document.getElementById('time-left').textContent = time;
+        if (time <= 0) {
+          clearInterval(timer);
+          endGame();
+        }
+      }, 1000);
+    }
+
+    function endGame() {
+      document.getElementById('final-score').textContent = correct;
+      document.getElementById('end-screen').classList.remove('hidden');
+      document.getElementById('question').classList.add('hidden');
+      document.getElementById('answer').classList.add('hidden');
+
+      if (userLoggedIn && loggedInUserId) {
+        fetch("/api/brain-games/update-score", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ userId: loggedInUserId, game: "rapid-tables", score: correct })
+        });
+      }
+    }
+
+    function restartGame() {
+      time = 180;
+      correct = 0;
+      document.getElementById('time-left').textContent = time;
+      document.getElementById('correct-count').textContent = correct;
+      document.getElementById('end-screen').classList.add('hidden');
+      document.getElementById('question').classList.remove('hidden');
+      document.getElementById('answer').classList.remove('hidden');
+      startGame();
+    }
+
+    function goBack() {
+      window.location.href = '../braingames.html';
+    }
+
+    startGame();
+  </script>
+</body>
+</html>

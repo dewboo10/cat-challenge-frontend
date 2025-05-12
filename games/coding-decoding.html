@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Coding-Decoding – BrainGames</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    .flash-green { background-color: #dcfce7 !important; border-color: #16a34a !important; }
+    .flash-red { background-color: #fee2e2 !important; border-color: #dc2626 !important; }
+    .draggable {
+      cursor: grab;
+    }
+    .drop-zone {
+      border: 2px dashed #3b82f6;
+      min-height: 2.5rem;
+      padding: 0.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 0.375rem;
+    }
+    .drop-zone.hover {
+      background-color: #e0f2fe;
+    }
+  </style>
+</head>
+<body class="bg-gradient-to-br from-blue-50 to-white text-gray-800 min-h-screen flex items-center justify-center p-4">
+  <div class="w-full max-w-xl p-6 bg-white shadow-xl rounded-2xl border border-blue-200 text-center space-y-6">
+    <h1 class="text-2xl font-bold text-blue-700">🔤 Coding-Decoding</h1>
+
+    <div class="text-sm text-gray-600">⏱ Time Left: <span id="timer" class="font-semibold">180s</span> | 🏆 Score: <span id="score" class="font-semibold">0</span></div>
+
+    <div id="question" class="text-base font-medium">Loading pattern...</div>
+
+    <div class="grid grid-cols-2 gap-4 items-center">
+      <div id="draggables" class="space-y-2"></div>
+      <div id="dropzones" class="space-y-2"></div>
+    </div>
+
+    <button id="retryBtn" onclick="startGame()" class="w-full bg-green-600 hover:bg-green-700 text-white py-2 rounded font-medium hidden">Retry</button>
+  </div>
+
+  <script>
+    const problems = [
+      {
+        word: "FISH",
+        code: "GKTI",
+        mapping: { "F": "G", "I": "K", "S": "T", "H": "I" }
+      },
+      {
+        word: "RING",
+        code: "TKPI",
+        mapping: { "R": "T", "I": "K", "N": "P", "G": "I" }
+      },
+      {
+        word: "CODE",
+        code: "EQFG",
+        mapping: { "C": "E", "O": "Q", "D": "F", "E": "G" }
+      }
+    ];
+
+    let current = {}, score = 0, timer = 180, interval;
+
+    const timerEl = document.getElementById("timer");
+    const scoreEl = document.getElementById("score");
+    const questionEl = document.getElementById("question");
+    const retryBtn = document.getElementById("retryBtn");
+    const draggables = document.getElementById("draggables");
+    const dropzones = document.getElementById("dropzones");
+    const userLoggedIn = localStorage.getItem("isLoggedIn") === "true";
+    const loggedInUserId = localStorage.getItem("userId");
+
+    function createDragAndDrop(word, mapping) {
+      draggables.innerHTML = "";
+      dropzones.innerHTML = "";
+
+      const shuffled = shuffle(Object.entries(mapping));
+
+      for (const [key, val] of shuffled) {
+        const drag = document.createElement("div");
+        drag.textContent = val;
+        drag.className = "draggable bg-blue-100 text-blue-900 px-3 py-2 rounded shadow cursor-pointer select-none";
+        drag.draggable = true;
+        drag.dataset.char = key;
+        drag.ondragstart = e => {
+          e.dataTransfer.setData("text/plain", drag.dataset.char);
+        };
+        draggables.appendChild(drag);
+      }
+
+      for (let i = 0; i < word.length; i++) {
+        const dz = document.createElement("div");
+        dz.className = "drop-zone";
+        dz.dataset.char = word[i];
+        dz.ondragover = e => {
+          e.preventDefault();
+          dz.classList.add("hover");
+        };
+        dz.ondragleave = () => dz.classList.remove("hover");
+        dz.ondrop = e => {
+          e.preventDefault();
+          dz.classList.remove("hover");
+          const dragged = e.dataTransfer.getData("text/plain");
+          const expected = dz.dataset.char;
+          const result = document.createElement("span");
+          result.textContent = current.mapping[expected];
+          result.className = dragged === expected ? "text-green-600 font-bold" : "text-red-600 font-bold";
+          dz.innerHTML = "";
+          dz.appendChild(result);
+          dz.ondrop = null;
+          dz.ondragover = null;
+          dz.ondragleave = null;
+
+          checkAllFilled();
+        };
+        dz.textContent = word[i];
+        dropzones.appendChild(dz);
+      }
+    }
+
+    function checkAllFilled() {
+      const all = Array.from(dropzones.children);
+      const allFilled = all.every(cell => cell.children.length > 0);
+      if (allFilled) {
+        const correct = all.every(cell => {
+          const expected = current.mapping[cell.dataset.char];
+          const actual = cell.textContent.slice(1);
+          return expected === actual;
+        });
+
+        if (correct) {
+          score++;
+          scoreEl.textContent = score;
+          questionEl.textContent = "✅ Correct!";
+        } else {
+          questionEl.textContent = "❌ Incorrect mapping.";
+        }
+        setTimeout(startGame, 1000);
+      }
+    }
+
+    function shuffle(arr) {
+      return arr.sort(() => Math.random() - 0.5);
+    }
+
+    function startGame() {
+      current = problems[Math.floor(Math.random() * problems.length)];
+      questionEl.textContent = `Encode "${current.word}" using the pattern.`;
+      retryBtn.classList.add("hidden");
+      createDragAndDrop(current.word, current.mapping);
+    }
+
+    function startTimer() {
+      clearInterval(interval);
+      interval = setInterval(() => {
+        timer--;
+        timerEl.textContent = `${timer}s`;
+        if (timer <= 0) {
+          clearInterval(interval);
+          questionEl.textContent = `Time's up! Final score: ${score}`;
+          retryBtn.classList.remove("hidden");
+          draggables.innerHTML = "";
+          dropzones.innerHTML = "";
+
+          // 🔐 Save score if user is logged in
+          if (userLoggedIn && loggedInUserId) {
+            fetch("/api/brain-games/update-score", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                userId: loggedInUserId,
+                gameId: "coding-decoding",
+                score: score
+              })
+            })
+            .then(res => res.json())
+            .then(data => {
+              if (data.success) {
+                console.log("✅ Score saved to backend:", data.bestScore);
+              } else {
+                console.error("❌ Score save failed:", data.message);
+              }
+            })
+            .catch(err => console.error("❌ Network error:", err));
+          }
+        }
+      }, 1000);
+    }
+
+    window.onload = () => {
+      score = 0;
+      timer = 180;
+      timerEl.textContent = "180s";
+      scoreEl.textContent = "0";
+      startGame();
+      startTimer();
+    }
+  </script>
+</body>
+</html>

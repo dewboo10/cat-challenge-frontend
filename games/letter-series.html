@@ -1,0 +1,114 @@
+<!-- Updated Letter Series Cracker – BrainGames -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Letter Series Cracker – BrainGames</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gradient-to-br from-blue-50 to-white min-h-screen flex items-center justify-center text-gray-800 p-4">
+  <div class="w-full max-w-md bg-white p-6 rounded-2xl shadow-xl border border-blue-200 text-center space-y-4">
+    <h1 class="text-2xl font-bold text-blue-700">🔡 Letter Series Cracker</h1>
+
+    <div class="text-sm text-gray-500">
+      ⏱ Time Left: <span id="timer" class="font-semibold">180s</span> |
+      🏆 Score: <span id="score" class="font-semibold">0</span>
+    </div>
+
+    <div id="series" class="text-xl font-semibold text-blue-700 my-2">Loading...</div>
+
+    <input id="answer" type="text" maxlength="1" class="text-center text-xl border border-blue-300 px-4 py-2 rounded w-1/2" placeholder="?">
+
+    <div class="space-x-4">
+      <button onclick="checkAnswer()" class="mt-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded">Submit</button>
+      <button id="retryBtn" onclick="startGame()" class="mt-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded hidden">Retry</button>
+    </div>
+  </div>
+
+  <script>
+    const seriesList = [
+      { pattern: ["A", "C", "E", "G"], answer: "I" },
+      { pattern: ["Z", "X", "V", "T"], answer: "R" },
+      { pattern: ["B", "D", "G", "K"], answer: "P" },
+      { pattern: ["L", "K", "I", "F"], answer: "B" },
+      { pattern: ["A", "D", "H", "M"], answer: "S" }
+    ];
+
+    let current = {}, score = 0, timeLeft = 180, timerInterval;
+    const userLoggedIn = localStorage.getItem("isLoggedIn") === "true";
+    const loggedInUserId = localStorage.getItem("userId");
+
+    function startGame() {
+      current = seriesList[Math.floor(Math.random() * seriesList.length)];
+      document.getElementById("series").textContent = current.pattern.join(" , ") + " , ?";
+      document.getElementById("answer").value = "";
+      document.getElementById("answer").disabled = false;
+      document.getElementById("retryBtn").classList.add("hidden");
+    }
+
+    function checkAnswer() {
+      const ans = document.getElementById("answer").value.toUpperCase().trim();
+      const seriesDiv = document.getElementById("series");
+      if (ans === current.answer) {
+        score++;
+        document.getElementById("score").textContent = score;
+        seriesDiv.textContent += ` ✅ (${ans})`;
+      } else {
+        seriesDiv.textContent += ` ❌ (Correct: ${current.answer})`;
+      }
+      document.getElementById("answer").disabled = true;
+
+      setTimeout(startGame, 1200);
+    }
+
+    function startTimer() {
+      clearInterval(timerInterval);
+      timerInterval = setInterval(() => {
+        timeLeft--;
+        document.getElementById("timer").textContent = `${timeLeft}s`;
+        if (timeLeft <= 0) {
+          endGame();
+        }
+      }, 1000);
+    }
+
+    function endGame() {
+      clearInterval(timerInterval);
+      document.getElementById("series").textContent = `⏱ Time's up! Final score: ${score}`;
+      document.getElementById("answer").disabled = true;
+      document.getElementById("retryBtn").classList.remove("hidden");
+
+      if (userLoggedIn && loggedInUserId) {
+        fetch("/api/brain-games/update-score", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            userId: loggedInUserId,
+            gameId: "letter-series-cracker",
+            score: score
+          })
+        })
+        .then(res => res.json())
+        .then(data => {
+          if (data.success) {
+            console.log("✅ Score saved to backend:", data.bestScore);
+          } else {
+            console.error("❌ Score save failed:", data.message);
+          }
+        })
+        .catch(err => console.error("❌ Network error:", err));
+      }
+    }
+
+    window.onload = () => {
+      score = 0;
+      timeLeft = 180;
+      document.getElementById("score").textContent = 0;
+      document.getElementById("timer").textContent = "180s";
+      startGame();
+      startTimer();
+    };
+  </script>
+</body>
+</html>

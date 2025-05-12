@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Paragraph Jumblers – BrainGames | Exam Prep</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    .draggable { cursor: grab; }
+    .dragging { opacity: 0.5; }
+    .correct {
+      background-color: #dcfce7 !important;
+      border-color: #16a34a !important;
+    }
+    .wrong {
+      background-color: #fee2e2 !important;
+      border-color: #dc2626 !important;
+    }
+  </style>
+</head>
+<body class="bg-white min-h-screen flex items-center justify-center text-gray-800">
+  <div class="w-full max-w-lg p-6 bg-white shadow-xl rounded-2xl border border-blue-200 text-center">
+    <h1 class="text-2xl font-bold text-blue-700 mb-4">✖️ Paragraph Jumblers</h1>
+
+    <div class="mb-4 text-sm text-gray-500">
+      <p>⏱ Time Left: <span id="timer" class="font-semibold">180s</span></p>
+      <p>🏆 Score: <span id="score" class="font-semibold">0</span></p>
+    </div>
+
+    <p class="mb-2 font-medium text-gray-600">Arrange the sentences to form a logical paragraph:</p>
+
+    <div id="sentenceContainer" class="space-y-2 mb-4"></div>
+
+    <button id="checkBtn" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-md font-medium mb-2">
+      Check Order
+    </button>
+
+    <button id="retryBtn"
+      class="w-full bg-green-600 hover:bg-green-700 text-white py-2 rounded-md font-medium mt-2 hidden">
+      Retry
+    </button>
+  </div>
+
+  <script>
+    const questions = [
+      [
+        "The sun was setting behind the mountains.",
+        "Birds returned to their nests.",
+        "The sky turned a warm shade of orange.",
+        "Children headed home after playing."
+      ],
+      [
+        "Water boils at 100°C.",
+        "This property is used in cooking.",
+        "It turns into steam above that point.",
+        "Boiling is a physical change."
+      ],
+      [
+        "I started preparing for the CAT exam.",
+        "Every day, I solved a mock test.",
+        "I tracked my progress in a dashboard.",
+        "Eventually, my scores began to improve."
+      ]
+    ];
+
+    const sentenceContainer = document.getElementById("sentenceContainer");
+    const timerEl = document.getElementById("timer").querySelector("span");
+    const scoreEl = document.getElementById("score").querySelector("span");
+    const checkBtn = document.getElementById("checkBtn");
+    const retryBtn = document.getElementById("retryBtn");
+
+    const userLoggedIn = localStorage.getItem("isLoggedIn") === "true";
+    const loggedInUserId = localStorage.getItem("userId");
+
+    let original = [], current = [], dragging = null;
+    let score = 0, timeLeft = 180, timerInterval;
+
+    function shuffle(arr) {
+      return [...arr].sort(() => 0.5 - Math.random());
+    }
+
+    function renderSentences() {
+      sentenceContainer.innerHTML = "";
+      current.forEach((sentence, index) => {
+        const div = document.createElement("div");
+        div.className = "p-2 border rounded-md bg-gray-50 draggable";
+        div.draggable = true;
+        div.textContent = sentence;
+
+        div.addEventListener("dragstart", () => {
+          dragging = div;
+          div.classList.add("dragging");
+        });
+
+        div.addEventListener("dragend", () => {
+          dragging = null;
+          div.classList.remove("dragging");
+        });
+
+        div.addEventListener("dragover", (e) => e.preventDefault());
+
+        div.addEventListener("drop", (e) => {
+          e.preventDefault();
+          if (!dragging || dragging === div) return;
+          const children = Array.from(sentenceContainer.children);
+          const draggedIndex = children.indexOf(dragging);
+          const droppedIndex = children.indexOf(div);
+          [current[draggedIndex], current[droppedIndex]] = [current[droppedIndex], current[draggedIndex]];
+          renderSentences();
+        });
+
+        sentenceContainer.appendChild(div);
+      });
+    }
+
+    function loadQuestion() {
+      const question = questions[Math.floor(Math.random() * questions.length)];
+      original = [...question];
+      current = shuffle(question);
+      renderSentences();
+    }
+
+    function checkOrder() {
+      let isCorrect = true;
+      Array.from(sentenceContainer.children).forEach((div, i) => {
+        div.classList.remove("correct", "wrong");
+        if (current[i] === original[i]) {
+          div.classList.add("correct");
+        } else {
+          div.classList.add("wrong");
+          isCorrect = false;
+        }
+      });
+
+      if (isCorrect) {
+        score++;
+        scoreEl.textContent = score;
+        setTimeout(loadQuestion, 1000);
+      }
+    }
+
+    function startTimer() {
+      clearInterval(timerInterval);
+      timerInterval = setInterval(() => {
+        timeLeft--;
+        timerEl.textContent = `${timeLeft}s`;
+        if (timeLeft <= 0) endGame();
+      }, 1000);
+    }
+
+    function endGame() {
+      clearInterval(timerInterval);
+      sentenceContainer.innerHTML = `<p class="text-base text-gray-700">Time's up! Final score: ${score}</p>`;
+      retryBtn.classList.remove("hidden");
+
+      if (userLoggedIn && loggedInUserId) {
+        fetch("/api/brain-games/update-score", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ userId: loggedInUserId, gameId: "paragraph-jumblers", score })
+        })
+        .then(res => res.json())
+        .then(data => {
+          if (data.success) {
+            console.log("✅ Score saved to backend:", data.bestScore);
+          } else {
+            console.error("❌ Score save failed:", data.message);
+          }
+        })
+        .catch(err => console.error("❌ Network error:", err));
+      }
+    }
+
+    function startGame() {
+      score = 0;
+      timeLeft = 180;
+      scoreEl.textContent = 0;
+      timerEl.textContent = "180s";
+      retryBtn.classList.add("hidden");
+      loadQuestion();
+      startTimer();
+    }
+
+    checkBtn.addEventListener("click", checkOrder);
+    retryBtn.addEventListener("click", startGame);
+    window.onload = startGame;
+  </script>
+</body>
+</html>

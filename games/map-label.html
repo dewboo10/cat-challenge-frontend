@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Map Label Tap – BrainGames | Exam Prep</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    .flash-green { background-color: #dcfce7 !important; border-color: #16a34a !important; }
+    .flash-red { background-color: #fee2e2 !important; border-color: #dc2626 !important; }
+  </style>
+</head>
+<body class="bg-white min-h-screen flex items-center justify-center text-gray-800">
+  <div class="w-full max-w-lg p-6 bg-white shadow-xl rounded-2xl border border-blue-200 text-center">
+    <h1 class="text-2xl font-bold text-blue-700 mb-4">🌐 Map Label Tap</h1>
+
+    <div class="mb-4 text-sm text-gray-500 flex justify-between">
+      <p>⏱ Time Left: <span id="timer" class="font-semibold">180s</span></p>
+      <p>🏆 Score: <span id="score" class="font-semibold">0</span></p>
+    </div>
+
+    <div id="question" class="text-lg font-medium mb-4">Loading...</div>
+    <div id="options" class="space-y-3 mb-4"></div>
+
+    <button id="retryBtn"
+      class="w-full bg-green-600 hover:bg-green-700 text-white py-2 rounded-md font-medium hidden">
+      Retry
+    </button>
+  </div>
+
+  <script>
+    const countries = [
+      { question: "Which country is directly north of India?", answer: "China", options: ["Nepal", "Pakistan", "China", "Bangladesh"] },
+      { question: "Which country shares the longest border with the USA?", answer: "Canada", options: ["Mexico", "Canada", "Russia", "UK"] },
+      { question: "Where is the Eiffel Tower located?", answer: "France", options: ["Germany", "France", "Italy", "Spain"] },
+      { question: "Which country is a continent and a country?", answer: "Australia", options: ["India", "South Africa", "Australia", "Brazil"] },
+      { question: "Where is the Great Wall located?", answer: "China", options: ["Mongolia", "China", "Thailand", "Japan"] }
+    ];
+
+    let score = 0;
+    let timeLeft = 180;
+    let current = {};
+    let timerInterval;
+
+    const timerEl = document.getElementById("timer");
+    const scoreEl = document.getElementById("score");
+    const questionEl = document.getElementById("question");
+    const optionsEl = document.getElementById("options");
+    const retryBtn = document.getElementById("retryBtn");
+
+    const userLoggedIn = localStorage.getItem("isLoggedIn") === "true";
+    const loggedInUserId = localStorage.getItem("userId");
+
+    function shuffle(arr) {
+      return arr.sort(() => 0.5 - Math.random());
+    }
+
+    function loadQuestion() {
+      current = countries[Math.floor(Math.random() * countries.length)];
+      questionEl.textContent = current.question;
+      optionsEl.innerHTML = "";
+
+      shuffle(current.options).forEach(option => {
+        const btn = document.createElement("button");
+        btn.className = "w-full border text-left px-4 py-2 rounded-md bg-gray-50 hover:bg-blue-100 transition";
+        btn.textContent = option;
+        btn.onclick = () => checkAnswer(option, btn);
+        optionsEl.appendChild(btn);
+      });
+    }
+
+    function checkAnswer(selected, btn) {
+      const isCorrect = selected === current.answer;
+      if (isCorrect) {
+        score++;
+        scoreEl.textContent = score;
+        btn.classList.add("flash-green");
+      } else {
+        btn.classList.add("flash-red");
+      }
+
+      Array.from(optionsEl.children).forEach(b => b.disabled = true);
+      setTimeout(() => loadQuestion(), 800);
+    }
+
+    function startTimer() {
+      clearInterval(timerInterval);
+      timerInterval = setInterval(() => {
+        timeLeft--;
+        timerEl.textContent = `${timeLeft}s`;
+        if (timeLeft <= 0) endGame();
+      }, 1000);
+    }
+
+    function startGame() {
+      score = 0;
+      timeLeft = 180;
+      scoreEl.textContent = 0;
+      timerEl.textContent = "180s";
+      retryBtn.classList.add("hidden");
+      loadQuestion();
+      startTimer();
+    }
+
+    function endGame() {
+      clearInterval(timerInterval);
+      questionEl.textContent = `Time's up! Final score: ${score}`;
+      optionsEl.innerHTML = "";
+      retryBtn.classList.remove("hidden");
+
+      // Backend score saving if logged in
+      if (userLoggedIn && loggedInUserId) {
+        fetch("/api/brain-games/update-score", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            userId: loggedInUserId,
+            gameId: "map-label-tap",
+            score: score
+          })
+        })
+        .then(res => res.json())
+        .then(data => {
+          if (data.success) {
+            console.log("✅ Score saved:", data.bestScore);
+          } else {
+            console.error("❌ Error saving score:", data.message);
+          }
+        })
+        .catch(err => console.error("❌ Network error:", err));
+      }
+    }
+
+    retryBtn.addEventListener("click", startGame);
+    window.onload = startGame;
+  </script>
+</body>
+</html>

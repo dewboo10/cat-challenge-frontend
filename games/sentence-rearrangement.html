@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Sentence Rearrangement – BrainGames | Exam Prep</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    .draggable { cursor: grab; }
+    .dragging { opacity: 0.5; }
+  </style>
+</head>
+<body class="bg-white text-gray-800 min-h-screen">
+  <header class="p-4 border-b border-blue-200 bg-white flex justify-between items-center">
+    <h1 class="text-xl font-bold text-blue-600">✍️ Sentence Rearrangement</h1>
+    <button onclick="goBack()" class="text-sm text-blue-500 underline">Back</button>
+  </header>
+
+  <main class="p-6 max-w-3xl mx-auto text-center space-y-4">
+    <div class="text-sm text-gray-600 flex justify-between">
+      <span>⏱ Time Left: <span id="timer" class="font-semibold">180s</span></span>
+      <span>🏆 Score: <span id="score" class="font-semibold">0</span></span>
+    </div>
+
+    <p class="text-gray-700">Drag and drop the parts to form a meaningful sentence:</p>
+
+    <div id="sentence-container" class="flex flex-wrap gap-2 justify-center mb-4"></div>
+
+    <div class="space-x-3">
+      <button onclick="checkSentence()" id="check-btn" class="bg-blue-600 text-white px-4 py-2 rounded font-semibold">Check</button>
+      <button onclick="nextSentence()" id="next-btn" class="bg-green-600 text-white px-4 py-2 rounded font-semibold hidden">Next</button>
+      <button onclick="startGame()" id="retryBtn" class="bg-indigo-600 text-white px-4 py-2 rounded font-semibold hidden">Retry</button>
+    </div>
+
+    <div id="feedback" class="text-center text-lg font-semibold hidden"></div>
+  </main>
+
+  <script>
+    const sentenceBank = [
+      ["Success", "comes", "to", "those", "who", "work", "hard."],
+      ["Knowledge", "is", "power", "in", "today's", "world."],
+      ["Practice", "makes", "a", "man", "perfect."],
+      ["Reading", "books", "expands", "your", "mind."],
+      ["Discipline", "is", "the", "key", "to", "success."]
+    ];
+
+    let currentIndex = 0;
+    let correctOrder = [];
+    let shuffledWords = [];
+    let score = 0;
+    let timeLeft = 180;
+    let timerInterval;
+
+    const container = document.getElementById('sentence-container');
+    const feedback = document.getElementById('feedback');
+    const checkBtn = document.getElementById('check-btn');
+    const nextBtn = document.getElementById('next-btn');
+    const retryBtn = document.getElementById('retryBtn');
+    const scoreEl = document.getElementById('score');
+    const timerEl = document.getElementById('timer');
+
+    const userLoggedIn = localStorage.getItem("isLoggedIn") === "true";
+    const loggedInUserId = localStorage.getItem("userId");
+
+    function shuffle(arr) {
+      return [...arr].sort(() => 0.5 - Math.random());
+    }
+
+    function renderSentence() {
+      container.innerHTML = '';
+      shuffledWords.forEach(word => {
+        const span = document.createElement('span');
+        span.textContent = word;
+        span.draggable = true;
+        span.className = 'bg-blue-100 px-3 py-1 rounded cursor-move draggable';
+
+        span.addEventListener('dragstart', e => {
+          e.dataTransfer.setData('text/plain', e.target.textContent);
+          span.classList.add('opacity-50');
+        });
+
+        span.addEventListener('dragend', () => span.classList.remove('opacity-50'));
+        span.addEventListener('dragover', e => e.preventDefault());
+
+        span.addEventListener('drop', e => {
+          e.preventDefault();
+          const fromWord = e.dataTransfer.getData('text/plain');
+          const toWord = span.textContent;
+          const fromIndex = shuffledWords.indexOf(fromWord);
+          const toIndex = shuffledWords.indexOf(toWord);
+          if (fromIndex > -1 && toIndex > -1) {
+            [shuffledWords[fromIndex], shuffledWords[toIndex]] = [shuffledWords[toIndex], shuffledWords[fromIndex]];
+            renderSentence();
+          }
+        });
+
+        container.appendChild(span);
+      });
+    }
+
+    function loadSentence() {
+      feedback.classList.add('hidden');
+      nextBtn.classList.add('hidden');
+      checkBtn.classList.remove('hidden');
+
+      correctOrder = sentenceBank[currentIndex];
+      shuffledWords = shuffle(correctOrder);
+      renderSentence();
+    }
+
+    function checkSentence() {
+      const correct = correctOrder.join(' ');
+      const attempt = shuffledWords.join(' ');
+      if (attempt === correct) {
+        score++;
+        scoreEl.textContent = score;
+        feedback.textContent = "✅ Correct!";
+        feedback.className = "text-green-600 font-semibold text-lg";
+        nextBtn.classList.remove('hidden');
+        checkBtn.classList.add('hidden');
+      } else {
+        feedback.textContent = "❌ Incorrect. Try again!";
+        feedback.className = "text-red-600 font-semibold text-lg";
+      }
+      feedback.classList.remove('hidden');
+    }
+
+    function nextSentence() {
+      currentIndex = (currentIndex + 1) % sentenceBank.length;
+      loadSentence();
+    }
+
+    function startTimer() {
+      clearInterval(timerInterval);
+      timerInterval = setInterval(() => {
+        timeLeft--;
+        timerEl.textContent = `${timeLeft}s`;
+        if (timeLeft <= 0) endGame();
+      }, 1000);
+    }
+
+    function startGame() {
+      score = 0;
+      timeLeft = 180;
+      currentIndex = 0;
+      scoreEl.textContent = 0;
+      timerEl.textContent = "180s";
+      retryBtn.classList.add("hidden");
+      loadSentence();
+      startTimer();
+    }
+
+    function endGame() {
+      clearInterval(timerInterval);
+      container.innerHTML = `<p class="text-base text-gray-700">Time's up! Final score: ${score}</p>`;
+      checkBtn.classList.add('hidden');
+      nextBtn.classList.add('hidden');
+      retryBtn.classList.remove('hidden');
+
+      if (userLoggedIn && loggedInUserId) {
+        fetch("/api/brain-games/update-score", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            userId: loggedInUserId,
+            gameId: "sentence-rearrangement",
+            score: score,
+            timestamp: new Date().toISOString()
+          })
+        }).then(res => console.log("Score synced"))
+          .catch(err => console.error("Sync failed", err));
+      }
+    }
+
+    function goBack() {
+      window.location.href = "../braingames.html";
+    }
+
+    // Start on load
+    window.onload = startGame;
+  </script>
+</body>
+</html>

@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Antonym Slam – BrainGames | Exam Prep</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    .flash-red { background-color: #fee2e2 !important; border-color: #dc2626 !important; }
+    .flash-green { background-color: #dcfce7 !important; border-color: #16a34a !important; }
+  </style>
+</head>
+<body class="bg-white min-h-screen flex items-center justify-center text-gray-800">
+  <div class="w-full max-w-md p-6 bg-white shadow-xl rounded-2xl border border-blue-200 text-center">
+    <h1 class="text-2xl font-bold text-blue-700 mb-4">🧠 Antonym Slam</h1>
+    <p id="timer" class="text-sm text-gray-500 mb-1">Time Left: <span class="font-semibold">180s</span></p>
+    <p id="score" class="text-sm text-gray-500 mb-4">Score: <span class="font-semibold">0</span></p>
+    <div id="question" class="text-lg font-semibold mb-4">Loading...</div>
+    <input type="text" id="answerInput" placeholder="Type antonym here"
+      class="w-full p-2 border border-gray-300 rounded-md text-center mb-4 transition" />
+    <button id="submitBtn" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-md font-medium">Submit</button>
+    <button id="retryBtn" class="w-full bg-green-600 hover:bg-green-700 text-white py-2 rounded-md font-medium mt-4 hidden">Retry</button>
+  </div>
+
+  <script>
+    const antonymPairs = [
+      { word: "happy", antonym: "sad" },
+      { word: "increase", antonym: "decrease" },
+      { word: "strong", antonym: "weak" },
+      { word: "begin", antonym: "end" },
+      { word: "above", antonym: "below" },
+      { word: "empty", antonym: "full" },
+      { word: "soft", antonym: "hard" },
+      { word: "win", antonym: "lose" },
+      { word: "fast", antonym: "slow" },
+    ];
+
+    let score = 0;
+    let timeLeft = 180;
+    let correctAnswer = '';
+    let timerInterval = null;
+
+    const timerEl = document.getElementById('timer').querySelector('span');
+    const scoreEl = document.getElementById('score').querySelector('span');
+    const questionEl = document.getElementById('question');
+    const answerInput = document.getElementById('answerInput');
+    const submitBtn = document.getElementById('submitBtn');
+    const retryBtn = document.getElementById('retryBtn');
+
+    const userLoggedIn = localStorage.getItem("isLoggedIn") === "true";
+    const loggedInUserId = localStorage.getItem("userId");
+
+    function generateQuestion() {
+      const q = antonymPairs[Math.floor(Math.random() * antonymPairs.length)];
+      correctAnswer = q.antonym.toLowerCase();
+      questionEl.textContent = `What's the antonym of "${q.word}"?`;
+    }
+
+    function flash(type) {
+      answerInput.classList.add(type === 'correct' ? 'flash-green' : 'flash-red');
+      setTimeout(() => {
+        answerInput.classList.remove('flash-green', 'flash-red');
+      }, 400);
+    }
+
+    function checkAnswer() {
+      const userAnswer = answerInput.value.trim().toLowerCase();
+      if (userAnswer === correctAnswer) {
+        score++;
+        scoreEl.textContent = score;
+        flash('correct');
+      } else {
+        flash('wrong');
+      }
+      answerInput.value = '';
+      generateQuestion();
+    }
+
+    function startTimer() {
+      timerInterval = setInterval(() => {
+        timeLeft--;
+        timerEl.textContent = `${timeLeft}s`;
+        if (timeLeft <= 0) endGame();
+      }, 1000);
+    }
+
+    function startGame() {
+      score = 0;
+      timeLeft = 180;
+      scoreEl.textContent = 0;
+      timerEl.textContent = `180s`;
+      retryBtn.classList.add('hidden');
+      answerInput.disabled = false;
+      submitBtn.disabled = false;
+      answerInput.focus();
+      generateQuestion();
+      clearInterval(timerInterval);
+      startTimer();
+    }
+
+    function endGame() {
+      clearInterval(timerInterval);
+      questionEl.textContent = `Time's up! You scored ${score}`;
+      answerInput.disabled = true;
+      submitBtn.disabled = true;
+      retryBtn.classList.remove('hidden');
+
+      // 🔐 Save score if user is logged in
+      if (userLoggedIn && loggedInUserId) {
+        fetch("/api/brain-games/update-score", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            userId: loggedInUserId,
+            gameId: "antonym-slam",
+            score: score
+          })
+        })
+        .then(res => res.json())
+        .then(data => {
+          if (data.success) {
+            console.log("✅ Score saved to backend:", data.bestScore);
+          } else {
+            console.error("❌ Score save failed:", data.message);
+          }
+        })
+        .catch(err => console.error("❌ Network error saving score:", err));
+      }
+    }
+
+    submitBtn.addEventListener('click', checkAnswer);
+    retryBtn.addEventListener('click', startGame);
+    answerInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') checkAnswer();
+    });
+
+    window.onload = startGame;
+  </script>
+</body>
+</html>

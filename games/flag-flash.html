@@ -1,0 +1,114 @@
+<!-- games/flag-flash.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🌍 Flag Flash</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-white text-black min-h-screen">
+  <header class="p-4 border-b border-blue-200 bg-white flex justify-between items-center">
+    <h1 class="text-xl font-bold text-blue-600">🌍 Flag Flash</h1>
+    <button onclick="goBack()" class="text-sm text-blue-500 underline">Back</button>
+  </header>
+
+  <main class="p-6 max-w-xl mx-auto text-center space-y-6">
+    <p class="text-sm text-gray-600">Guess the correct country for the flag shown!</p>
+
+    <div id="flag-container" class="w-48 h-32 mx-auto border"></div>
+    <div id="choices" class="grid grid-cols-2 gap-4"></div>
+
+    <div id="feedback" class="text-center text-lg font-semibold hidden"></div>
+    <div class="text-center">
+      <button onclick="nextFlag()" id="next-btn" class="bg-green-600 text-white px-4 py-2 rounded font-semibold hidden">Next</button>
+    </div>
+
+    <p class="text-sm text-gray-500">Score: <span id="score">0</span></p>
+  </main>
+
+  <script>
+    const flags = [
+      { country: "India", url: "https://flagcdn.com/w320/in.png" },
+      { country: "USA", url: "https://flagcdn.com/w320/us.png" },
+      { country: "Germany", url: "https://flagcdn.com/w320/de.png" },
+      { country: "Japan", url: "https://flagcdn.com/w320/jp.png" },
+      { country: "Brazil", url: "https://flagcdn.com/w320/br.png" }
+    ];
+
+    const userLoggedIn = localStorage.getItem("isLoggedIn") === "true";
+    const loggedInUserId = localStorage.getItem("userId");
+
+    let currentIndex = 0;
+    let score = 0;
+
+    function loadFlag() {
+      const flagData = flags[currentIndex];
+      document.getElementById("flag-container").innerHTML = `<img src="${flagData.url}" alt="Flag" class="w-full h-full object-cover">`;
+
+      const allOptions = flags.map(f => f.country);
+      const choices = [flagData.country];
+      while (choices.length < 4) {
+        const random = allOptions[Math.floor(Math.random() * allOptions.length)];
+        if (!choices.includes(random)) choices.push(random);
+      }
+
+      choices.sort(() => Math.random() - 0.5);
+      const choiceContainer = document.getElementById("choices");
+      choiceContainer.innerHTML = "";
+      document.getElementById("feedback").classList.add("hidden");
+      document.getElementById("next-btn").classList.add("hidden");
+
+      choices.forEach(choice => {
+        const btn = document.createElement("button");
+        btn.textContent = choice;
+        btn.className = "bg-blue-100 hover:bg-blue-200 text-blue-700 font-medium px-4 py-2 rounded";
+        btn.onclick = () => handleAnswer(choice === flagData.country);
+        choiceContainer.appendChild(btn);
+      });
+    }
+
+    function handleAnswer(correct) {
+      const feedback = document.getElementById("feedback");
+      feedback.textContent = correct ? '✅ Correct!' : '❌ Incorrect';
+      feedback.className = `text-center text-lg font-semibold ${correct ? 'text-green-600' : 'text-red-600'}`;
+      feedback.classList.remove("hidden");
+      if (correct) {
+        score++;
+        document.getElementById("score").textContent = score;
+        document.getElementById("next-btn").classList.remove("hidden");
+      } else {
+        if (userLoggedIn && loggedInUserId) {
+          fetch("/api/brain-games/update-score", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              userId: loggedInUserId,
+              gameId: "flag-flash",
+              score: score
+            })
+          })
+          .then(res => res.json())
+          .then(data => {
+            if (data.success) {
+              console.log("✅ Score saved to backend:", data.bestScore);
+            }
+          })
+          .catch(err => console.error("❌ Network error:", err));
+        }
+      }
+    }
+
+    function nextFlag() {
+      currentIndex = (currentIndex + 1) % flags.length;
+      loadFlag();
+    }
+
+    function goBack() {
+      window.location.href = '../braingames.html';
+    }
+
+    loadFlag();
+  </script>
+</body>
+</html>

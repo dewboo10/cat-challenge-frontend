@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Find the Main Idea – BrainGames | Exam Prep</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    .flash-green { background-color: #dcfce7 !important; border-color: #16a34a !important; }
+    .flash-red { background-color: #fee2e2 !important; border-color: #dc2626 !important; }
+  </style>
+</head>
+<body class="bg-white min-h-screen flex items-center justify-center text-gray-800">
+  <div class="w-full max-w-lg p-6 bg-white shadow-xl rounded-2xl border border-blue-200 text-center">
+    <h1 class="text-2xl font-bold text-blue-700 mb-4">🔍 Find the Main Idea</h1>
+
+    <div class="mb-4 text-sm text-gray-500">
+      <p id="timer">Time Left: <span class="font-semibold">180s</span></p>
+      <p id="score">Score: <span class="font-semibold">0</span></p>
+    </div>
+
+    <div id="passage" class="text-left text-sm bg-blue-50 p-3 rounded border border-blue-200 mb-4 max-h-44 overflow-y-auto">
+      Loading passage...
+    </div>
+
+    <div id="options" class="space-y-3 mb-4"></div>
+
+    <button id="retryBtn"
+      class="w-full bg-green-600 hover:bg-green-700 text-white py-2 rounded-md font-medium hidden">
+      Retry
+    </button>
+  </div>
+
+  <script>
+    const questions = [
+      {
+        passage: `Social media platforms have revolutionized how people communicate and share information. While they offer many advantages such as real-time updates and global connectivity, they also raise concerns over privacy, misinformation, and mental health.`,
+        options: [
+          "Social media helps people make more money.",
+          "Social media can harm your eyesight.",
+          "Social media is changing communication, with both pros and cons.",
+          "Social media should be banned by governments."
+        ],
+        answer: "Social media is changing communication, with both pros and cons."
+      },
+      {
+        passage: `Recycling helps reduce waste, conserve natural resources, and decrease pollution. By reusing materials like paper, plastic, and glass, communities can minimize landfill use and preserve the environment for future generations.`,
+        options: [
+          "Recycling is too expensive to implement.",
+          "Recycling benefits the environment and reduces waste.",
+          "Only paper can be recycled effectively.",
+          "Recycling is popular only in big cities."
+        ],
+        answer: "Recycling benefits the environment and reduces waste."
+      },
+      {
+        passage: `Electric vehicles are gaining popularity due to their environmental benefits. They produce fewer emissions than gas-powered cars and offer long-term savings. However, challenges such as battery range and charging infrastructure remain.`,
+        options: [
+          "Electric vehicles are slower than petrol cars.",
+          "Electric vehicles are better for the environment but face challenges.",
+          "Electric vehicles cause air pollution.",
+          "Electric vehicles are only useful in winter."
+        ],
+        answer: "Electric vehicles are better for the environment but face challenges."
+      }
+    ];
+
+    let score = 0;
+    let timeLeft = 180;
+    let currentQuestion = {};
+    let timerInterval;
+
+    const timerEl = document.getElementById("timer").querySelector("span");
+    const scoreEl = document.getElementById("score").querySelector("span");
+    const passageEl = document.getElementById("passage");
+    const optionsEl = document.getElementById("options");
+    const retryBtn = document.getElementById("retryBtn");
+    const userLoggedIn = localStorage.getItem("isLoggedIn") === "true";
+    const loggedInUserId = localStorage.getItem("userId");
+
+    function shuffle(arr) {
+      return arr.sort(() => 0.5 - Math.random());
+    }
+
+    function loadQuestion() {
+      currentQuestion = questions[Math.floor(Math.random() * questions.length)];
+      passageEl.textContent = currentQuestion.passage;
+      optionsEl.innerHTML = "";
+
+      shuffle(currentQuestion.options).forEach(option => {
+        const btn = document.createElement("button");
+        btn.className = "w-full border text-left px-4 py-2 rounded-md bg-gray-50 hover:bg-blue-100 transition";
+        btn.textContent = option;
+        btn.onclick = () => checkAnswer(option, btn);
+        optionsEl.appendChild(btn);
+      });
+    }
+
+    function checkAnswer(selected, btn) {
+      const isCorrect = selected === currentQuestion.answer;
+      if (isCorrect) {
+        score++;
+        scoreEl.textContent = score;
+        btn.classList.add("flash-green");
+      } else {
+        btn.classList.add("flash-red");
+      }
+
+      Array.from(optionsEl.children).forEach(b => b.disabled = true);
+      setTimeout(() => {
+        loadQuestion();
+      }, 800);
+    }
+
+    function startTimer() {
+      timerInterval = setInterval(() => {
+        timeLeft--;
+        timerEl.textContent = `${timeLeft}s`;
+        if (timeLeft <= 0) endGame();
+      }, 1000);
+    }
+
+    function startGame() {
+      score = 0;
+      timeLeft = 180;
+      scoreEl.textContent = 0;
+      timerEl.textContent = "180s";
+      retryBtn.classList.add("hidden");
+      clearInterval(timerInterval);
+      loadQuestion();
+      startTimer();
+    }
+
+    function endGame() {
+      clearInterval(timerInterval);
+      passageEl.textContent = `Time's up! You scored ${score}`;
+      optionsEl.innerHTML = "";
+      retryBtn.classList.remove("hidden");
+
+      if (userLoggedIn && loggedInUserId) {
+        fetch("/api/brain-games/update-score", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            userId: loggedInUserId,
+            gameId: "find-main-idea",
+            score: score
+          })
+        })
+        .then(res => res.json())
+        .then(data => {
+          if (data.success) {
+            console.log("✅ Score saved to backend:", data.bestScore);
+          } else {
+            console.error("❌ Score save failed:", data.message);
+          }
+        })
+        .catch(err => console.error("❌ Network error:", err));
+      }
+    }
+
+    retryBtn.addEventListener("click", startGame);
+    window.onload = startGame;
+  </script>
+</body>
+</html>

@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Graph Memory Snap – BrainGames | Exam Prep</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    .flash-green { background-color: #dcfce7 !important; border-color: #16a34a !important; }
+    .flash-red { background-color: #fee2e2 !important; border-color: #dc2626 !important; }
+  </style>
+</head>
+<body class="bg-white min-h-screen flex items-center justify-center text-gray-800">
+  <div class="w-full max-w-lg p-6 bg-white shadow-xl rounded-2xl border border-blue-200 text-center">
+    <h1 class="text-2xl font-bold text-blue-700 mb-4">📊 Graph Memory Snap</h1>
+
+    <div class="mb-4 text-sm text-gray-500">
+      <p id="timer">Time Left: <span class="font-semibold">180s</span></p>
+      <p id="score">Score: <span class="font-semibold">0</span></p>
+    </div>
+
+    <div id="graphBox" class="bg-blue-50 p-3 border border-blue-200 rounded text-left text-sm mb-4 h-24 overflow-y-auto">
+      Loading graph description...
+    </div>
+
+    <div id="question" class="text-base font-medium mb-2"></div>
+    <div id="options" class="space-y-2 mb-4"></div>
+
+    <button id="retryBtn"
+      class="w-full bg-green-600 hover:bg-green-700 text-white py-2 rounded-md font-medium hidden">
+      Retry
+    </button>
+  </div>
+
+  <script>
+    const data = [
+      {
+        description: "A bar graph shows sales from Jan to June. Sales peak in April with 800 units, then drop to 400 in June.",
+        question: "When were the highest sales recorded?",
+        answer: "April",
+        options: ["January", "March", "April", "June"]
+      },
+      {
+        description: "A line graph shows website traffic. It starts at 200, rises to 900 in Week 2, dips in Week 3, and ends at 600.",
+        question: "What was the traffic in Week 2?",
+        answer: "900",
+        options: ["200", "600", "900", "500"]
+      },
+      {
+        description: "A pie chart divides expenses: Rent (40%), Food (25%), Transport (20%), Others (15%).",
+        question: "Which category has the second highest percentage?",
+        answer: "Food",
+        options: ["Others", "Rent", "Food", "Transport"]
+      }
+    ];
+
+    const userLoggedIn = localStorage.getItem("isLoggedIn") === "true";
+    const loggedInUserId = localStorage.getItem("userId");
+
+    let current = {};
+    let score = 0;
+    let timeLeft = 180;
+    let timerInterval;
+
+    const graphBox = document.getElementById("graphBox");
+    const questionEl = document.getElementById("question");
+    const optionsEl = document.getElementById("options");
+    const scoreEl = document.getElementById("score").querySelector("span");
+    const timerEl = document.getElementById("timer").querySelector("span");
+    const retryBtn = document.getElementById("retryBtn");
+
+    function shuffle(arr) {
+      return arr.sort(() => 0.5 - Math.random());
+    }
+
+    function loadGraphQuestion() {
+      current = data[Math.floor(Math.random() * data.length)];
+      graphBox.textContent = current.description;
+      questionEl.textContent = current.question;
+      optionsEl.innerHTML = "";
+
+      shuffle(current.options).forEach(opt => {
+        const btn = document.createElement("button");
+        btn.className = "w-full border text-left px-4 py-2 rounded-md bg-gray-50 hover:bg-blue-100 transition";
+        btn.textContent = opt;
+        btn.onclick = () => checkAnswer(opt, btn);
+        optionsEl.appendChild(btn);
+      });
+    }
+
+    function checkAnswer(selected, btn) {
+      if (selected === current.answer) {
+        score++;
+        scoreEl.textContent = score;
+        btn.classList.add("flash-green");
+      } else {
+        btn.classList.add("flash-red");
+      }
+
+      Array.from(optionsEl.children).forEach(b => b.disabled = true);
+      setTimeout(loadGraphQuestion, 800);
+    }
+
+    function startTimer() {
+      timerInterval = setInterval(() => {
+        timeLeft--;
+        timerEl.textContent = `${timeLeft}s`;
+        if (timeLeft <= 0) endGame();
+      }, 1000);
+    }
+
+    function startGame() {
+      score = 0;
+      timeLeft = 180;
+      scoreEl.textContent = 0;
+      timerEl.textContent = "180s";
+      retryBtn.classList.add("hidden");
+      clearInterval(timerInterval);
+      loadGraphQuestion();
+      startTimer();
+    }
+
+    function endGame() {
+      clearInterval(timerInterval);
+      graphBox.textContent = `Time's up! Final score: ${score}`;
+      questionEl.textContent = "";
+      optionsEl.innerHTML = "";
+      retryBtn.classList.remove("hidden");
+
+      if (userLoggedIn && loggedInUserId) {
+        fetch("/api/brain-games/update-score", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            userId: loggedInUserId,
+            gameId: "graph-memory-snap",
+            score: score
+          })
+        })
+        .then(res => res.json())
+        .then(data => {
+          if (data.success) {
+            console.log("✅ Score saved to backend:", data.bestScore);
+          } else {
+            console.error("❌ Score save failed:", data.message);
+          }
+        })
+        .catch(err => console.error("❌ Network error:", err));
+      }
+    }
+
+    retryBtn.addEventListener("click", startGame);
+    window.onload = startGame;
+  </script>
+</body>
+</html>

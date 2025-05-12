@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BrainGames | Ultimate Prep</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gradient-to-br from-blue-50 to-white text-black">
+  <header class="p-4 border-b border-blue-100 flex justify-between items-center bg-white shadow-sm">
+    <h1 class="text-xl font-bold text-blue-600">🧠 BrainGames</h1>
+    <button onclick="goToDashboard()" class="text-sm text-blue-500 rounded p-2 hover:bg-blue-100">Back to Dashboard</button>
+  </header>
+
+  <main class="p-6 space-y-10">
+    <!-- Game Zone -->
+    <section>
+      <h2 class="text-lg font-semibold text-blue-700 mb-4">🎮 Interactive Games</h2>
+      <div class="p-4 bg-blue-100/40 border border-blue-300 rounded-xl shadow-inner" >
+        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+          <a href="games/square-bubble.html" class="game-card">🔢 Square Bubble Pop</a>
+          <a href="games/sentence-rearrangement.html" class="game-card">✍️ Sentence Rearrangement</a>
+          <a href="games/rapid-tables.html" class="game-card">⚡ Rapid Tables Blitz</a>
+          <a href="games/ratio-race.html" class="game-card">📊 Ratio Race</a>
+          <a href="games/root-bubble.html" class="game-card">📐 Root Bubble Pop</a>
+          <a href="games/mental-math.html" class="game-card">⚡ Mental Math Rush</a>
+          <a href="games/color-memory.html" class="game-card">🎨 Color Memory</a>
+          <a href="games/find-main-idea.html" class="game-card">🔍 Find the Main Idea</a>
+          <a href="games/synonym-shooter.html" class="game-card">🎯 Synonym Shooter</a>
+          <a href="games/antonym-slam.html" class="game-card">🧠 Antonym Slam</a>
+          <a href="games/paragraph-jumblers.html" class="game-card">🧩 Paragraph Jumblers</a>
+          <a href="games/history-match.html" class="game-card">🏛️ History Match-Up</a>
+          <a href="games/map-label.html" class="game-card">🌐 Map Label Tap</a>
+          <a href="games/flag-flash.html" class="game-card">🌍 Flag Flash Memory</a>
+          <a href="games/logic-chain.html" class="game-card">🧠 Logic Chain Puzzle</a>
+          <a href="games/graph-memory-snap.html" class="game-card">📉 Graph Memory Snap</a>
+          <a href="games/vocabulary-time-trial.html" class="game-card">🔠 Vocabulary Time Trial</a>
+          <a href="games/mental-math-match.html" class="game-card">🧮 Mental Math Match</a>
+          <a href="games/equation-balancer.html" class="game-card">🟰 Equation Balancer</a>
+          <a href="games/pattern-predictor.html" class="game-card">🔢 Pattern Predictor</a>
+          <a href="games/blood-relation.html" class="game-card">👪 Blood Relation Puzzle</a>
+          <a href="games/syllogism-simulator.html" class="game-card">🔄 Syllogism Simulator</a>
+          <a href="games/odd-one-out.html" class="game-card">❓ Odd One Out</a>
+          <a href="games/seating-arrangement.html" class="game-card">🪑 Seating Arrangement</a>
+          <a href="games/direction-sense.html" class="game-card">🧭 Direction Sense Trainer</a>
+          <a href="games/coding-decoding.html" class="game-card">🔤 Coding-Decoding</a>
+          <a href="games/input-output-machine.html" class="game-card">⚙️ Input-Output Machine</a>
+          <a href="games/letter-series.html" class="game-card">🔡 Letter Series Cracker</a>
+        </div>
+      </div>
+    </section>
+
+    <!-- Practice by Subject -->
+    <section>
+      <h2 class="text-lg font-semibold text-blue-700 mb-4">📘 Topic-wise Practice</h2>
+      <div class="p-4 bg-blue-100/40 border border-blue-300 rounded-xl shadow-inner">
+        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+          <a href="topics/quant.html" class="subject-card">📐 Quant</a>
+          <a href="topics/varc.html" class="subject-card">📖 VARC</a>
+          <a href="topics/lrdi.html" class="subject-card">🧩 LRDI</a>
+          <a href="topics/gk.html" class="subject-card">🌍 GK</a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <style>
+    .game-card, .subject-card {
+      @apply bg-white text-blue-900 border border-blue-100 font-medium text-center py-4 px-3 rounded-xl shadow hover:bg-blue-200 hover:text-blue-900 hover:scale-[1.02] transition-all duration-200;
+    }
+  </style>
+
+  <script>
+    function goToDashboard() {
+      window.location.href = "dashboard.html";
+    }
+  </script>
+</body>
+</html>
