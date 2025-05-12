@@ -1,5 +1,3 @@
-// ✅ Updated auth.js — safer OTP sending with debounce and UI feedback
-
 const API_BASE = "https://ultimate-backend-vyse.onrender.com/api/auth";
 
 async function sendOtp() {
@@ -53,7 +51,6 @@ function startOtpTimer() {
   }, 1000);
 }
 
-
 async function verifyOtp() {
   const email = document.getElementById("auth-email").value.trim();
   const otp = document.getElementById("otp-input").value.trim();
@@ -68,8 +65,6 @@ async function verifyOtp() {
   if (data.success) {
     alert("✅ OTP verified!");
     switchStep(3);
-
-    // ✅ Store verified email to use in register step
     document.getElementById("auth-email-hidden").value = email;
   } else {
     alert("❌ " + data.error);
@@ -79,7 +74,7 @@ async function verifyOtp() {
 async function registerUser() {
   const username = document.getElementById("auth-username").value.trim();
   const password = document.getElementById("auth-password").value.trim();
-  const email = document.getElementById("auth-email-hidden").value.trim(); // ✅ Use verified email
+  const email = document.getElementById("auth-email-hidden").value.trim();
 
   if (!username || !password) return alert("Fill in all fields");
 
@@ -93,6 +88,8 @@ async function registerUser() {
   if (data.success) {
     localStorage.setItem("user", JSON.stringify(data.user));
     localStorage.setItem("isPaidUser", data.user.isPremium);
+    localStorage.setItem("isLoggedIn", "true"); // ✅ new
+    localStorage.setItem("username", data.user.username); // ✅ new
     alert(`🎉 Welcome ${data.user.username}`);
     closeAuthModal();
     location.reload();
@@ -117,6 +114,8 @@ async function loginUser() {
   if (data.success) {
     localStorage.setItem("user", JSON.stringify(data.user));
     localStorage.setItem("isPaidUser", data.user.isPremium);
+    localStorage.setItem("isLoggedIn", "true"); // ✅ new
+    localStorage.setItem("username", data.user.username); // ✅ new
     alert(`✅ Welcome ${data.user.username}`);
     closeAuthModal();
     location.reload();
