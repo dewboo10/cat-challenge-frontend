@@ -5,109 +5,215 @@
   <title>Blood Relation – BrainGames</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <script src="https://cdn.tailwindcss.com"></script>
-  <script src="/js/config.js"></script>
-  <script src="components/auth-popup.js"></script>
-  <script src="components/brain-game-utils.js"></script>
+  <style>
+    .correct-answer {
+      animation: correctPulse 0.5s ease-out;
+    }
+    .wrong-answer {
+      animation: wrongShake 0.5s ease-in-out;
+    }
+    @keyframes correctPulse {
+      0% { background-color: rgb(34 197 94); transform: scale(1); }
+      50% { background-color: rgb(34 197 94); transform: scale(1.05); }
+      100% { background-color: rgb(243 244 246); transform: scale(1); }
+    }
+    @keyframes wrongShake {
+      0% { background-color: rgb(239 68 68); transform: translateX(0); }
+      25% { background-color: rgb(239 68 68); transform: translateX(-5px); }
+      75% { background-color: rgb(239 68 68); transform: translateX(5px); }
+      100% { background-color: rgb(243 244 246); transform: translateX(0); }
+    }
+    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; }
+  </style>
 </head>
 <body class="bg-white text-gray-800 min-h-screen flex items-center justify-center p-4">
-<div class="max-w-2xl w-full bg-white shadow-xl p-6 border border-blue-200 rounded-xl text-center space-y-4 game-container">
+<div class="max-w-2xl w-full bg-white shadow-xl p-6 border border-blue-200 rounded-xl text-center space-y-4">
   <h1 class="text-2xl font-bold text-blue-700">Blood Relation</h1>
-  <p>⏱ Time Left: <span id="timer">90</span>s | 🎯 Score: <span id="score">0</span></p>
+  <p>⏱ Time Left: <span id="timer" class="mono">90</span>s | 🎯 Score: <span id="score" class="mono">0</span></p>
   <p id="question" class="text-2xl font-semibold">Loading...</p>
   <div id="options" class="grid grid-cols-1 sm:grid-cols-2 gap-4"></div>
-  <button id="retryBtn" class="bg-green-600 text-white px-4 py-2 rounded font-semibold hidden">Retry</button>
+  <button id="retryBtn" class="bg-green-600 text-white px-4 py-2 rounded font-semibold hidden hover:bg-green-700 transition-colors">Play Again</button>
 </div>
 
 <script>
-const GAME_ID = 'blood-relation';
+let score = 0;
+let timeLeft = 90;
+let timerInterval;
+let currentQuestion;
+let currentAnswer;
 
-  const questions = [
-    {
-      q: "A is the father of B. B is the sister of C. How is A related to C?",
-      options: ["Father", "Uncle", "Brother", "Cousin"],
-      answer: "Father"
-    },
-    {
-      q: "P is the brother of Q. Q is the daughter of R. How is R related to P?",
-      options: ["Mother", "Father", "Aunt", "Uncle"],
-      answer: "Mother"
-    },
-    {
-      q: "X is the son of Y. Y is the daughter of Z. How is Z related to X?",
-      options: ["Grandfather", "Grandmother", "Mother", "Father"],
-      answer: "Grandmother"
-    },
-    {
-      q: "R is the son of M. M is the brother of T. How is T related to R?",
-      options: ["Aunt", "Uncle", "Brother", "Father"],
-      answer: "Aunt"
-    },
-    {
-      q: "T is the daughter of P. P is the son of Q. How is Q related to T?",
-      options: ["Grandmother", "Father", "Grandfather", "Uncle"],
-      answer: "Grandfather"
-    }
-  ];
+const questions = [
+  {
+    q: "A is the father of B. B is the sister of C. How is A related to C?",
+    options: ["Father", "Uncle", "Brother", "Cousin"],
+    answer: "Father",
+    explanation: "Since A is B's father and C is B's sibling (sister), A must be C's father as well."
+  },
+  {
+    q: "P is the brother of Q. Q is the daughter of R. How is R related to P?",
+    options: ["Mother", "Father", "Aunt", "Uncle"],
+    answer: "Mother",
+    explanation: "Q is R's daughter and P is Q's brother, therefore R must be P's mother."
+  },
+  {
+    q: "X is the son of Y. Y is the daughter of Z. How is Z related to X?",
+    options: ["Grandfather", "Grandmother", "Mother", "Father"],
+    answer: "Grandmother",
+    explanation: "Y is Z's daughter and X is Y's son, making Z X's grandmother."
+  },
+  {
+    q: "R is the son of M. M is the brother of T. How is T related to R?",
+    options: ["Aunt", "Uncle", "Brother", "Father"],
+    answer: "Uncle",
+    explanation: "M is R's father and T is M's brother, making T R's uncle."
+  },
+  {
+    q: "T is the daughter of P. P is the son of Q. How is Q related to T?",
+    options: ["Grandmother", "Father", "Grandfather", "Uncle"],
+    answer: "Grandfather",
+    explanation: "P is Q's son and T is P's daughter, making Q T's grandfather."
+  },
+  {
+    q: "A is B's sister. B is C's mother. How is A related to C?",
+    options: ["Mother", "Aunt", "Sister", "Grandmother"],
+    answer: "Aunt",
+    explanation: "A is B's sister and C is B's child, therefore A is C's aunt."
+  },
+  {
+    q: "M is N's daughter. N is O's wife. How is O related to M?",
+    options: ["Mother", "Father", "Aunt", "Uncle"],
+    answer: "Father",
+    explanation: "N is O's wife and M is N's daughter, making O M's father."
+  },
+  {
+    q: "P is Q's son. Q is R's daughter-in-law. How is R related to P?",
+    options: ["Grandfather", "Grandmother", "Father", "Mother"],
+    answer: "Grandmother",
+    explanation: "Q is R's daughter-in-law (married to R's son) and P is Q's son, making R P's grandmother."
+  },
+  {
+    q: "X is Y's brother. Y is Z's mother. How is X related to Z?",
+    options: ["Father", "Uncle", "Brother", "Grandfather"],
+    answer: "Uncle",
+    explanation: "X is Y's brother and Z is Y's child, therefore X is Z's uncle."
+  },
+  {
+    q: "D is E's daughter. E is F's mother. How is F related to D?",
+    options: ["Aunt", "Uncle", "Brother", "Sister"],
+    answer: "Uncle",
+    explanation: "E is F's mother and D is E's daughter, making F D's uncle."
+  }
+];
 
-  let current = 0, score = 0, timeLeft = 90, timerInterval;
-
-  function generateQuestion() {
-    const q = questions[current];
-    document.getElementById("question").textContent = q.q;
-    const options = document.getElementById("options");
-    options.innerHTML = "";
-    q.options.forEach(opt => {
+function generateQuestion() {
+  currentQuestion = questions[Math.floor(Math.random() * questions.length)];
+  currentAnswer = currentQuestion.answer;
+  
+  const questionEl = document.getElementById("question");
+  if (questionEl) {
+    questionEl.innerHTML = `
+      <div class="mb-4">
+        <p class="text-xl font-semibold mb-2">${currentQuestion.q}</p>
+      </div>
+    `;
+  }
+  
+  const container = document.getElementById("options");
+  if (container) {
+    container.innerHTML = "";
+    const opts = [...currentQuestion.options];
+    opts.sort(() => Math.random() - 0.5).forEach(opt => {
       const btn = document.createElement("button");
       btn.textContent = opt;
-      btn.className = "w-full border p-2 rounded hover:bg-blue-100";
+      btn.className = "bg-gray-100 hover:bg-blue-100 px-4 py-2 rounded transition-colors text-left w-full";
       btn.onclick = () => {
-        if (opt === q.answer) score++;
-        current = (current + 1) % questions.length;
-        document.getElementById("score").textContent = score;
-        generateQuestion();
+        // Remove any existing animation classes from all buttons
+        container.querySelectorAll('button').forEach(b => {
+          b.classList.remove('correct-answer', 'wrong-answer');
+        });
+        
+        if (opt === currentAnswer) {
+          score++;
+          const scoreEl = document.getElementById("score");
+          if (scoreEl) scoreEl.textContent = score;
+          btn.classList.add('correct-answer');
+          // Wait for animation to finish before next question
+          setTimeout(generateQuestion, 500);
+        } else {
+          btn.classList.add('wrong-answer');
+          // Find and highlight the correct answer
+          container.querySelectorAll('button').forEach(b => {
+            if (b.textContent === currentAnswer) {
+              b.classList.add('correct-answer');
+            }
+          });
+          // Show explanation for wrong answers
+          questionEl.innerHTML = `
+            <div class="text-red-600 mb-2">Incorrect!</div>
+            <div class="text-lg font-bold mb-1">Correct Answer: ${currentAnswer}</div>
+            <div class="text-sm text-gray-600 italic">${currentQuestion.explanation}</div>
+          `;
+          // Wait longer for wrong answers so user can see the explanation
+          setTimeout(generateQuestion, 2000);
+        }
+        // Disable all buttons during animation
+        container.querySelectorAll('button').forEach(b => {
+          b.disabled = true;
+        });
       };
-      options.appendChild(btn);
+      container.appendChild(btn);
     });
   }
+}
 
-  function startTimer() {
-    timerInterval = setInterval(() => {
-      timeLeft--;
-      document.getElementById("timer").textContent = timeLeft;
-      if (timeLeft <= 0) endGame();
-    }, 1000);
-  }
+function startTimer() {
+  clearInterval(timerInterval);
+  timerInterval = setInterval(() => {
+    timeLeft--;
+    const timerEl = document.getElementById("timer");
+    if (timerEl) timerEl.textContent = timeLeft;
+    
+    if (timeLeft <= 0) {
+      endGame();
+    }
+  }, 1000);
+}
 
-  function endGame() {
-    clearInterval(timerInterval);
-    document.getElementById("question").textContent = `Time's up! Final Score: ${score}`;
-    document.getElementById("options").innerHTML = "";
-    document.getElementById("retryBtn").classList.remove("hidden");
-    submitGameScore(GAME_ID, score);
-  }
-
-  function restartGame() {
-    current = 0;
-    score = 0;
-    timeLeft = 90;
-    document.getElementById("score").textContent = score;
-    document.getElementById("timer").textContent = timeLeft;
-    document.getElementById("retryBtn").classList.add("hidden");
-    generateQuestion();
-    startTimer();
-  }
-
-  // Backend integration
+function endGame() {
+  clearInterval(timerInterval);
+  const questionEl = document.getElementById("question");
+  const optionsEl = document.getElementById("options");
+  const retryBtn = document.getElementById("retryBtn");
   
+  if (questionEl) questionEl.textContent = `Time's up! Final Score: ${score}`;
+  if (optionsEl) optionsEl.innerHTML = "";
+  if (retryBtn) retryBtn.classList.remove("hidden");
+}
 
-  /submit`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ username, gameId, score })
-    });
-  }
-
+function startGame() {
+  score = 0;
+  timeLeft = 90;
   
+  const scoreEl = document.getElementById("score");
+  const timerEl = document.getElementById("timer");
+  const retryBtn = document.getElementById("retryBtn");
+  
+  if (scoreEl) scoreEl.textContent = score;
+  if (timerEl) timerEl.textContent = timeLeft;
+  if (retryBtn) retryBtn.classList.add("hidden");
+  
+  generateQuestion();
+  startTimer();
+}
+
+// Initialize game
+document.addEventListener('DOMContentLoaded', () => {
+  const retryBtn = document.getElementById('retryBtn');
+  if (retryBtn) {
+    retryBtn.onclick = startGame;
+  }
+  startGame();
+});
 </script>
 </body>
 </html>
