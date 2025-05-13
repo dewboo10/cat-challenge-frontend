@@ -1,12 +1,12 @@
 const API_BASE = CONFIG.AUTH_API;
 
 async function sendOtp() {
-  const email = document.getElementById("auth-email").value.trim();
+  const email = document.getElementById("auth-email")?.value.trim();
   const otpBtn = document.getElementById("otp-btn");
 
   if (!email) return alert("Enter a valid email");
   if (!email.includes("@")) return alert("Enter a valid email address");
-  
+
   otpBtn.disabled = true;
   otpBtn.innerText = "Sending...";
 
@@ -16,14 +16,9 @@ async function sendOtp() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email })
     });
-    
-    if (!res.ok) {
-      throw new Error(`HTTP error! status: ${res.status}`);
-    }
-    
-    const data = await res.json();
 
-    if (data.success) {
+    const data = await res.json();
+    if (res.ok && data.success) {
       alert("📨 OTP sent! Check your email");
       switchStep(2);
       startOtpTimer();
@@ -65,8 +60,8 @@ function startOtpTimer() {
 }
 
 async function verifyOtp() {
-  const email = document.getElementById("auth-email").value.trim();
-  const otp = document.getElementById("otp-input").value.trim();
+  const email = document.getElementById("auth-email")?.value.trim();
+  const otp = document.getElementById("otp-input")?.value.trim();
 
   if (!email || !otp) {
     alert("Please fill in all fields");
@@ -85,12 +80,8 @@ async function verifyOtp() {
       body: JSON.stringify({ email, otp })
     });
 
-    if (!res.ok) {
-      throw new Error(`HTTP error! status: ${res.status}`);
-    }
-
     const data = await res.json();
-    if (data.success) {
+    if (res.ok && data.success) {
       alert("✅ OTP verified successfully!");
       switchStep(3);
       document.getElementById("auth-email-hidden").value = email;
@@ -104,9 +95,9 @@ async function verifyOtp() {
 }
 
 async function registerUser() {
-  const username = document.getElementById("auth-username").value.trim();
-  const password = document.getElementById("auth-password").value.trim();
-  const email = document.getElementById("auth-email-hidden").value.trim();
+  const username = document.getElementById("auth-username")?.value.trim();
+  const password = document.getElementById("auth-password")?.value.trim();
+  const email = document.getElementById("auth-email-hidden")?.value.trim();
 
   if (!username || !password || !email) {
     alert("Please fill in all fields");
@@ -125,14 +116,10 @@ async function registerUser() {
       body: JSON.stringify({ username, password, email })
     });
 
-    if (!res.ok) {
-      throw new Error(`HTTP error! status: ${res.status}`);
-    }
-
     const data = await res.json();
-    if (data.success) {
+    if (res.ok && data.success && data.user) {
       localStorage.setItem("user", JSON.stringify(data.user));
-      localStorage.setItem("isPaidUser", data.user.isPremium);
+      localStorage.setItem("isPaidUser", !!data.user.isPremium);
       localStorage.setItem("isLoggedIn", "true");
       localStorage.setItem("username", data.user.username);
       alert(`🎉 Welcome ${data.user.username}! Registration successful.`);
@@ -148,8 +135,8 @@ async function registerUser() {
 }
 
 async function loginUser() {
-  const username = document.getElementById("login-username").value.trim();
-  const password = document.getElementById("login-password").value.trim();
+  const username = document.getElementById("login-username")?.value.trim();
+  const password = document.getElementById("login-password")?.value.trim();
 
   if (!username || !password) {
     alert("Please enter both username and password");
@@ -163,14 +150,10 @@ async function loginUser() {
       body: JSON.stringify({ username, password })
     });
 
-    if (!res.ok) {
-      throw new Error(`HTTP error! status: ${res.status}`);
-    }
-
     const data = await res.json();
-    if (data.success) {
+    if (res.ok && data.success && data.user) {
       localStorage.setItem("user", JSON.stringify(data.user));
-      localStorage.setItem("isPaidUser", data.user.isPremium);
+      localStorage.setItem("isPaidUser", !!data.user.isPremium);
       localStorage.setItem("isLoggedIn", "true");
       localStorage.setItem("username", data.user.username);
       alert(`✅ Welcome back, ${data.user.username}!`);
