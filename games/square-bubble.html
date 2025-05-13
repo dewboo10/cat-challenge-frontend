@@ -50,7 +50,7 @@ function generateQuestion() {
   
   const container = document.getElementById("options");
   if (container) {
-    container.innerHTML = "";
+  container.innerHTML = "";
     const choices = new Set([correctAnswer]);
     while (choices.size < 4) {
       const wrongAnswer = Math.floor(Math.random() * 400);
@@ -62,10 +62,10 @@ function generateQuestion() {
     Array.from(choices)
       .sort(() => Math.random() - 0.5)
       .forEach(opt => {
-        const btn = document.createElement("button");
-        btn.textContent = opt;
-        btn.className = "bg-gray-100 hover:bg-blue-100 px-4 py-2 rounded transition-colors";
-        btn.onclick = () => {
+    const btn = document.createElement("button");
+    btn.textContent = opt;
+    btn.className = "bg-gray-100 hover:bg-blue-100 px-4 py-2 rounded transition-colors";
+    btn.onclick = () => {
           // Remove any existing animation classes from all buttons
           container.querySelectorAll('button').forEach(b => {
             b.classList.remove('correct-answer', 'wrong-answer');
@@ -93,9 +93,9 @@ function generateQuestion() {
           container.querySelectorAll('button').forEach(b => {
             b.disabled = true;
           });
-        };
-        container.appendChild(btn);
-      });
+    };
+    container.appendChild(btn);
+  });
   }
 }
 
