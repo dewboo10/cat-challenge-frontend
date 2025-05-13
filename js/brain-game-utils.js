@@ -3,7 +3,7 @@ const API_BASE = CONFIG.BRAIN_GAMES_API;
 const isLoggedIn = localStorage.getItem("isLoggedIn") === "true";
 const username = localStorage.getItem("username");
 
-// Score submission
+// Score submission - will work when backend is available
 function submitGameScore(gameId, score) {
   if (!isLoggedIn || !username) {
     showAuthPopup();
@@ -16,18 +16,12 @@ function submitGameScore(gameId, score) {
     body: JSON.stringify({ username, gameId, score })
   })
   .then(res => res.json())
-  .then(() => {
-    fetchGameStats(gameId); // Refresh stats after submission
-  })
   .catch(err => console.error("Error submitting score:", err));
 }
 
 // Common game initialization
 function initGame(gameId) {
-  // Initialize game stats
-  initGameStats(gameId);
-  
-  // Start the game
+  // Start the game immediately without waiting for backend
   if (typeof window[gameId] === 'function') {
     window[gameId]();
   } else if (typeof generateQuestion === 'function') {
@@ -57,6 +51,10 @@ let score = 0;
 
 function startTimer() {
   clearInterval(timerInterval);
+  timeLeft = 90;
+  const timerEl = document.getElementById("timer");
+  if (timerEl) timerEl.textContent = timeLeft;
+  
   timerInterval = setInterval(() => {
     timeLeft--;
     const timerEl = document.getElementById("timer");
@@ -75,16 +73,14 @@ function endGame() {
   if (optionsEl) optionsEl.innerHTML = "";
   if (retryBtn) retryBtn.classList.remove("hidden");
   
-  if (!isLoggedIn) {
-    showAuthPopup();
-  } else {
+  // Try to submit score if logged in
+  if (isLoggedIn) {
     submitGameScore(GAME_ID, score);
   }
 }
 
 function restartGame() {
   score = 0;
-  timeLeft = 90;
   const scoreEl = document.getElementById("score");
   const timerEl = document.getElementById("timer");
   const retryBtn = document.getElementById("retryBtn");

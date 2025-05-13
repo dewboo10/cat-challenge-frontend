@@ -5,9 +5,8 @@
   <title>Vocabulary Time Trial – BrainGames</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <script src="https://cdn.tailwindcss.com"></script>
-  <script src="/js/config.js"></script>
-  <script src="/components/auth-popup.js"></script>
-  <script src="/js/brain-game-utils.js"></script>
+  <script src="../js/config.js"></script>
+  <script src="../js/brain-game-utils.js"></script>
 </head>
 <body class="bg-white text-gray-800 min-h-screen flex items-center justify-center p-4">
 <div class="max-w-2xl w-full bg-white shadow-xl p-6 border border-blue-200 rounded-xl text-center space-y-4 game-container">
@@ -15,7 +14,7 @@
   <p>⏱ Time Left: <span id="timer">90</span>s | 🎯 Score: <span id="score">0</span></p>
   <p id="question" class="text-2xl font-semibold">Loading...</p>
   <div id="options" class="grid grid-cols-1 sm:grid-cols-2 gap-4"></div>
-  <button id="retryBtn" class="bg-green-600 text-white px-4 py-2 rounded font-semibold hidden">Retry</button>
+  <button id="retryBtn" class="bg-green-600 text-white px-4 py-2 rounded font-semibold hidden hover:bg-green-700 transition-colors">Retry</button>
 </div>
 
 <script>
@@ -26,106 +25,40 @@ const questions = [
   { word: "elated", answer: "extremely happy", options: ["somewhat confused", "totally exhausted", "slightly amused"] },
   { word: "ambiguous", answer: "unclear or vague", options: ["well-defined", "exact and certain", "simple and obvious"] },
   { word: "meticulous", answer: "very careful and precise", options: ["messy and random", "rough and careless", "quick and dirty"] },
-  { word: "contemplate", answer: "think deeply", options: ["ignore", "run away", "talk loudly"] }
+  { word: "contemplate", answer: "think deeply", options: ["ignore", "run away", "talk loudly"] },
+  { word: "ephemeral", answer: "lasting for a very short time", options: ["permanent", "ancient", "unchanging"] },
+  { word: "ubiquitous", answer: "present everywhere", options: ["rare", "unique", "hidden"] },
+  { word: "pragmatic", answer: "practical and realistic", options: ["idealistic", "emotional", "theoretical"] }
 ];
 
-let score = 0, timeLeft = 90, timerInterval, current = {};
-const isLoggedIn = localStorage.getItem("isLoggedIn") === "true";
-const username = localStorage.getItem("username");
+let current = {};
 
 function generateQuestion() {
   current = questions[Math.floor(Math.random() * questions.length)];
-  document.getElementById("question").textContent = `What is the meaning of "${current.word}"?`;
+  const questionEl = document.getElementById("question");
+  if (questionEl) {
+    questionEl.textContent = `What is the meaning of "${current.word}"?`;
+  }
+  
   const opts = new Set([current.answer, ...current.options]);
   const container = document.getElementById("options");
-  container.innerHTML = "";
-  Array.from(opts).sort(() => Math.random() - 0.5).forEach(opt => {
-    const btn = document.createElement("button");
-    btn.textContent = opt;
-    btn.className = "bg-gray-100 hover:bg-blue-100 px-4 py-2 rounded transition-colors";
-    btn.onclick = () => {
-      if (opt === current.answer) {
-        score++;
-        document.getElementById("score").textContent = score;
-      }
-      generateQuestion();
-    };
-    container.appendChild(btn);
-  });
-}
-
-function startTimer() {
-  timerInterval = setInterval(() => {
-    timeLeft--;
-    document.getElementById("timer").textContent = timeLeft;
-    if (timeLeft <= 0) endGame();
-  }, 1000);
-}
-
-function endGame() {
-  clearInterval(timerInterval);
-  document.getElementById("question").textContent = `Time's up! Final Score: ${score}`;
-  document.getElementById("options").innerHTML = "";
-  document.getElementById("retryBtn").classList.remove("hidden");
-  
-  if (!isLoggedIn) {
-    showAuthPopup();
-  } else {
-    submitGameScore(GAME_ID, score);
+  if (container) {
+    container.innerHTML = "";
+    Array.from(opts).sort(() => Math.random() - 0.5).forEach(opt => {
+      const btn = document.createElement("button");
+      btn.textContent = opt;
+      btn.className = "bg-gray-100 hover:bg-blue-100 px-4 py-2 rounded transition-colors";
+      btn.onclick = () => {
+        if (opt === current.answer) {
+          score++;
+          const scoreEl = document.getElementById("score");
+          if (scoreEl) scoreEl.textContent = score;
+        }
+        generateQuestion();
+      };
+      container.appendChild(btn);
+    });
   }
-}
-
-function restartGame() {
-  score = 0;
-  timeLeft = 90;
-  document.getElementById("score").textContent = score;
-  document.getElementById("timer").textContent = timeLeft;
-  document.getElementById("retryBtn").classList.add("hidden");
-  generateQuestion();
-  startTimer();
-}
-
-// Backend Integration
-const API_BASE = CONFIG.BRAIN_GAMES_API;
-
-function fetchStats(gameId) {
-  fetch(`${API_BASE}/stats?gameId=${gameId}`)
-    .then(res => res.json())
-    .then(data => {
-      document.getElementById("leaderboard").innerHTML = data
-        .map((s, i) => `<li class="flex justify-between items-center ${s.username === username ? 'text-blue-600 font-semibold' : ''}">
-          <span>${i + 1}. ${s.username}</span>
-          <span>${s.score}</span>
-        </li>`).join("");
-    })
-    .catch(err => console.error("Error fetching leaderboard:", err));
-}
-
-// Only fetch personal best if logged in
-if (isLoggedIn && username) {
-  fetch(`${API_BASE}/personal-best?gameId=${GAME_ID}`)
-    .then(res => res.json())
-    .then(data => {
-      if (data.score > score) {
-        document.getElementById("retryBtn").classList.add("hidden");
-        document.getElementById("score").textContent = data.score;
-        document.getElementById("timer").textContent = data.timeLeft;
-      }
-    })
-    .catch(err => console.error("Error fetching personal best:", err));
-}
-
-function submitGameScore(gameId, score) {
-  fetch(`${API_BASE}/submit`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ username, gameId, score })
-  })
-  .then(res => res.json())
-  .then(() => {
-    fetchStats(gameId); // Refresh stats after submission
-  })
-  .catch(err => console.error("Error submitting score:", err));
 }
 
 // Register the game function globally
