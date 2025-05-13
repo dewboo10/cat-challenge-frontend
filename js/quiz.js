@@ -10,13 +10,14 @@ let questions = [];
 let questionsLoaded = false;
 let currentSection = "Quant";
 let currentQuestionIndex = 0;
-let sectionTimers = { Quant: 40 * 60, VARC: 30 * 60, LRDI: 30 * 60 };
+let sectionTimers = { Quant: 30 * 60, VARC: 30 * 60, LRDI: 30 * 60 }; // 30 minutes per section
 let selectedAnswers = {};
 let markedForReview = new Set();
 let isSubmitted = false;
 let interval;
 let sectionStartTime = Date.now();
 let timeSpentPerSection = { Quant: 0, VARC: 0, LRDI: 0 };
+let sectionCompleted = { Quant: false, VARC: false, LRDI: false };
 
 // === Theme and User Setup ===
 (function applySavedTheme() {
@@ -84,6 +85,7 @@ function startQuiz() {
   sectionStartTime = Date.now();
   loadQuestion();
   startSectionTimer();
+  updateSectionTabs(); // Disable section switching initially
 }
 
 function startSectionTimer() {
@@ -92,6 +94,7 @@ function startSectionTimer() {
   interval = setInterval(() => {
     if (sectionTimers[currentSection] <= 0) {
       captureSectionTime();
+      sectionCompleted[currentSection] = true;
       autoSwitchSection();
       return;
     }
@@ -106,14 +109,22 @@ function autoSwitchSection() {
   if (isSubmitted) return; // Prevent auto-switch in review mode
 
   clearInterval(interval);
-  if (currentSection === "Quant") currentSection = "VARC";
-  else if (currentSection === "VARC") currentSection = "LRDI";
-  else return submitQuiz();
+  if (currentSection === "Quant") {
+    currentSection = "VARC";
+    alert("Time's up for Quant section! Moving to VARC section.");
+  } else if (currentSection === "VARC") {
+    currentSection = "LRDI";
+    alert("Time's up for VARC section! Moving to LRDI section.");
+  } else {
+    alert("Time's up for LRDI section! Submitting quiz.");
+    return submitQuiz();
+  }
 
   sectionStartTime = Date.now();
   currentQuestionIndex = 0;
   loadQuestion();
   startSectionTimer();
+  updateSectionTabs();
 }
 
 function captureSectionTime() {
@@ -126,7 +137,7 @@ function loadQuestion() {
   const question = sectionQs[currentQuestionIndex];
   if (!question) return;
 
-  document.getElementById("section-name").textContent = currentSection;
+  document.getElementById("section-indicator").textContent = `Section: ${currentSection}`;
   document.getElementById("question-number").textContent = currentQuestionIndex + 1;
   document.getElementById("passage-text").textContent = question.passage || '';
   document.getElementById("question-text").textContent = question.q;
@@ -160,6 +171,7 @@ function loadQuestion() {
   }
 
   updateOverview();
+  updateSectionTabs();
 }
 
 document.getElementById("options-container")?.addEventListener("change", () => saveAnswer());
@@ -240,11 +252,15 @@ function submitQuiz() {
       username: user.username,
       exam: selectedExam,
       day: currentDay,
-      selectedAnswers
+      selectedAnswers,
+      timeSpentPerSection
     })
   })
     .then(res => res.json())
-    .then(() => showReviewLayout())
+    .then(() => {
+      showReviewLayout();
+      updateSectionTabs(); // Enable section switching in review mode
+    })
     .catch(err => {
       console.error("❌ Submission error:", err);
       alert("Submission failed. Try again.");
@@ -263,14 +279,43 @@ function loadReviewQuestion() {
 }
 
 function switchSection(section) {
+  if (!isSubmitted && section !== currentSection) {
+    // Prevent manual section switching during quiz
+    return;
+  }
+  
   currentSection = section;
   currentQuestionIndex = 0;
-  if (isSubmitted) loadReviewQuestion();
-  else loadQuestion();
+  if (isSubmitted) {
+    loadQuestion();
+  } else {
+    loadQuestion();
+    startSectionTimer();
+  }
+  updateSectionTabs();
 }
 
 function quitQuiz() {
   if (confirm("Are you sure you want to quit?")) {
     window.location.href = "dashboard.html";
   }
+}
+
+function updateSectionTabs() {
+  const sections = ["Quant", "VARC", "LRDI"];
+  sections.forEach(section => {
+    const btn = document.querySelector(`button[onclick="switchSection('${section}')"]`);
+    if (btn) {
+      if (isSubmitted) {
+        // Enable all sections in review mode
+        btn.disabled = false;
+        btn.classList.remove("opacity-50", "cursor-not-allowed");
+      } else {
+        // Disable section switching during quiz
+        btn.disabled = section !== currentSection;
+        btn.classList.toggle("opacity-50", section !== currentSection);
+        btn.classList.toggle("cursor-not-allowed", section !== currentSection);
+      }
+    }
+  });
 }

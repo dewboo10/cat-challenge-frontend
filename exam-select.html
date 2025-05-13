@@ -4,6 +4,36 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Select Exam | Ultimate Prep</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" />
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          animation: {
+            'bounce-slow': 'bounce 3s linear infinite',
+            'pulse-slow': 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    .exam-card {
+      transition: all 0.3s ease;
+    }
+    .exam-card:hover {
+      transform: translateY(-5px);
+    }
+    .fade-in {
+      opacity: 0;
+      animation: fadeIn 0.5s ease-out forwards;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
   <script>
     document.documentElement.classList.remove("dark");
 
@@ -12,28 +42,71 @@
       window.location.href = "dashboard.html";
     }
   </script>
-  <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-white text-black min-h-screen flex items-center justify-center font-sans">
+<body class="bg-gradient-to-br from-white to-blue-50 text-black min-h-screen flex items-center justify-center font-sans p-4">
 
-  <div class="text-center space-y-6 max-w-xl mx-auto p-4">
-    <h1 class="text-3xl sm:text-4xl font-bold text-blue-600">🎓 Choose Your Exam</h1>
-    <p class="text-gray-700">Select the exam you're preparing for to start your 100-day journey.</p>
-
-    <div class="grid grid-cols-2 sm:grid-cols-3 gap-4 mt-6">
-      <button onclick="selectExam('CAT')" class="bg-blue-100 hover:bg-blue-200 px-4 py-2 rounded text-blue-700 font-semibold">CAT</button>
-      <button onclick="selectExam('IPMAT')" class="bg-blue-100 hover:bg-blue-200 px-4 py-2 rounded text-blue-700 font-semibold">IPMAT</button>
-      <button onclick="selectExam('SSC')" class="bg-blue-100 hover:bg-blue-200 px-4 py-2 rounded text-blue-700 font-semibold">SSC</button>
-      <button onclick="selectExam('SBI')" class="bg-blue-100 hover:bg-blue-200 px-4 py-2 rounded text-blue-700 font-semibold">SBI</button>
-      <button onclick="selectExam('SNAP')" class="bg-blue-100 hover:bg-blue-200 px-4 py-2 rounded text-blue-700 font-semibold">SNAP</button>
-      <button onclick="selectExam('CMAT')" class="bg-blue-100 hover:bg-blue-200 px-4 py-2 rounded text-blue-700 font-semibold">CMAT</button>
+  <div class="text-center space-y-8 max-w-4xl mx-auto">
+    <div class="space-y-4 fade-in" style="animation-delay: 0.1s">
+      <h1 class="text-4xl sm:text-5xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 text-transparent bg-clip-text flex items-center justify-center gap-3">
+        <span class="animate-bounce-slow">🎓</span>
+        Choose Your Exam
+      </h1>
+      <p class="text-gray-600 text-lg">Select the exam you're preparing for to begin your transformative 100-day journey.</p>
     </div>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mt-8">
+      <div onclick="selectExam('CAT')" class="exam-card cursor-pointer bg-white/80 backdrop-blur-sm p-6 rounded-xl shadow-lg hover:shadow-xl fade-in" style="animation-delay: 0.2s">
+        <div class="text-3xl mb-3 animate-bounce-slow">📚</div>
+        <h3 class="text-xl font-bold text-blue-600 mb-2">CAT</h3>
+        <p class="text-gray-600 text-sm">Common Admission Test for Top B-Schools</p>
+      </div>
+
+      <div onclick="selectExam('IPMAT')" class="exam-card cursor-pointer bg-white/80 backdrop-blur-sm p-6 rounded-xl shadow-lg hover:shadow-xl fade-in" style="animation-delay: 0.3s">
+        <div class="text-3xl mb-3 animate-bounce-slow">🎯</div>
+        <h3 class="text-xl font-bold text-green-600 mb-2">IPMAT</h3>
+        <p class="text-gray-600 text-sm">Integrated Program in Management Aptitude Test</p>
+      </div>
+
+      <div onclick="selectExam('SSC')" class="exam-card cursor-pointer bg-white/80 backdrop-blur-sm p-6 rounded-xl shadow-lg hover:shadow-xl fade-in" style="animation-delay: 0.4s">
+        <div class="text-3xl mb-3 animate-bounce-slow">⚡</div>
+        <h3 class="text-xl font-bold text-purple-600 mb-2">SSC</h3>
+        <p class="text-gray-600 text-sm">Staff Selection Commission Examination</p>
+      </div>
+
+      <div onclick="selectExam('SBI')" class="exam-card cursor-pointer bg-white/80 backdrop-blur-sm p-6 rounded-xl shadow-lg hover:shadow-xl fade-in" style="animation-delay: 0.5s">
+        <div class="text-3xl mb-3 animate-bounce-slow">🏦</div>
+        <h3 class="text-xl font-bold text-red-600 mb-2">SBI</h3>
+        <p class="text-gray-600 text-sm">State Bank of India PO & Clerk Exams</p>
+      </div>
+
+      <div onclick="selectExam('SNAP')" class="exam-card cursor-pointer bg-white/80 backdrop-blur-sm p-6 rounded-xl shadow-lg hover:shadow-xl fade-in" style="animation-delay: 0.6s">
+        <div class="text-3xl mb-3 animate-bounce-slow">💡</div>
+        <h3 class="text-xl font-bold text-yellow-600 mb-2">SNAP</h3>
+        <p class="text-gray-600 text-sm">Symbiosis National Aptitude Test</p>
+      </div>
+
+      <div onclick="selectExam('CMAT')" class="exam-card cursor-pointer bg-white/80 backdrop-blur-sm p-6 rounded-xl shadow-lg hover:shadow-xl fade-in" style="animation-delay: 0.7s">
+        <div class="text-3xl mb-3 animate-bounce-slow">🎓</div>
+        <h3 class="text-xl font-bold text-indigo-600 mb-2">CMAT</h3>
+        <p class="text-gray-600 text-sm">Common Management Admission Test</p>
+      </div>
+    </div>
+
+    <p class="text-gray-500 mt-8 text-sm fade-in" style="animation-delay: 0.8s">
+      You can change your exam selection anytime from the dashboard
+    </p>
   </div>
 
   <script>
     function selectExam(exam) {
-      localStorage.setItem("selectedExam", exam);
-      window.location.href = "dashboard.html";
+      const card = event.currentTarget;
+      card.classList.add('scale-110', 'bg-blue-50');
+      card.style.transition = 'all 0.3s ease';
+      
+      setTimeout(() => {
+        localStorage.setItem("selectedExam", exam);
+        window.location.href = "dashboard.html";
+      }, 300);
     }
   </script>
 </body>

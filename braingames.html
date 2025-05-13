@@ -5,75 +5,303 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>BrainGames | Ultimate Prep</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" />
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          animation: {
+            'bounce-slow': 'bounce 3s linear infinite',
+            'pulse-slow': 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+            'float': 'float 3s ease-in-out infinite',
+          },
+          keyframes: {
+            float: {
+              '0%, 100%': { transform: 'translateY(0)' },
+              '50%': { transform: 'translateY(-10px)' },
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    .game-card {
+      transition: all 0.3s ease;
+      animation: fadeIn 0.5s ease-out forwards;
+      opacity: 0;
+    }
+    .subject-card {
+      transition: all 0.3s ease;
+      animation: fadeIn 0.5s ease-out forwards;
+      opacity: 0;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .hover-float:hover {
+      animation: float 3s ease-in-out infinite;
+    }
+  </style>
 </head>
-<body class="bg-gradient-to-br from-blue-50 to-white text-black">
-  <header class="p-4 border-b border-blue-100 flex justify-between items-center bg-white shadow-sm">
-    <h1 class="text-xl font-bold text-blue-600">🧠 BrainGames</h1>
-    <button onclick="goToDashboard()" class="text-sm text-blue-500 rounded p-2 hover:bg-blue-100">Back to Dashboard</button>
+<body class="bg-gradient-to-br from-blue-50 to-white text-black min-h-screen">
+  <header class="fixed top-0 left-0 right-0 p-4 bg-white/80 backdrop-blur-md border-b border-blue-100 flex justify-between items-center shadow-lg z-50">
+    <div class="flex items-center gap-3">
+      <span class="text-3xl animate-bounce-slow">🧠</span>
+      <h1 class="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 text-transparent bg-clip-text">BrainGames</h1>
+    </div>
+    <button onclick="goToDashboard()" class="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white rounded-lg shadow transition-all hover:shadow-lg">
+      <span>←</span>
+      Dashboard
+    </button>
   </header>
 
-  <main class="p-6 space-y-10">
-    <!-- Game Zone -->
-    <section>
-      <h2 class="text-lg font-semibold text-blue-700 mb-4">🎮 Interactive Games</h2>
-      <div class="p-4 bg-blue-100/40 border border-blue-300 rounded-xl shadow-inner" >
-        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-          <a href="games/square-bubble.html" class="game-card">🔢 Square Bubble Pop</a>
-          <a href="games/sentence-rearrangement.html" class="game-card">✍️ Sentence Rearrangement</a>
-          <a href="games/rapid-tables.html" class="game-card">⚡ Rapid Tables Blitz</a>
-          <a href="games/ratio-race.html" class="game-card">📊 Ratio Race</a>
-          <a href="games/root-bubble.html" class="game-card">📐 Root Bubble Pop</a>
-          <a href="games/mental-math.html" class="game-card">⚡ Mental Math Rush</a>
-          <a href="games/color-memory.html" class="game-card">🎨 Color Memory</a>
-          <a href="games/find-main-idea.html" class="game-card">🔍 Find the Main Idea</a>
-          <a href="games/synonym-shooter.html" class="game-card">🎯 Synonym Shooter</a>
-          <a href="games/antonym-slam.html" class="game-card">🧠 Antonym Slam</a>
-          <a href="games/paragraph-jumblers.html" class="game-card">🧩 Paragraph Jumblers</a>
-          <a href="games/history-match.html" class="game-card">🏛️ History Match-Up</a>
-          <a href="games/map-label.html" class="game-card">🌐 Map Label Tap</a>
-          <a href="games/flag-flash.html" class="game-card">🌍 Flag Flash Memory</a>
-          <a href="games/logic-chain.html" class="game-card">🧠 Logic Chain Puzzle</a>
-          <a href="games/graph-memory-snap.html" class="game-card">📉 Graph Memory Snap</a>
-          <a href="games/vocabulary-time-trial.html" class="game-card">🔠 Vocabulary Time Trial</a>
-          <a href="games/mental-math-match.html" class="game-card">🧮 Mental Math Match</a>
-          <a href="games/equation-balancer.html" class="game-card">🟰 Equation Balancer</a>
-          <a href="games/pattern-predictor.html" class="game-card">🔢 Pattern Predictor</a>
-          <a href="games/blood-relation.html" class="game-card">👪 Blood Relation Puzzle</a>
-          <a href="games/syllogism-simulator.html" class="game-card">🔄 Syllogism Simulator</a>
-          <a href="games/odd-one-out.html" class="game-card">❓ Odd One Out</a>
-          <a href="games/seating-arrangement.html" class="game-card">🪑 Seating Arrangement</a>
-          <a href="games/direction-sense.html" class="game-card">🧭 Direction Sense Trainer</a>
-          <a href="games/coding-decoding.html" class="game-card">🔤 Coding-Decoding</a>
-          <a href="games/input-output-machine.html" class="game-card">⚙️ Input-Output Machine</a>
-          <a href="games/letter-series.html" class="game-card">🔡 Letter Series Cracker</a>
+  <main class="pt-20 p-6 space-y-10 max-w-7xl mx-auto">
+    <!-- Stats Section -->
+    <section class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 mb-8">
+      <div class="bg-white/80 backdrop-blur-sm p-6 rounded-xl shadow-lg hover:shadow-xl transition-all">
+        <div class="flex items-center justify-between mb-2">
+          <h3 class="text-lg font-semibold text-gray-700">Games Played</h3>
+          <span class="text-2xl">🎮</span>
         </div>
+        <p class="text-3xl font-bold text-blue-600">24</p>
+      </div>
+      <div class="bg-white/80 backdrop-blur-sm p-6 rounded-xl shadow-lg hover:shadow-xl transition-all">
+        <div class="flex items-center justify-between mb-2">
+          <h3 class="text-lg font-semibold text-gray-700">Time Spent</h3>
+          <span class="text-2xl">⏱️</span>
+        </div>
+        <p class="text-3xl font-bold text-green-600">2.5h</p>
+      </div>
+      <div class="bg-white/80 backdrop-blur-sm p-6 rounded-xl shadow-lg hover:shadow-xl transition-all">
+        <div class="flex items-center justify-between mb-2">
+          <h3 class="text-lg font-semibold text-gray-700">High Score</h3>
+          <span class="text-2xl">🏆</span>
+        </div>
+        <p class="text-3xl font-bold text-yellow-600">980</p>
+      </div>
+      <div class="bg-white/80 backdrop-blur-sm p-6 rounded-xl shadow-lg hover:shadow-xl transition-all">
+        <div class="flex items-center justify-between mb-2">
+          <h3 class="text-lg font-semibold text-gray-700">Rank</h3>
+          <span class="text-2xl">📊</span>
+        </div>
+        <p class="text-3xl font-bold text-purple-600">#12</p>
+      </div>
+    </section>
+
+    <!-- Game Zone -->
+    <section class="bg-white/80 backdrop-blur-sm p-8 rounded-2xl shadow-lg">
+      <div class="flex items-center justify-between mb-6">
+        <h2 class="text-2xl font-bold text-blue-700 flex items-center gap-3">
+          <span class="animate-bounce-slow">🎮</span>
+          Interactive Games
+        </h2>
+        <div class="flex gap-2">
+          <button class="px-4 py-2 text-sm bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-all">Popular</button>
+          <button class="px-4 py-2 text-sm bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-all">New</button>
+        </div>
+      </div>
+      <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+        <a href="games/square-bubble.html" class="game-card hover-float bg-gradient-to-br from-blue-50 to-white p-6 rounded-xl shadow-md hover:shadow-xl" style="animation-delay: 0.1s">
+          <div class="text-3xl mb-3">🔢</div>
+          <h3 class="font-semibold text-blue-800 mb-2">Square Bubble Pop</h3>
+          <p class="text-sm text-gray-600">Pop bubbles with perfect squares!</p>
+        </a>
+        <a href="games/sentence-rearrangement.html" class="game-card hover-float bg-gradient-to-br from-green-50 to-white p-6 rounded-xl shadow-md hover:shadow-xl" style="animation-delay: 0.2s">
+          <div class="text-3xl mb-3">✍️</div>
+          <h3 class="font-semibold text-green-800 mb-2">Sentence Rearrangement</h3>
+          <p class="text-sm text-gray-600">Arrange words in correct order</p>
+        </a>
+        <a href="games/rapid-tables.html" class="game-card hover-float bg-gradient-to-br from-yellow-50 to-white p-6 rounded-xl shadow-md hover:shadow-xl" style="animation-delay: 0.3s">
+          <div class="text-3xl mb-3">⚡</div>
+          <h3 class="font-semibold text-yellow-800 mb-2">Rapid Tables Blitz</h3>
+          <p class="text-sm text-gray-600">Quick multiplication practice</p>
+        </a>
+        <a href="games/ratio-race.html" class="game-card hover-float bg-gradient-to-br from-pink-50 to-white p-6 rounded-xl shadow-md hover:shadow-xl" style="animation-delay: 0.4s">
+          <div class="text-3xl mb-3">📊</div>
+          <h3 class="font-semibold text-pink-800 mb-2">Ratio Race</h3>
+          <p class="text-sm text-gray-600">Race against the clock to solve ratios</p>
+        </a>
+        <a href="games/root-bubble.html" class="game-card hover-float bg-gradient-to-br from-teal-50 to-white p-6 rounded-xl shadow-md hover:shadow-xl" style="animation-delay: 0.5s">
+          <div class="text-3xl mb-3">📐</div>
+          <h3 class="font-semibold text-teal-800 mb-2">Root Bubble Pop</h3>
+          <p class="text-sm text-gray-600">Pop bubbles with perfect roots!</p>
+        </a>
+        <a href="games/mental-math.html" class="game-card hover-float bg-gradient-to-br from-purple-50 to-white p-6 rounded-xl shadow-md hover:shadow-xl" style="animation-delay: 0.6s">
+          <div class="text-3xl mb-3">⚡</div>
+          <h3 class="font-semibold text-purple-800 mb-2">Mental Math Rush</h3>
+          <p class="text-sm text-gray-600">Practice mental math on the go</p>
+        </a>
+        <a href="games/color-memory.html" class="game-card hover-float bg-gradient-to-br from-red-50 to-white p-6 rounded-xl shadow-md hover:shadow-xl" style="animation-delay: 0.7s">
+          <div class="text-3xl mb-3">🎨</div>
+          <h3 class="font-semibold text-red-800 mb-2">Color Memory</h3>
+          <p class="text-sm text-gray-600">Remember colors and match them</p>
+        </a>
+        <a href="games/find-main-idea.html" class="game-card hover-float bg-gradient-to-br from-orange-50 to-white p-6 rounded-xl shadow-md hover:shadow-xl" style="animation-delay: 0.8s">
+          <div class="text-3xl mb-3">🔍</div>
+          <h3 class="font-semibold text-orange-800 mb-2">Find the Main Idea</h3>
+          <p class="text-sm text-gray-600">Identify the main idea in a text</p>
+        </a>
+        <a href="games/synonym-shooter.html" class="game-card hover-float bg-gradient-to-br from-lime-50 to-white p-6 rounded-xl shadow-md hover:shadow-xl" style="animation-delay: 0.9s">
+          <div class="text-3xl mb-3">🎯</div>
+          <h3 class="font-semibold text-lime-800 mb-2">Synonym Shooter</h3>
+          <p class="text-sm text-gray-600">Find the correct synonym for a word</p>
+        </a>
+        <a href="games/antonym-slam.html" class="game-card hover-float bg-gradient-to-br from-indigo-50 to-white p-6 rounded-xl shadow-md hover:shadow-xl" style="animation-delay: 1s">
+          <div class="text-3xl mb-3">🧠</div>
+          <h3 class="font-semibold text-indigo-800 mb-2">Antonym Slam</h3>
+          <p class="text-sm text-gray-600">Find the antonym for a word</p>
+        </a>
+        <a href="games/paragraph-jumblers.html" class="game-card hover-float bg-gradient-to-br from-pink-50 to-white p-6 rounded-xl shadow-md hover:shadow-xl" style="animation-delay: 1.1s">
+          <div class="text-3xl mb-3">🧩</div>
+          <h3 class="font-semibold text-pink-800 mb-2">Paragraph Jumblers</h3>
+          <p class="text-sm text-gray-600">Arrange sentences in correct order</p>
+        </a>
+        <a href="games/history-match.html" class="game-card hover-float bg-gradient-to-br from-teal-50 to-white p-6 rounded-xl shadow-md hover:shadow-xl" style="animation-delay: 1.2s">
+          <div class="text-3xl mb-3">🏛️</div>
+          <h3 class="font-semibold text-teal-800 mb-2">History Match-Up</h3>
+          <p class="text-sm text-gray-600">Match historical events with their dates</p>
+        </a>
+        <a href="games/map-label.html" class="game-card hover-float bg-gradient-to-br from-blue-50 to-white p-6 rounded-xl shadow-md hover:shadow-xl" style="animation-delay: 1.3s">
+          <div class="text-3xl mb-3">🌐</div>
+          <h3 class="font-semibold text-blue-800 mb-2">Map Label Tap</h3>
+          <p class="text-sm text-gray-600">Tap the correct country or city</p>
+        </a>
+        <a href="games/flag-flash.html" class="game-card hover-float bg-gradient-to-br from-green-50 to-white p-6 rounded-xl shadow-md hover:shadow-xl" style="animation-delay: 1.4s">
+          <div class="text-3xl mb-3">🌍</div>
+          <h3 class="font-semibold text-green-800 mb-2">Flag Flash Memory</h3>
+          <p class="text-sm text-gray-600">Remember flags and their countries</p>
+        </a>
+        <a href="games/logic-chain.html" class="game-card hover-float bg-gradient-to-br from-yellow-50 to-white p-6 rounded-xl shadow-md hover:shadow-xl" style="animation-delay: 1.5s">
+          <div class="text-3xl mb-3">🧠</div>
+          <h3 class="font-semibold text-yellow-800 mb-2">Logic Chain Puzzle</h3>
+          <p class="text-sm text-gray-600">Solve logical reasoning puzzles</p>
+        </a>
+        <a href="games/graph-memory-snap.html" class="game-card hover-float bg-gradient-to-br from-purple-50 to-white p-6 rounded-xl shadow-md hover:shadow-xl" style="animation-delay: 1.6s">
+          <div class="text-3xl mb-3">📉</div>
+          <h3 class="font-semibold text-purple-800 mb-2">Graph Memory Snap</h3>
+          <p class="text-sm text-gray-600">Remember graph patterns and snap them</p>
+        </a>
+        <a href="games/vocabulary-time-trial.html" class="game-card hover-float bg-gradient-to-br from-red-50 to-white p-6 rounded-xl shadow-md hover:shadow-xl" style="animation-delay: 1.7s">
+          <div class="text-3xl mb-3">🔠</div>
+          <h3 class="font-semibold text-red-800 mb-2">Vocabulary Time Trial</h3>
+          <p class="text-sm text-gray-600">Practice vocabulary and spelling</p>
+        </a>
+        <a href="games/mental-math-match.html" class="game-card hover-float bg-gradient-to-br from-teal-50 to-white p-6 rounded-xl shadow-md hover:shadow-xl" style="animation-delay: 1.8s">
+          <div class="text-3xl mb-3">��</div>
+          <h3 class="font-semibold text-teal-800 mb-2">Mental Math Match</h3>
+          <p class="text-sm text-gray-600">Match mental math problems</p>
+        </a>
+        <a href="games/equation-balancer.html" class="game-card hover-float bg-gradient-to-br from-orange-50 to-white p-6 rounded-xl shadow-md hover:shadow-xl" style="animation-delay: 1.9s">
+          <div class="text-3xl mb-3">🟰</div>
+          <h3 class="font-semibold text-orange-800 mb-2">Equation Balancer</h3>
+          <p class="text-sm text-gray-600">Balance mathematical equations</p>
+        </a>
+        <a href="games/pattern-predictor.html" class="game-card hover-float bg-gradient-to-br from-lime-50 to-white p-6 rounded-xl shadow-md hover:shadow-xl" style="animation-delay: 2s">
+          <div class="text-3xl mb-3">🔢</div>
+          <h3 class="font-semibold text-lime-800 mb-2">Pattern Predictor</h3>
+          <p class="text-sm text-gray-600">Identify patterns and predict the next</p>
+        </a>
+        <a href="games/blood-relation.html" class="game-card hover-float bg-gradient-to-br from-pink-50 to-white p-6 rounded-xl shadow-md hover:shadow-xl" style="animation-delay: 2.1s">
+          <div class="text-3xl mb-3">��</div>
+          <h3 class="font-semibold text-pink-800 mb-2">Blood Relation Puzzle</h3>
+          <p class="text-sm text-gray-600">Solve blood relation puzzles</p>
+        </a>
+        <a href="games/syllogism-simulator.html" class="game-card hover-float bg-gradient-to-br from-indigo-50 to-white p-6 rounded-xl shadow-md hover:shadow-xl" style="animation-delay: 2.2s">
+          <div class="text-3xl mb-3">🔄</div>
+          <h3 class="font-semibold text-indigo-800 mb-2">Syllogism Simulator</h3>
+          <p class="text-sm text-gray-600">Simulate syllogism reasoning</p>
+        </a>
+        <a href="games/odd-one-out.html" class="game-card hover-float bg-gradient-to-br from-teal-50 to-white p-6 rounded-xl shadow-md hover:shadow-xl" style="animation-delay: 2.3s">
+          <div class="text-3xl mb-3">❓</div>
+          <h3 class="font-semibold text-teal-800 mb-2">Odd One Out</h3>
+          <p class="text-sm text-gray-600">Identify the odd one out</p>
+        </a>
+        <a href="games/seating-arrangement.html" class="game-card hover-float bg-gradient-to-br from-blue-50 to-white p-6 rounded-xl shadow-md hover:shadow-xl" style="animation-delay: 2.4s">
+          <div class="text-3xl mb-3">🪑</div>
+          <h3 class="font-semibold text-blue-800 mb-2">Seating Arrangement</h3>
+          <p class="text-sm text-gray-600">Arrange people in correct seating</p>
+        </a>
+        <a href="games/direction-sense.html" class="game-card hover-float bg-gradient-to-br from-green-50 to-white p-6 rounded-xl shadow-md hover:shadow-xl" style="animation-delay: 2.5s">
+          <div class="text-3xl mb-3">��</div>
+          <h3 class="font-semibold text-green-800 mb-2">Direction Sense Trainer</h3>
+          <p class="text-sm text-gray-600">Train direction sense and navigation</p>
+        </a>
+        <a href="games/coding-decoding.html" class="game-card hover-float bg-gradient-to-br from-yellow-50 to-white p-6 rounded-xl shadow-md hover:shadow-xl" style="animation-delay: 2.6s">
+          <div class="text-3xl mb-3">🔤</div>
+          <h3 class="font-semibold text-yellow-800 mb-2">Coding-Decoding</h3>
+          <p class="text-sm text-gray-600">Encode and decode messages</p>
+        </a>
+        <a href="games/input-output-machine.html" class="game-card hover-float bg-gradient-to-br from-purple-50 to-white p-6 rounded-xl shadow-md hover:shadow-xl" style="animation-delay: 2.7s">
+          <div class="text-3xl mb-3">⚙️</div>
+          <h3 class="font-semibold text-purple-800 mb-2">Input-Output Machine</h3>
+          <p class="text-sm text-gray-600">Operate the input-output machine</p>
+        </a>
+        <a href="games/letter-series.html" class="game-card hover-float bg-gradient-to-br from-red-50 to-white p-6 rounded-xl shadow-md hover:shadow-xl" style="animation-delay: 2.8s">
+          <div class="text-3xl mb-3">🔡</div>
+          <h3 class="font-semibold text-red-800 mb-2">Letter Series Cracker</h3>
+          <p class="text-sm text-gray-600">Identify the missing letter in a series</p>
+        </a>
+      </div>
+      <div class="text-center mt-8">
+        <button class="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all shadow-lg hover:shadow-xl">
+          View All Games
+        </button>
       </div>
     </section>
 
     <!-- Practice by Subject -->
-    <section>
-      <h2 class="text-lg font-semibold text-blue-700 mb-4">📘 Topic-wise Practice</h2>
-      <div class="p-4 bg-blue-100/40 border border-blue-300 rounded-xl shadow-inner">
-        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-          <a href="topics/quant.html" class="subject-card">📐 Quant</a>
-          <a href="topics/varc.html" class="subject-card">📖 VARC</a>
-          <a href="topics/lrdi.html" class="subject-card">🧩 LRDI</a>
-          <a href="topics/gk.html" class="subject-card">🌍 GK</a>
-        </div>
+    <section class="bg-white/80 backdrop-blur-sm p-8 rounded-2xl shadow-lg">
+      <h2 class="text-2xl font-bold text-blue-700 mb-6 flex items-center gap-3">
+        <span class="animate-bounce-slow">📚</span>
+        Topic-wise Practice
+      </h2>
+      <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
+        <a href="topics/quant.html" class="subject-card hover-float bg-gradient-to-br from-blue-50 to-white p-6 rounded-xl shadow-md hover:shadow-xl text-center" style="animation-delay: 0.4s">
+          <div class="text-3xl mb-3">📐</div>
+          <h3 class="font-semibold text-blue-800 mb-2">Quantitative</h3>
+          <p class="text-sm text-gray-600">Master numbers and calculations</p>
+        </a>
+        <a href="topics/varc.html" class="subject-card hover-float bg-gradient-to-br from-purple-50 to-white p-6 rounded-xl shadow-md hover:shadow-xl text-center" style="animation-delay: 0.5s">
+          <div class="text-3xl mb-3">📖</div>
+          <h3 class="font-semibold text-purple-800 mb-2">VARC</h3>
+          <p class="text-sm text-gray-600">Enhance verbal and reading skills</p>
+        </a>
+        <a href="topics/lrdi.html" class="subject-card hover-float bg-gradient-to-br from-green-50 to-white p-6 rounded-xl shadow-md hover:shadow-xl text-center" style="animation-delay: 0.6s">
+          <div class="text-3xl mb-3">🧩</div>
+          <h3 class="font-semibold text-green-800 mb-2">LRDI</h3>
+          <p class="text-sm text-gray-600">Logical reasoning & data interpretation</p>
+        </a>
+        <a href="topics/gk.html" class="subject-card hover-float bg-gradient-to-br from-yellow-50 to-white p-6 rounded-xl shadow-md hover:shadow-xl text-center" style="animation-delay: 0.7s">
+          <div class="text-3xl mb-3">🌍</div>
+          <h3 class="font-semibold text-yellow-800 mb-2">GK</h3>
+          <p class="text-sm text-gray-600">Stay updated with current affairs</p>
+        </a>
       </div>
     </section>
   </main>
-
-  <style>
-    .game-card, .subject-card {
-      @apply bg-white text-blue-900 border border-blue-100 font-medium text-center py-4 px-3 rounded-xl shadow hover:bg-blue-200 hover:text-blue-900 hover:scale-[1.02] transition-all duration-200;
-    }
-  </style>
 
   <script>
     function goToDashboard() {
       window.location.href = "dashboard.html";
     }
+
+    // Add animation classes to cards as they scroll into view
+    document.addEventListener('DOMContentLoaded', () => {
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            entry.target.style.opacity = '1';
+            entry.target.style.transform = 'translateY(0)';
+          }
+        });
+      }, { threshold: 0.1 });
+
+      document.querySelectorAll('.game-card, .subject-card').forEach(card => {
+        observer.observe(card);
+      });
+    });
   </script>
 </body>
 </html>

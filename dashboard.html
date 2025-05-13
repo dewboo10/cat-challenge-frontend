@@ -5,108 +5,208 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Dashboard | Ultimate Prep</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <script>tailwind.config = { darkMode: 'class' }</script>
+  <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" />
   <script>
-    document.documentElement.classList.remove("dark");
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          animation: {
+            'bounce-slow': 'bounce 3s linear infinite',
+            'pulse-slow': 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+          }
+        }
+      }
+    }
   </script>
+  <style>
+    .slide-in {
+      animation: slideIn 0.5s ease-out;
+    }
+    @keyframes slideIn {
+      from { transform: translateX(-100%); }
+      to { transform: translateX(0); }
+    }
+    .fade-in {
+      animation: fadeIn 0.5s ease-out;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    .scale-in {
+      animation: scaleIn 0.3s ease-out;
+    }
+    @keyframes scaleIn {
+      from { transform: scale(0.95); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
+    }
+    .progress-ring {
+      transition: stroke-dashoffset 0.35s;
+      transform: rotate(-90deg);
+      transform-origin: 50% 50%;
+    }
+  </style>
 </head>
-<body class="bg-white text-black font-sans min-h-screen">
+<body class="bg-gradient-to-br from-white to-blue-50 text-black font-sans min-h-screen transition-colors duration-300">
 
 <!-- ✅ Navbar with Mobile Toggle -->
-<nav class="fixed top-0 left-0 right-0 bg-blue-600 text-white px-6 py-4 shadow flex justify-between items-center z-40">
+<nav class="fixed top-0 left-0 right-0 bg-gradient-to-r from-blue-600 to-blue-700 text-white px-6 py-4 shadow-lg flex justify-between items-center z-40 transition-all duration-300">
   <div class="flex items-center gap-4">
-    <button class="md:hidden text-2xl" onclick="toggleMobileSidebar()">☰</button>
-    <h1 class="text-xl font-bold">Ultimate Prep</h1>
+    <button class="md:hidden text-2xl hover:scale-110 transition-transform" onclick="toggleMobileSidebar()">☰</button>
+    <h1 class="text-xl font-bold flex items-center gap-2">
+      <span class="animate-bounce-slow">🎯</span>
+      Ultimate Prep
+    </h1>
   </div>
-  <div id="navbar-user" class="relative group"></div>
+  <div class="flex items-center gap-4">
+    <div id="notification-bell" class="relative cursor-pointer group">
+      <span class="text-xl">🔔</span>
+      <span class="absolute -top-1 -right-1 bg-red-500 text-xs rounded-full w-4 h-4 flex items-center justify-center animate-pulse">3</span>
+      <div class="hidden group-hover:block absolute right-0 mt-2 w-64 bg-white text-black rounded-lg shadow-xl p-2 scale-in">
+        <div class="text-sm p-2 hover:bg-blue-50 rounded">📚 New quiz available!</div>
+        <div class="text-sm p-2 hover:bg-blue-50 rounded">🏆 You moved up in rankings!</div>
+        <div class="text-sm p-2 hover:bg-blue-50 rounded">📈 Check your weekly progress</div>
+      </div>
+    </div>
+    <div id="navbar-user" class="relative group"></div>
+  </div>
 </nav>
 
-<!-- ✅ Sidebar for Desktop (with leaderboard) -->
-<aside class="hidden md:flex w-64 fixed top-16 bottom-0 bg-blue-50 border-r border-blue-100 p-4 flex-col justify-between z-30">
-  <div class="space-y-6">
-    <div class="bg-white p-4 rounded shadow">
-      <h3 class="font-semibold mb-2">🏆 Top 10 Performers</h3>
-      <div id="leaderboard-list" class="space-y-1 text-sm"></div>
+<!-- ✅ Sidebar for Desktop -->
+<aside class="hidden md:flex w-64 fixed top-16 bottom-0 bg-white/80 backdrop-blur-md border-r border-blue-100 p-4 flex-col justify-between z-30 transition-all duration-300 hover:shadow-xl">
+  <div class="space-y-6 flex-1 overflow-y-auto">
+    <div class="bg-gradient-to-br from-blue-50 to-white p-4 rounded-lg shadow-md hover:shadow-lg transition-all">
+      <h3 class="font-semibold mb-4 flex items-center gap-2">
+        <span class="animate-bounce-slow">🏆</span>
+        Top 10 Performers
+      </h3>
+      <div id="leaderboard-list" class="space-y-2 text-sm"></div>
     </div>
-    <div class="bg-white p-4 rounded shadow">
-      <h3 class="font-semibold mb-2">⏳ Days Until Exam</h3>
-      <p id="days-left" class="text-2xl font-bold text-center">--</p>
+    <div class="bg-gradient-to-br from-blue-50 to-white p-4 rounded-lg shadow-md hover:shadow-lg transition-all">
+      <h3 class="font-semibold mb-2 flex items-center gap-2">
+        <span>⏳</span>
+        Days Until Exam
+      </h3>
+      <div class="relative flex justify-center items-center">
+        <svg class="w-32 h-32" viewBox="0 0 100 100">
+          <circle class="text-gray-200" stroke-width="8" stroke="currentColor" fill="transparent" r="40" cx="50" cy="50"/>
+          <circle class="progress-ring text-blue-600" stroke-width="8" stroke="currentColor" fill="transparent" r="40" cx="50" cy="50"/>
+        </svg>
+        <div class="absolute inset-0 flex items-center justify-center">
+          <p id="days-left" class="text-2xl font-bold">--</p>
+        </div>
+      </div>
     </div>
   </div>
-  <div class="space-y-2">
-    <a href="performance.html" class="block w-full px-3 py-2 bg-blue-100 hover:bg-blue-200 rounded text-center">📈 Performance</a>
-    <a href="braingames.html" class="block w-full px-3 py-2 bg-blue-100 hover:bg-blue-200 rounded text-center">🧠 BrainGames</a>
-    <a href="#" onclick="switchExam()" class="block w-full px-3 py-2 bg-blue-100 hover:bg-blue-200 rounded text-center">🔄 Switch Exam</a>
-  </div>
+  <nav class="space-y-3 mt-4">
+    <a href="performance.html" class="block w-full px-4 py-3 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white rounded-lg shadow transition-all hover:shadow-lg text-center">
+      <span class="animate-pulse-slow">📈</span> Performance
+    </a>
+    <a href="braingames.html" class="block w-full px-4 py-3 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white rounded-lg shadow transition-all hover:shadow-lg text-center">
+      <span class="animate-pulse-slow">🧠</span> BrainGames
+    </a>
+    <button onclick="switchExam()" class="w-full px-4 py-3 bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white rounded-lg shadow transition-all hover:shadow-lg text-center">
+      <span class="animate-pulse-slow">🔄</span> Switch Exam
+    </button>
+  </nav>
 </aside>
 
-<!-- ✅ Sidebar for Mobile (without leaderboard, fixed position) -->
-<div id="mobile-sidebar" class="md:hidden fixed top-16 left-0 w-64 h-[calc(100vh-4rem)] bg-blue-50 border-r border-blue-100 shadow z-50 flex flex-col justify-between p-4 hidden">
-  <div class="space-y-6">
-    <div class="bg-white p-4 rounded shadow">
-      <h3 class="font-semibold mb-2">⏳ Days Until Exam</h3>
+<!-- ✅ Mobile Sidebar -->
+<div id="mobile-sidebar" class="md:hidden fixed top-16 left-0 w-64 h-[calc(100vh-4rem)] bg-white/90 backdrop-blur-md border-r border-blue-100 shadow-lg z-50 flex flex-col justify-between p-4 hidden slide-in">
+  <div class="space-y-6 flex-1 overflow-y-auto">
+    <div class="bg-gradient-to-br from-blue-50 to-white p-4 rounded-lg shadow">
+      <h3 class="font-semibold mb-2 flex items-center gap-2">
+        <span>⏳</span>
+        Days Until Exam
+      </h3>
       <p id="days-left-mobile" class="text-2xl font-bold text-center">--</p>
     </div>
-    <a href="performance.html">
-      <button class="w-full px-3 py-2 bg-blue-100 hover:bg-blue-200 rounded">📈 Performance</button>
-    </a>
-    <a href="braingames.html">
-      <button class="w-full px-3 py-2 bg-blue-100 hover:bg-blue-200 rounded">🧠 BrainGames</button>
-    </a>
-    <a href="#" onclick="switchExam()">
-      <button class="w-full px-3 py-2 bg-blue-100 hover:bg-blue-200 rounded">🔄 Switch Exam</button>
-    </a>
+    <nav class="space-y-3">
+      <a href="performance.html" class="block w-full px-4 py-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg shadow transition-all hover:shadow-lg text-center">
+        <span>📈</span> Performance
+      </a>
+      <a href="braingames.html" class="block w-full px-4 py-3 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-lg shadow transition-all hover:shadow-lg text-center">
+        <span>🧠</span> BrainGames
+      </a>
+      <button onclick="switchExam()" class="w-full px-4 py-3 bg-gradient-to-r from-purple-500 to-purple-600 text-white rounded-lg shadow transition-all hover:shadow-lg text-center">
+        <span>🔄</span> Switch Exam
+      </button>
+    </nav>
   </div>
 </div>
 
-<script>
-  function toggleMobileSidebar() {
-    document.getElementById("mobile-sidebar")?.classList.toggle("hidden");
-  }
-
-  function switchExam() {
-    localStorage.removeItem("selectedExam");
-    location.href = "exam-select.html";
-  }
-
-  function renderMobileCountdown() {
-    const exam = localStorage.getItem("selectedExam") || "CAT";
-    const examDates = {
-      CAT: "2025-11-24",
-      IPMAT: "2025-05-20",
-      SSC: "2025-06-15",
-      SBI: "2025-07-10",
-      SNAP: "2025-12-15",
-      CMAT: "2025-08-01",
-    };
-    const target = new Date(`${examDates[exam]}T00:00:00`);
-    const now = new Date();
-    const diff = Math.max(Math.ceil((target - now) / (1000 * 60 * 60 * 24)), 0);
-    document.getElementById("days-left-mobile").textContent = `${diff} days`;
-  }
-
-  document.addEventListener("DOMContentLoaded", () => {
-    renderMobileCountdown();
-  });
-</script>
-
 <!-- Main Content -->
-<main class="md:ml-64 pt-24 px-6">
-  <section class="max-w-3xl mx-auto mb-8 text-center">
-    <p class="text-lg font-semibold mb-4">“100 Days of effort, a lifetime of impact.”</p>
-    <div class="bg-blue-100 text-blue-800 py-3 rounded shadow mb-6">
-      📚 <span id="study-count">4,970</span> students currently studying
+<main class="md:ml-64 pt-24 px-6 fade-in">
+  <section class="max-w-3xl mx-auto mb-8">
+    <div class="text-center mb-8">
+      <h1 class="text-3xl font-bold mb-2 bg-gradient-to-r from-blue-600 to-purple-600 text-transparent bg-clip-text">Welcome to Your Learning Journey</h1>
+      <p class="text-lg text-gray-600 italic">"100 Days of effort, a lifetime of impact."</p>
     </div>
-    <div class="relative w-full pt-[56.25%] rounded overflow-hidden shadow">
-      <iframe class="absolute top-0 left-0 w-full h-full" src="https://www.youtube.com/embed/5MgBikgcWnY" allowfullscreen></iframe>
-    </div>
-  </section>
+    
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+      <div class="bg-white/80 backdrop-blur-md p-6 rounded-xl shadow-lg hover:shadow-xl transition-all">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="text-xl font-semibold">Today's Progress</h3>
+          <span class="text-2xl animate-bounce-slow">📊</span>
+        </div>
+        <div class="space-y-4">
+          <div class="relative pt-1">
+            <div class="flex mb-2 items-center justify-between">
+              <div>
+                <span class="text-xs font-semibold inline-block py-1 px-2 uppercase rounded-full text-blue-600 bg-blue-200">
+                  Daily Tasks
+                </span>
+              </div>
+              <div class="text-right">
+                <span class="text-xs font-semibold inline-block text-blue-600">
+                  70%
+                </span>
+              </div>
+            </div>
+            <div class="overflow-hidden h-2 mb-4 text-xs flex rounded bg-blue-200">
+              <div class="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-blue-500 w-[70%] transition-all duration-500"></div>
+            </div>
+          </div>
+        </div>
+      </div>
 
-  <section>
-    <h2 class="text-2xl font-bold mb-4">📘 100 Days Quiz Challenge</h2>
-    <div id="quiz-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-      <!-- Rendered by JS -->
+      <div class="bg-white/80 backdrop-blur-md p-6 rounded-xl shadow-lg hover:shadow-xl transition-all">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="text-xl font-semibold">Study Community</h3>
+          <span class="text-2xl animate-bounce-slow">👥</span>
+        </div>
+        <div class="text-center">
+          <div class="text-3xl font-bold text-blue-600 mb-2">
+            <span id="study-count" class="animate-pulse">4,970</span>
+          </div>
+          <p class="text-gray-600">students currently studying</p>
+        </div>
+      </div>
     </div>
+
+    <div class="bg-white/80 backdrop-blur-md rounded-xl shadow-lg hover:shadow-xl transition-all p-6 mb-8">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-2xl font-bold">Featured Content</h2>
+        <span class="text-2xl animate-bounce-slow">🎥</span>
+      </div>
+      <div class="relative w-full pt-[56.25%] rounded-lg overflow-hidden">
+        <iframe class="absolute top-0 left-0 w-full h-full" src="https://www.youtube.com/embed/5MgBikgcWnY" allowfullscreen></iframe>
+      </div>
+    </div>
+
+    <section class="bg-white/80 backdrop-blur-md rounded-xl shadow-lg hover:shadow-xl transition-all p-6">
+      <div class="flex items-center justify-between mb-6">
+        <h2 class="text-2xl font-bold">📘 100 Days Quiz Challenge</h2>
+        <button class="text-blue-600 hover:text-blue-700 transition-colors" onclick="refreshQuizzes()">
+          <span class="text-xl">🔄</span>
+        </button>
+      </div>
+      <div id="quiz-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+        <!-- Rendered by JS -->
+      </div>
+    </section>
   </section>
 </main>
 
@@ -161,6 +261,79 @@
     </div>
   </div>
 </div>
+
+<script>
+  function toggleMobileSidebar() {
+    const sidebar = document.getElementById("mobile-sidebar");
+    sidebar?.classList.toggle("hidden");
+  }
+
+  function switchExam() {
+    localStorage.removeItem("selectedExam");
+    window.location.href = "./exam-select.html";
+  }
+
+  function updateProgressRing(daysLeft, totalDays = 100) {
+    const circle = document.querySelector('.progress-ring');
+    const radius = 40;
+    const circumference = radius * 2 * Math.PI;
+    
+    circle.style.strokeDasharray = `${circumference} ${circumference}`;
+    const offset = circumference - (daysLeft / totalDays) * circumference;
+    circle.style.strokeDashoffset = offset;
+  }
+
+  function renderCountdown() {
+    const exam = localStorage.getItem("selectedExam") || "CAT";
+    const examDates = {
+      CAT: "2025-11-24",
+      IPMAT: "2025-05-20",
+      SSC: "2025-06-15",
+      SBI: "2025-07-10",
+      SNAP: "2025-12-15",
+      CMAT: "2025-08-01",
+    };
+    const target = new Date(`${examDates[exam]}T00:00:00`);
+    const now = new Date();
+    const diff = Math.max(Math.ceil((target - now) / (1000 * 60 * 60 * 24)), 0);
+    
+    document.getElementById("days-left").textContent = `${diff}`;
+    document.getElementById("days-left-mobile").textContent = `${diff} days`;
+    updateProgressRing(diff);
+  }
+
+  function refreshQuizzes() {
+    const quizGrid = document.getElementById('quiz-grid');
+    quizGrid.classList.add('animate__animated', 'animate__fadeOut');
+    setTimeout(() => {
+      // Refresh logic here
+      quizGrid.classList.remove('animate__fadeOut');
+      quizGrid.classList.add('animate__fadeIn');
+    }, 500);
+  }
+
+  // Study count animation
+  function animateStudyCount() {
+    const counter = document.getElementById('study-count');
+    const target = 4970;
+    let current = 0;
+    const increment = target / 50;
+    const interval = setInterval(() => {
+      current += increment;
+      if (current >= target) {
+        current = target;
+        clearInterval(interval);
+      }
+      counter.textContent = Math.round(current).toLocaleString();
+    }, 20);
+  }
+
+  document.addEventListener("DOMContentLoaded", () => {
+    renderCountdown();
+    setInterval(renderCountdown, 60000); // Update every minute
+    animateStudyCount();
+  });
+</script>
 
 <!-- Scripts -->
 <script src="js/theme.js"></script>

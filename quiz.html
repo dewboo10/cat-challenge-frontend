@@ -14,25 +14,106 @@
   </script>
   
   <script src="https://cdn.tailwindcss.com"></script>
-  <script>tailwind.config = { darkMode: 'class' };</script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" />
+  <script>
+    tailwind.config = { 
+      darkMode: 'class',
+      theme: {
+        extend: {
+          animation: {
+            'float': 'float 3s ease-in-out infinite',
+            'pulse-slow': 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+          },
+          keyframes: {
+            float: {
+              '0%, 100%': { transform: 'translateY(0)' },
+              '50%': { transform: 'translateY(-10px)' },
+            }
+          }
+        }
+      }
+    };
+  </script>
+  <style>
+    .fade-in {
+      opacity: 0;
+      animation: fadeIn 0.5s ease-out forwards;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .question-nav-btn {
+      transition: all 0.3s ease;
+    }
+    .question-nav-btn:hover {
+      transform: translateY(-2px);
+    }
+    .option-card {
+      transition: all 0.3s ease;
+    }
+    .option-card:hover:not(.selected) {
+      transform: translateX(10px);
+    }
+    .selected {
+      transform: scale(1.02);
+    }
+  </style>
 </head>
-<body class="bg-white dark:bg-[#0f0f0f] dark:text-white min-h-screen">
+<body class="bg-gradient-to-br from-blue-50 to-white dark:from-gray-900 dark:to-gray-800 dark:text-white min-h-screen">
 
 <!-- Start Screen (Guidelines) -->
 <div id="start-screen" class="flex items-center justify-center min-h-screen p-4">
-  <div class="bg-gray-100 dark:bg-[#1a1a1a] p-6 sm:p-8 rounded-lg shadow-lg w-full max-w-xl text-center space-y-6">
-    <h1 class="text-2xl font-bold text-blue-600 dark:text-blue-400">📝 Quiz Guidelines</h1>
-    <ul class="text-left text-sm space-y-2">
-      <li>⏳ Fixed time for each section (Quant, VARC, LRDI).</li>
-      <li>🚫 No pause allowed once started. Timer continues even if reloaded.</li>
-      <li>✅ Save, Mark, or Clear your responses.</li>
-      <li>📤 Submit quiz anytime or auto-submit when time runs out.</li>
-    </ul>
-    <div class="flex items-center gap-2 justify-center">
-      <input type="checkbox" id="agree-checkbox" class="accent-blue-600">
-      <label for="agree-checkbox" class="text-sm">I have read and agree to the above rules.</label>
+  <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm p-8 rounded-2xl shadow-lg w-full max-w-xl text-center space-y-8 fade-in">
+    <div class="space-y-4">
+      <span class="text-5xl animate-float">📝</span>
+      <h1 class="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 text-transparent bg-clip-text">Quiz Guidelines</h1>
     </div>
-    <button onclick="waitForQuestionsThenStart()" id="start-btn" disabled class="px-6 py-2 bg-gray-400 rounded text-white font-semibold w-full sm:w-auto">Start Quiz</button>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-left">
+      <div class="bg-blue-50/50 dark:bg-gray-700/50 p-4 rounded-xl space-y-2">
+        <div class="flex items-center gap-2 text-blue-700 dark:text-blue-300 font-semibold">
+          <span class="text-xl">⏳</span>
+          <h3>Time Management</h3>
+        </div>
+        <p class="text-sm text-gray-600 dark:text-gray-400">Fixed time for each section (Quant, VARC, LRDI)</p>
+      </div>
+
+      <div class="bg-purple-50/50 dark:bg-gray-700/50 p-4 rounded-xl space-y-2">
+        <div class="flex items-center gap-2 text-purple-700 dark:text-purple-300 font-semibold">
+          <span class="text-xl">🚫</span>
+          <h3>No Pause</h3>
+        </div>
+        <p class="text-sm text-gray-600 dark:text-gray-400">Timer continues even if page is reloaded</p>
+      </div>
+
+      <div class="bg-green-50/50 dark:bg-gray-700/50 p-4 rounded-xl space-y-2">
+        <div class="flex items-center gap-2 text-green-700 dark:text-green-300 font-semibold">
+          <span class="text-xl">✅</span>
+          <h3>Response Options</h3>
+        </div>
+        <p class="text-sm text-gray-600 dark:text-gray-400">Save, Mark, or Clear your responses</p>
+      </div>
+
+      <div class="bg-yellow-50/50 dark:bg-gray-700/50 p-4 rounded-xl space-y-2">
+        <div class="flex items-center gap-2 text-yellow-700 dark:text-yellow-300 font-semibold">
+          <span class="text-xl">📤</span>
+          <h3>Submission</h3>
+        </div>
+        <p class="text-sm text-gray-600 dark:text-gray-400">Submit anytime or auto-submit when time ends</p>
+      </div>
+    </div>
+
+    <div class="space-y-4">
+      <label class="flex items-center gap-2 justify-center text-sm cursor-pointer">
+        <input type="checkbox" id="agree-checkbox" class="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+        <span class="text-gray-600 dark:text-gray-400">I have read and agree to the above rules</span>
+      </label>
+      <button onclick="waitForQuestionsThenStart()" id="start-btn" disabled 
+        class="px-8 py-3 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-semibold rounded-xl shadow-md hover:shadow-lg transition-all opacity-50 disabled:cursor-not-allowed disabled:opacity-50 w-full sm:w-auto">
+        Start Quiz
+      </button>
+    </div>
   </div>
 </div>
 
@@ -40,62 +121,102 @@
 <div id="quiz-panel" class="hidden flex flex-col lg:grid lg:grid-cols-6 min-h-screen">
 
   <!-- Panel 1: Main Content -->
-  <section class="lg:col-span-3 p-4 lg:p-6 border-b lg:border-b-0 lg:border-r border-gray-300 dark:border-gray-700">
-    <h1 class="text-lg sm:text-xl font-bold mb-4">Question No. <span id="question-number">1</span></h1>
-    <div id="main-block" class="bg-gray-100 dark:bg-[#1a1a1a] p-4 rounded shadow-sm">
+  <section class="lg:col-span-3 p-4 lg:p-6 border-b lg:border-b-0 lg:border-r border-gray-200 dark:border-gray-700 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm">
+    <div class="flex items-center gap-3 mb-6">
+      <h1 class="text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 text-transparent bg-clip-text">Question <span id="question-number">1</span></h1>
+      <div class="text-sm px-3 py-1 bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 rounded-full">
+        <span id="section-indicator">Section: Quant</span>
+      </div>
+    </div>
+    <div id="main-block" class="bg-gray-50/50 dark:bg-gray-900/50 p-6 rounded-xl shadow-sm space-y-4">
       <div id="video-review" class="mb-4"></div>
-      <p id="passage-text" class="text-sm">Loading passage...</p>
+      <p id="passage-text" class="text-gray-700 dark:text-gray-300 text-sm leading-relaxed">Loading passage...</p>
     </div>
   </section>
 
   <!-- Panel 2: Question and Options -->
-  <section class="lg:col-span-2 p-4 lg:p-6 space-y-4">
-    <h2 id="question-text" class="text-base sm:text-lg font-semibold">Loading question...</h2>
-    <div id="options-container" class="space-y-3"></div>
-    <div id="written-explanation" class="text-sm text-gray-400"></div>
+  <section class="lg:col-span-2 p-4 lg:p-6 space-y-6 bg-gray-50/50 dark:bg-gray-900/50">
+    <h2 id="question-text" class="text-lg font-semibold text-gray-800 dark:text-gray-200">Loading question...</h2>
+    
+    <div id="options-container" class="space-y-3">
+      <!-- Options will be dynamically added here -->
+    </div>
 
-    <div class="flex flex-wrap gap-2 mt-6" id="control-buttons">
-      <button onclick="clearResponse()" class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded w-full sm:w-auto">Clear</button>
-      <button onclick="markAndNext()" class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded w-full sm:w-auto">Mark & Next</button>
-      <button onclick="saveAndNext()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded w-full sm:w-auto">Save & Next</button>
+    <div id="written-explanation" class="text-sm text-gray-500 dark:text-gray-400 bg-blue-50/50 dark:bg-blue-900/50 p-4 rounded-xl"></div>
+
+    <div class="flex flex-wrap gap-3 mt-6" id="control-buttons">
+      <button onclick="clearResponse()" 
+        class="flex-1 px-4 py-2 bg-gradient-to-r from-gray-500 to-gray-600 hover:from-gray-600 hover:to-gray-700 text-white rounded-lg shadow transition-all flex items-center justify-center gap-2">
+        <span>🗑️</span>
+        Clear
+      </button>
+      <button onclick="markAndNext()" 
+        class="flex-1 px-4 py-2 bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white rounded-lg shadow transition-all flex items-center justify-center gap-2">
+        <span>🚩</span>
+        Mark & Next
+      </button>
+      <button onclick="saveAndNext()" 
+        class="flex-1 px-4 py-2 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white rounded-lg shadow transition-all flex items-center justify-center gap-2">
+        <span>✅</span>
+        Save & Next
+      </button>
     </div>
   </section>
 
   <!-- Panel 3: Profile + Navigator -->
-  <aside class="lg:col-span-1 p-4 border-t lg:border-t-0 lg:border-l border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-[#1a1a1a] flex flex-col justify-between">
-
-    <!-- User Profile Top -->
-    <div class="flex items-center gap-3 mb-4">
-      <img src="https://www.svgrepo.com/show/382106/avatar-boy.svg" alt="Profile" class="w-10 h-10 rounded-full bg-gray-200">
-      <div class="text-sm font-semibold" id="profile-username">User</div>
-    </div>
-<!-- Section Switch Tabs -->
-<div id="section-tabs" class="flex justify-center gap-2 mb-4">
-  <button onclick="switchSection('Quant')" class="px-3 py-1 bg-blue-100 text-black rounded hover:bg-blue-200 text-xs">Quant</button>
-  <button onclick="switchSection('VARC')" class="px-3 py-1 bg-blue-100 text-black rounded hover:bg-blue-200 text-xs">VARC</button>
-  <button onclick="switchSection('LRDI')" class="px-3 py-1 bg-blue-100 text-black rounded hover:bg-blue-200 text-xs">LRDI</button>
-</div>
-
-    <!-- Section and Timer Info -->
-    <div class="space-y-4">
-      <div class="text-sm text-center">
-        <h3 class="font-bold">Section: <span id="section-name">Quant</span></h3>
-        <p class="text-xs mt-1">Time Left: <span id="timer">40:00</span></p>
-        <hr class="my-2">
-        <p class="text-sm">Answered: <span id="answered-count">0</span></p>
+  <aside class="lg:col-span-1 p-4 border-t lg:border-t-0 lg:border-l border-gray-200 dark:border-gray-700 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm flex flex-col">
+    <!-- User Profile -->
+    <div class="flex items-center gap-3 p-3 bg-blue-50/50 dark:bg-blue-900/50 rounded-xl mb-4">
+      <img src="https://www.svgrepo.com/show/382106/avatar-boy.svg" alt="Profile" class="w-10 h-10 rounded-full bg-white/50 p-1">
+      <div class="flex-1">
+        <div class="text-sm font-semibold" id="profile-username">User</div>
+        <div class="text-xs text-gray-500 dark:text-gray-400">CAT Aspirant</div>
       </div>
-      <div class="mt-4">
-        <h4 class="font-semibold text-sm mb-2">Question Overview</h4>
-        <div id="question-overview" class="grid grid-cols-5 gap-2 text-sm"></div>
+    </div>
+
+    <!-- Section Tabs -->
+    <div id="section-tabs" class="grid grid-cols-3 gap-2 mb-4">
+      <button onclick="switchSection('Quant')" 
+        class="px-3 py-2 text-xs font-medium bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 rounded-lg hover:bg-blue-200 dark:hover:bg-blue-800 transition-all">
+        Quant
+      </button>
+      <button onclick="switchSection('VARC')" 
+        class="px-3 py-2 text-xs font-medium bg-purple-100 dark:bg-purple-900 text-purple-700 dark:text-purple-300 rounded-lg hover:bg-purple-200 dark:hover:bg-purple-800 transition-all">
+        VARC
+      </button>
+      <button onclick="switchSection('LRDI')" 
+        class="px-3 py-2 text-xs font-medium bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300 rounded-lg hover:bg-green-200 dark:hover:bg-green-800 transition-all">
+        LRDI
+      </button>
+    </div>
+
+    <!-- Timer -->
+    <div class="bg-gradient-to-r from-blue-500 to-purple-500 text-white p-4 rounded-xl text-center mb-4">
+      <h3 class="text-sm font-medium mb-1">Time Remaining</h3>
+      <p id="timer" class="text-2xl font-bold animate-pulse-slow">40:00</p>
+    </div>
+
+    <!-- Question Overview -->
+    <div class="flex-1">
+      <h4 class="text-sm font-semibold mb-3 px-2">Question Overview</h4>
+      <div id="question-overview" class="grid grid-cols-5 gap-2 p-2">
+        <!-- Question buttons will be added here -->
       </div>
     </div>
 
     <!-- Submit & Quit -->
-    <div class="mt-4">
-      <button onclick="quitQuiz()" class="bg-red-600 hover:bg-red-700 text-white w-full py-2 rounded mb-2">Quit</button>
-      <button onclick="submitQuiz()" class="bg-green-600 hover:bg-green-700 text-white w-full py-2 rounded">Submit</button>
+    <div class="space-y-2 mt-4">
+      <button onclick="quitQuiz()" 
+        class="w-full py-2 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white rounded-lg shadow transition-all flex items-center justify-center gap-2">
+        <span>🚪</span>
+        Quit Quiz
+      </button>
+      <button onclick="submitQuiz()" 
+        class="w-full py-2 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white rounded-lg shadow transition-all flex items-center justify-center gap-2">
+        <span>📤</span>
+        Submit Quiz
+      </button>
     </div>
-
   </aside>
 </div>
 
@@ -107,9 +228,21 @@ const startBtn = document.getElementById("start-btn");
 checkbox.addEventListener("change", () => {
   startBtn.disabled = !checkbox.checked;
   startBtn.className = checkbox.checked 
-    ? "px-6 py-2 bg-blue-600 hover:bg-blue-700 rounded text-white font-semibold w-full sm:w-auto" 
-    : "px-6 py-2 bg-gray-400 rounded text-white font-semibold w-full sm:w-auto";
+    ? "px-8 py-3 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-semibold rounded-xl shadow-md hover:shadow-lg transition-all w-full sm:w-auto" 
+    : "px-8 py-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white font-semibold rounded-xl shadow-md opacity-50 cursor-not-allowed w-full sm:w-auto";
 });
+
+// Add scroll animation
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      entry.target.style.opacity = '1';
+      entry.target.style.transform = 'translateY(0)';
+    }
+  });
+}, { threshold: 0.1 });
+
+document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
 </script>
 
 </body>

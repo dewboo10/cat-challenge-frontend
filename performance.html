@@ -5,59 +5,226 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Performance Dashboard | Ultimate Prep</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" />
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          animation: {
+            'float': 'float 3s ease-in-out infinite',
+          },
+          keyframes: {
+            float: {
+              '0%, 100%': { transform: 'translateY(0)' },
+              '50%': { transform: 'translateY(-10px)' },
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    .stat-card {
+      transition: all 0.3s ease;
+    }
+    .stat-card:hover {
+      transform: translateY(-5px);
+    }
+    .fade-in {
+      opacity: 0;
+      animation: fadeIn 0.5s ease-out forwards;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
 </head> 
 <body class="bg-gradient-to-br from-blue-50 to-white text-black min-h-screen flex flex-col">
 
   <!-- Navbar -->
-  <nav class="bg-white px-4 sm:px-6 py-4 shadow flex flex-col sm:flex-row justify-between items-center gap-2 border-b border-blue-100">
-    <h1 class="text-lg sm:text-xl font-bold text-center sm:text-left text-blue-700">📈 Performance Dashboard</h1>
-    <button onclick="window.location.href='dashboard.html'" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded w-full sm:w-auto">Go to Dashboard</button>
+  <nav class="bg-white/80 backdrop-blur-sm px-4 sm:px-6 py-4 shadow-lg flex flex-col sm:flex-row justify-between items-center gap-2 border-b border-blue-100 sticky top-0 z-50">
+    <div class="flex items-center gap-3">
+      <span class="text-3xl animate-bounce-slow">📈</span>
+      <h1 class="text-lg sm:text-xl font-bold text-center sm:text-left bg-gradient-to-r from-blue-600 to-purple-600 text-transparent bg-clip-text">Performance Dashboard</h1>
+    </div>
+    <button onclick="window.location.href='dashboard.html'" class="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white px-6 py-2 rounded-lg shadow-md hover:shadow-lg transition-all w-full sm:w-auto flex items-center justify-center gap-2">
+      <span>←</span>
+      Back to Dashboard
+    </button>
   </nav>
 
   <!-- Main Layout -->
   <main class="p-4 sm:p-6 space-y-10 flex-1">
 
     <!-- Summary Cards -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-      <div class="bg-blue-100 p-4 rounded-xl shadow text-center">
-        <p class="text-sm text-blue-800">Total Quizzes</p>
-        <h2 id="total-quizzes" class="text-2xl font-bold text-blue-900">--</h2>
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div class="stat-card bg-white/80 backdrop-blur-sm p-6 rounded-xl shadow-lg hover:shadow-xl transition-all fade-in" style="animation-delay: 0.1s">
+        <div class="flex items-center justify-between mb-4">
+          <p class="text-sm font-semibold text-blue-800">Total Quizzes</p>
+          <span class="text-2xl">📚</span>
+        </div>
+        <h2 id="total-quizzes" class="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 text-transparent bg-clip-text">--</h2>
+        <p class="text-sm text-gray-500 mt-2">Completed quizzes</p>
       </div>
-      <div class="bg-blue-100 p-4 rounded-xl shadow text-center">
-        <p class="text-sm text-blue-800">Average Accuracy</p>
-        <h2 id="avg-accuracy" class="text-2xl font-bold text-blue-900">--%</h2>
+      <div class="stat-card bg-white/80 backdrop-blur-sm p-6 rounded-xl shadow-lg hover:shadow-xl transition-all fade-in" style="animation-delay: 0.2s">
+        <div class="flex items-center justify-between mb-4">
+          <p class="text-sm font-semibold text-green-800">Average Accuracy</p>
+          <span class="text-2xl">🎯</span>
+        </div>
+        <h2 id="avg-accuracy" class="text-3xl font-bold bg-gradient-to-r from-green-600 to-teal-600 text-transparent bg-clip-text">--%</h2>
+        <p class="text-sm text-gray-500 mt-2">Correct answers</p>
       </div>
-      <div class="bg-blue-100 p-4 rounded-xl shadow text-center">
-        <p class="text-sm text-blue-800">Avg Time / Question</p>
-        <h2 id="avg-time" class="text-2xl font-bold text-blue-900">--s</h2>
+      <div class="stat-card bg-white/80 backdrop-blur-sm p-6 rounded-xl shadow-lg hover:shadow-xl transition-all fade-in" style="animation-delay: 0.3s">
+        <div class="flex items-center justify-between mb-4">
+          <p class="text-sm font-semibold text-yellow-800">Avg Time / Question</p>
+          <span class="text-2xl">⏱️</span>
+        </div>
+        <h2 id="avg-time" class="text-3xl font-bold bg-gradient-to-r from-yellow-600 to-orange-600 text-transparent bg-clip-text">--s</h2>
+        <p class="text-sm text-gray-500 mt-2">Per question</p>
       </div>
-      <div class="bg-blue-100 p-4 rounded-xl shadow text-center">
-        <p class="text-sm text-blue-800">Predicted Percentile</p>
-        <h2 id="predicted-percentile" class="text-2xl font-bold text-blue-900">--%</h2>
+      <div class="stat-card bg-white/80 backdrop-blur-sm p-6 rounded-xl shadow-lg hover:shadow-xl transition-all fade-in" style="animation-delay: 0.4s">
+        <div class="flex items-center justify-between mb-4">
+          <p class="text-sm font-semibold text-purple-800">Predicted Percentile</p>
+          <span class="text-2xl">🚀</span>
+        </div>
+        <h2 id="predicted-percentile" class="text-3xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 text-transparent bg-clip-text">--%</h2>
+        <p class="text-sm text-gray-500 mt-2">Based on performance</p>
       </div>
     </div>
 
     <!-- Chapter-wise Analysis -->
-    <section>
-      <h2 class="text-lg sm:text-xl font-semibold text-blue-700 mb-4">📚 Section & Topic Wise Analysis</h2>
-      <div id="chapter-analysis" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <section class="bg-white/80 backdrop-blur-sm p-6 rounded-xl shadow-lg fade-in" style="animation-delay: 0.5s">
+      <div class="flex items-center gap-3 mb-6">
+        <span class="text-3xl animate-bounce-slow">📚</span>
+        <h2 class="text-lg sm:text-xl font-semibold bg-gradient-to-r from-blue-600 to-purple-600 text-transparent bg-clip-text">Section & Topic Wise Analysis</h2>
+      </div>
+      <div id="chapter-analysis" class="grid grid-cols-1 md:grid-cols-2 gap-6">
         <!-- Filled dynamically -->
       </div>
     </section>
 
-    <!-- Time Insight Chart (Future) -->
-    <section>
-      <h2 class="text-lg sm:text-xl font-semibold text-blue-700 mb-4">⏱ Time Distribution</h2>
-      <canvas id="timeChart" class="w-full max-w-3xl mx-auto"></canvas>
+    <!-- Time Distribution -->
+    <section class="bg-white/80 backdrop-blur-sm p-6 rounded-xl shadow-lg fade-in" style="animation-delay: 0.6s">
+      <div class="flex items-center gap-3 mb-6">
+        <span class="text-3xl animate-bounce-slow">⏱️</span>
+        <h2 class="text-lg sm:text-xl font-semibold bg-gradient-to-r from-blue-600 to-purple-600 text-transparent bg-clip-text">Time Distribution</h2>
+      </div>
+      <div class="relative">
+        <canvas id="timeChart" class="w-full max-w-3xl mx-auto"></canvas>
+      </div>
+    </section>
+
+    <!-- Progress Timeline -->
+    <section class="bg-white/80 backdrop-blur-sm p-6 rounded-xl shadow-lg fade-in" style="animation-delay: 0.7s">
+      <div class="flex items-center gap-3 mb-6">
+        <span class="text-3xl animate-bounce-slow">📅</span>
+        <h2 class="text-lg sm:text-xl font-semibold bg-gradient-to-r from-blue-600 to-purple-600 text-transparent bg-clip-text">Progress Timeline</h2>
+      </div>
+      <div id="progressChart" class="w-full h-64"></div>
     </section>
 
     <!-- Reset Button -->
-    <div class="text-center">
-      <button onclick="resetPerformance()" class="mt-4 px-6 py-2 bg-red-500 hover:bg-red-600 text-white rounded w-full sm:w-auto">Reset Performance</button>
+    <div class="text-center fade-in" style="animation-delay: 0.8s">
+      <button onclick="resetPerformance()" class="mt-4 px-8 py-3 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white rounded-lg shadow-md hover:shadow-lg transition-all w-full sm:w-auto">
+        Reset Performance Data
+      </button>
     </div>
 
   </main>
 
+  <script>
+    // Initialize charts when DOM is loaded
+    document.addEventListener('DOMContentLoaded', () => {
+      // Time Distribution Chart
+      const timeCtx = document.getElementById('timeChart').getContext('2d');
+      new Chart(timeCtx, {
+        type: 'bar',
+        data: {
+          labels: ['Quant', 'VARC', 'LRDI'],
+          datasets: [{
+            label: 'Average Time (minutes)',
+            data: [25, 30, 35],
+            backgroundColor: [
+              'rgba(59, 130, 246, 0.5)',
+              'rgba(16, 185, 129, 0.5)',
+              'rgba(139, 92, 246, 0.5)'
+            ],
+            borderColor: [
+              'rgb(59, 130, 246)',
+              'rgb(16, 185, 129)',
+              'rgb(139, 92, 246)'
+            ],
+            borderWidth: 1
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: {
+              position: 'top',
+            },
+            title: {
+              display: true,
+              text: 'Time Spent per Section'
+            }
+          }
+        }
+      });
+
+      // Progress Timeline
+      const progressOptions = {
+        series: [{
+          name: 'Accuracy',
+          data: [65, 70, 75, 72, 80, 78, 85]
+        }],
+        chart: {
+          type: 'area',
+          height: 250,
+          toolbar: {
+            show: false
+          }
+        },
+        stroke: {
+          curve: 'smooth'
+        },
+        fill: {
+          type: 'gradient',
+          gradient: {
+            shadeIntensity: 1,
+            opacityFrom: 0.7,
+            opacityTo: 0.3
+          }
+        },
+        xaxis: {
+          categories: ['Week 1', 'Week 2', 'Week 3', 'Week 4', 'Week 5', 'Week 6', 'Week 7']
+        },
+        yaxis: {
+          title: {
+            text: 'Accuracy %'
+          }
+        }
+      };
+
+      const progressChart = new ApexCharts(document.querySelector("#progressChart"), progressOptions);
+      progressChart.render();
+    });
+
+    // Add scroll animation
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.style.opacity = '1';
+          entry.target.style.transform = 'translateY(0)';
+        }
+      });
+    }, { threshold: 0.1 });
+
+    document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+  </script>
+
   <script src="js/performance.js"></script>
 </body>
-</html>
+</html> 
