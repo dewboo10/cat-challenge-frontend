@@ -1,88 +1,149 @@
 <!DOCTYPE html>
-
 <html lang="en">
 <head>
-<meta charset="utf-8"/>
-<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-<title>Direction Sense Trainer – BrainGames</title>
-
-<style>
-    .grid-cell {
-      width: 2.5rem;
-      height: 2.5rem;
-      border: 1px solid #cbd5e1;
+  <meta charset="UTF-8" />
+  <title>Direction Sense – BrainGames | Exam Prep</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    .cell {
+      width: 40px;
+      height: 40px;
+      border: 1px solid #ccc;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 1.25rem;
+      font-weight: bold;
     }
-    .player {
-      background-color: #3b82f6;
-      color: white;
-      border-radius: 0.25rem;
-    }
-    .goal {
-      background-color: #10b981;
-      color: white;
-      border-radius: 0.25rem;
-    }
+    .start { background-color: #3b82f6; color: white; }
+    .goal { background-color: #16a34a; color: white; }
   </style>
 </head>
-<body class="bg-white min-h-screen flex items-center justify-center text-gray-800 p-4"><div class="flex flex-col lg:flex-row gap-8 max-w-7xl w-full"><div class="flex-1 bg-white p-6 shadow-xl rounded-2xl border border-blue-200">
-<div class="text-green-600 font-semibold mb-3" id="best-score">Your Best Score: loading...</div><div class="w-full max-w-md p-6 bg-white shadow-xl rounded-2xl border border-blue-200 text-center space-y-4">
-<h1 class="text-2xl font-bold text-blue-700">🧭 Direction Sense Trainer</h1>
-<div class="text-sm text-gray-600">⏱ Time Left: <span class="font-semibold" id="timer">180s</span> | 🏆 Score: <span class="font-semibold" id="score">0</span></div>
-<div class="text-base font-medium mb-2" id="instruction">Loading...</div>
-<div class="grid grid-cols-5 gap-1 w-fit mx-auto mb-4" id="grid"></div>
-<div class="grid grid-cols-4 gap-2 text-sm font-medium">
-<button class="py-2 bg-blue-500 hover:bg-blue-600 text-white rounded" onclick="move('up')">↑ North</button>
-<button class="py-2 bg-blue-500 hover:bg-blue-600 text-white rounded" onclick="move('down')">↓ South</button>
-<button class="py-2 bg-blue-500 hover:bg-blue-600 text-white rounded" onclick="move('left')">← West</button>
-<button class="py-2 bg-blue-500 hover:bg-blue-600 text-white rounded" onclick="move('right')">→ East</button>
-</div>
-<button class="w-full bg-green-600 hover:bg-green-700 text-white py-2 rounded font-medium hidden" id="retryBtn" onclick="startGame()">Retry</button>
+<body class="bg-white min-h-screen flex items-center justify-center text-gray-800 p-4">
+<div class="max-w-xl w-full bg-white shadow-xl p-6 border border-blue-200 rounded-xl text-center space-y-4">
+  <h1 class="text-2xl font-bold text-blue-700">🧭 Direction Sense</h1>
+  <p>⏱ Time Left: <span id="timer">180</span>s | 🎯 Score: <span id="score">0</span></p>
+  <p id="instruction" class="font-medium">Loading...</p>
+  <div id="grid" class="grid grid-cols-5 gap-1 justify-center"></div>
+  <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+    <button onclick="move('up')" class="bg-blue-500 text-white py-2 rounded">↑ North</button>
+    <button onclick="move('down')" class="bg-blue-500 text-white py-2 rounded">↓ South</button>
+    <button onclick="move('left')" class="bg-blue-500 text-white py-2 rounded">← West</button>
+    <button onclick="move('right')" class="bg-blue-500 text-white py-2 rounded">→ East</button>
+  </div>
+  <button id="retryBtn" class="w-full bg-green-600 text-white py-2 rounded hover:bg-green-700 hidden">Retry</button>
+  <div id="best-score" class="text-sm text-green-700 mt-2"></div>
+  <ul id="leaderboard" class="text-left text-sm text-gray-600 mt-4 space-y-1"></ul>
 </div>
 
-</div>
-<div class="w-full lg:w-72 bg-gray-50 border border-gray-200 p-4 rounded-xl shadow">
-<h2 class="font-bold mb-3 text-blue-700">🏆 Leaderboard</h2>
-<ul class="text-sm text-gray-700 space-y-2" id="leaderboard"></ul>
-</div>
-</div><script>
+<script>
+const instructions = [
+  { start: [2, 2], goal: [2, 4], text: "Go 2 steps East." },
+  { start: [1, 1], goal: [3, 1], text: "Go 2 steps South." },
+  { start: [4, 2], goal: [2, 2], text: "Go 2 steps North." },
+  { start: [0, 0], goal: [0, 2], text: "Go 2 steps East." },
+  { start: [3, 3], goal: [3, 1], text: "Go 2 steps West." }
+];
+
+let score = 0, timeLeft = 180, timerInterval, current = 0, pos = [];
+
+function drawGrid(start, goal) {
+  const grid = document.getElementById("grid");
+  grid.innerHTML = "";
+  for (let r = 0; r < 5; r++) {
+    for (let c = 0; c < 5; c++) {
+      const div = document.createElement("div");
+      div.className = "cell";
+      if (r === start[0] && c === start[1]) div.classList.add("start");
+      if (r === goal[0] && c === goal[1]) div.classList.add("goal");
+      grid.appendChild(div);
+    }
+  }
+}
+
+function loadQuestion() {
+  const q = instructions[current];
+  pos = [...q.start];
+  document.getElementById("instruction").textContent = q.text;
+  drawGrid(q.start, q.goal);
+}
+
+function move(dir) {
+  if (dir === 'up' && pos[0] > 0) pos[0]--;
+  else if (dir === 'down' && pos[0] < 4) pos[0]++;
+  else if (dir === 'left' && pos[1] > 0) pos[1]--;
+  else if (dir === 'right' && pos[1] < 4) pos[1]++;
+
+  const goal = instructions[current].goal;
+  if (pos[0] === goal[0] && pos[1] === goal[1]) {
+    score++;
+    document.getElementById("score").textContent = score;
+    current = (current + 1) % instructions.length;
+    loadQuestion();
+  }
+}
+
+function startTimer() {
+  timerInterval = setInterval(() => {
+    timeLeft--;
+    document.getElementById("timer").textContent = timeLeft;
+    if (timeLeft <= 0) endGame();
+  }, 1000);
+}
+
+function endGame() {
+  clearInterval(timerInterval);
+  document.getElementById("instruction").textContent = `Time's up! Final Score: ${score}`;
+  document.getElementById("retryBtn").classList.remove("hidden");
+  submitScore("direction-sense", score);
+}
+
+function restartGame() {
+  score = 0;
+  timeLeft = 180;
+  current = 0;
+  document.getElementById("score").textContent = score;
+  document.getElementById("timer").textContent = timeLeft;
+  document.getElementById("retryBtn").classList.add("hidden");
+  loadQuestion();
+  startTimer();
+}
+
+// ✅ Backend
 const API_BASE = "https://ultimate-backend-vyse.onrender.com/api/brain-games";
 const username = localStorage.getItem("username");
 const isLoggedIn = localStorage.getItem("isLoggedIn") === "true";
 
-async function fetchUserBestScore(gameId) {
-  try {
-    const res = await fetch(`${API_BASE}/user?username=${username}&gameId=${gameId}`);
-    const data = await res.json();
-    document.getElementById("best-score").textContent = `Your Best Score: ${data.score || 0}`;
-  } catch {
-    document.getElementById("best-score").textContent = "Login to track score.";
-  }
+function submitScore(gameId, score) {
+  if (!isLoggedIn || !username) return;
+  fetch(`${API_BASE}/submit`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ username, gameId, score })
+  });
 }
 
-async function fetchLeaderboard(gameId) {
-  try {
-    const res = await fetch(`${API_BASE}/top?gameId=${gameId}`);
-    const data = await res.json();
-    const lb = document.getElementById("leaderboard");
-    lb.innerHTML = data.map((s, i) => `<li>${i + 1}. ${s.username} – ${s.score}</li>`).join("");
-  } catch {
-    document.getElementById("leaderboard").innerHTML = "<li>Could not load leaderboard.</li>";
-  }
+function fetchStats(gameId) {
+  if (!isLoggedIn || !username) return;
+  fetch(`${API_BASE}/user?username=${username}&gameId=${gameId}`)
+    .then(res => res.json())
+    .then(data => {
+      document.getElementById("best-score").textContent = `🏅 Your Best Score: ${data.score || 0}`;
+    });
+  fetch(`${API_BASE}/top?gameId=${gameId}`)
+    .then(res => res.json())
+    .then(data => {
+      document.getElementById("leaderboard").innerHTML =
+        data.map((s, i) => `<li>${i + 1}. ${s.username} – ${s.score}</li>`).join("");
+    });
 }
 
-window.addEventListener("DOMContentLoaded", () => {
-  const gameId = window.location.pathname.split("/").pop().replace(".html", "");
-  if (isLoggedIn && username) {
-    fetchUserBestScore(gameId);
-    fetchLeaderboard(gameId);
-  } else {
-    const bs = document.getElementById("best-score");
-    if (bs) bs.textContent = "Login to track score.";
-  }
-});
-    </script></body>
+window.onload = () => {
+  fetchStats("direction-sense");
+  loadQuestion();
+  startTimer();
+  document.getElementById("retryBtn").addEventListener("click", restartGame);
+};
+</script>
+</body>
 </html>

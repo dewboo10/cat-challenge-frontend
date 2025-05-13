@@ -1,73 +1,121 @@
 <!DOCTYPE html>
-
 <html lang="en">
 <head>
-<meta charset="utf-8"/>
-<title>Equation Balancer – BrainGames | Exam Prep</title>
-<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-
-<style>
-    .flash-green { background-color: #dcfce7 !important; border-color: #16a34a !important; }
-    .flash-red { background-color: #fee2e2 !important; border-color: #dc2626 !important; }
-  </style>
+  <meta charset="UTF-8" />
+  <title>Equation Balancer – BrainGames | Exam Prep</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-white min-h-screen flex items-center justify-center text-gray-800 p-4"><div class="flex flex-col lg:flex-row gap-8 max-w-7xl w-full"><div class="flex-1 bg-white p-6 shadow-xl rounded-2xl border border-blue-200">
-<div class="text-green-600 font-semibold mb-3" id="best-score">Your Best Score: loading...</div><div class="w-full max-w-lg p-6 bg-white shadow-xl rounded-2xl border border-blue-200 text-center">
-<h1 class="text-2xl font-bold text-blue-700 mb-4">🧮 Equation Balancer</h1>
-<div class="mb-4 text-sm text-gray-500">
-<p id="timer">Time Left: <span class="font-semibold">180s</span></p>
-<p id="score">Score: <span class="font-semibold">0</span></p>
-</div>
-<div class="text-lg font-medium mb-4" id="question">Loading...</div>
-<input class="w-full p-2 border border-gray-300 rounded-md text-center mb-4 transition" id="answerInput" placeholder="Value of x" type="number"/>
-<button class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-md font-medium mb-2" id="submitBtn">
-      Submit
-    </button>
-<button class="w-full bg-green-600 hover:bg-green-700 text-white py-2 rounded-md font-medium hidden" id="retryBtn">
-      Retry
-    </button>
-</div>
+<body class="bg-white min-h-screen flex items-center justify-center text-gray-800 p-4">
+  <div class="max-w-xl w-full bg-white shadow-xl p-6 border border-blue-200 rounded-xl text-center space-y-4">
+    <h1 class="text-2xl font-bold text-blue-700">🧮 Equation Balancer</h1>
+    <p>⏱ Time Left: <span id="timer">180</span>s | 🎯 Score: <span id="score">0</span></p>
+    <p id="question" class="text-lg font-semibold">Loading...</p>
+    <input id="answerInput" type="number" class="w-full border p-2 rounded text-center" placeholder="Enter value of x"/>
+    <button id="submitBtn" class="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700">Submit</button>
+    <button id="retryBtn" class="w-full bg-green-600 text-white py-2 rounded hover:bg-green-700 hidden">Retry</button>
+    <div id="best-score" class="text-sm text-green-700 mt-2"></div>
+    <ul id="leaderboard" class="text-left text-sm text-gray-600 mt-4 space-y-1"></ul>
+  </div>
 
-</div>
-<div class="w-full lg:w-72 bg-gray-50 border border-gray-200 p-4 rounded-xl shadow">
-<h2 class="font-bold mb-3 text-blue-700">🏆 Leaderboard</h2>
-<ul class="text-sm text-gray-700 space-y-2" id="leaderboard"></ul>
-</div>
-</div><script>
+<script>
+const equations = [
+  { q: "3x + 5 = 20", answer: 5 },
+  { q: "2x - 4 = 6", answer: 5 },
+  { q: "5x = 25", answer: 5 },
+  { q: "x/2 = 6", answer: 12 },
+  { q: "4x + 8 = 24", answer: 4 },
+  { q: "10 = 2x + 2", answer: 4 },
+  { q: "15 = 3x", answer: 5 },
+  { q: "18 = 6x", answer: 3 },
+  { q: "x + 7 = 10", answer: 3 },
+  { q: "x - 3 = 2", answer: 5 }
+];
+
+let current = 0, score = 0, timeLeft = 180, timerInterval;
+
+function loadQuestion() {
+  const eq = equations[current];
+  document.getElementById("question").textContent = eq.q;
+  document.getElementById("answerInput").value = "";
+}
+
+function checkAnswer() {
+  const input = parseInt(document.getElementById("answerInput").value.trim());
+  if (input === equations[current].answer) {
+    score++;
+    document.getElementById("score").textContent = score;
+  }
+  current = (current + 1) % equations.length;
+  loadQuestion();
+}
+
+function startTimer() {
+  timerInterval = setInterval(() => {
+    timeLeft--;
+    document.getElementById("timer").textContent = timeLeft;
+    if (timeLeft <= 0) endGame();
+  }, 1000);
+}
+
+function endGame() {
+  clearInterval(timerInterval);
+  document.getElementById("question").textContent = `Time's up! Final Score: ${score}`;
+  document.getElementById("submitBtn").disabled = true;
+  document.getElementById("answerInput").disabled = true;
+  document.getElementById("retryBtn").classList.remove("hidden");
+  submitScore("equation-balancer", score);
+}
+
+function restartGame() {
+  current = 0;
+  score = 0;
+  timeLeft = 180;
+  document.getElementById("score").textContent = score;
+  document.getElementById("timer").textContent = timeLeft;
+  document.getElementById("submitBtn").disabled = false;
+  document.getElementById("answerInput").disabled = false;
+  document.getElementById("retryBtn").classList.add("hidden");
+  loadQuestion();
+  startTimer();
+}
+
+// ✅ Backend
 const API_BASE = "https://ultimate-backend-vyse.onrender.com/api/brain-games";
 const username = localStorage.getItem("username");
 const isLoggedIn = localStorage.getItem("isLoggedIn") === "true";
 
-async function fetchUserBestScore(gameId) {
-  try {
-    const res = await fetch(`${API_BASE}/user?username=${username}&gameId=${gameId}`);
-    const data = await res.json();
-    document.getElementById("best-score").textContent = `Your Best Score: ${data.score || 0}`;
-  } catch {
-    document.getElementById("best-score").textContent = "Login to track score.";
-  }
+function submitScore(gameId, score) {
+  if (!isLoggedIn || !username) return;
+  fetch(`${API_BASE}/submit`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ username, gameId, score })
+  });
 }
 
-async function fetchLeaderboard(gameId) {
-  try {
-    const res = await fetch(`${API_BASE}/top?gameId=${gameId}`);
-    const data = await res.json();
-    const lb = document.getElementById("leaderboard");
-    lb.innerHTML = data.map((s, i) => `<li>${i + 1}. ${s.username} – ${s.score}</li>`).join("");
-  } catch {
-    document.getElementById("leaderboard").innerHTML = "<li>Could not load leaderboard.</li>";
-  }
+function fetchStats(gameId) {
+  if (!isLoggedIn || !username) return;
+  fetch(`${API_BASE}/user?username=${username}&gameId=${gameId}`)
+    .then(res => res.json())
+    .then(data => {
+      document.getElementById("best-score").textContent = `🏅 Your Best Score: ${data.score || 0}`;
+    });
+  fetch(`${API_BASE}/top?gameId=${gameId}`)
+    .then(res => res.json())
+    .then(data => {
+      document.getElementById("leaderboard").innerHTML =
+        data.map((s, i) => `<li>${i + 1}. ${s.username} – ${s.score}</li>`).join("");
+    });
 }
 
-window.addEventListener("DOMContentLoaded", () => {
-  const gameId = window.location.pathname.split("/").pop().replace(".html", "");
-  if (isLoggedIn && username) {
-    fetchUserBestScore(gameId);
-    fetchLeaderboard(gameId);
-  } else {
-    const bs = document.getElementById("best-score");
-    if (bs) bs.textContent = "Login to track score.";
-  }
-});
-    </script></body>
+window.onload = () => {
+  loadQuestion();
+  startTimer();
+  fetchStats("equation-balancer");
+  document.getElementById("submitBtn").addEventListener("click", checkAnswer);
+  document.getElementById("retryBtn").addEventListener("click", restartGame);
+};
+</script>
+</body>
 </html>

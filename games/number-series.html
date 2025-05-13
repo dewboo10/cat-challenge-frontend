@@ -1,57 +1,54 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <meta charset="UTF-8" />
+  <title>Number Series – BrainGames</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <script src="https://cdn.tailwindcss.com"></script>
-  <meta charset="utf-8"/>
-  <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-  <title>🌍 Flag Flash</title>
 </head>
 <body class="bg-white min-h-screen flex items-center justify-center text-gray-800 p-4">
-<div class="max-w-3xl w-full bg-white shadow-xl p-6 border border-blue-200 rounded-xl text-center space-y-4">
-  <h1 class="text-2xl font-bold text-blue-700">🌍 Flag Flash</h1>
+<div class="max-w-xl w-full bg-white shadow-xl p-6 border border-blue-200 rounded-xl text-center space-y-4">
+  <h1 class="text-2xl font-bold text-blue-700">🔢 Number Series</h1>
   <p>⏱ Time Left: <span id="timer">180</span>s | 🎯 Score: <span id="score">0</span></p>
-  <p class="text-sm text-gray-600">Guess the correct country for the flag shown!</p>
-  <img id="flag-img" class="w-40 h-28 mx-auto border border-gray-300 object-cover" src="" alt="Flag"/>
-  <div class="grid grid-cols-2 sm:grid-cols-4 gap-4" id="choices"></div>
+  <p id="series" class="text-xl font-semibold">Loading...</p>
+  <div id="options" class="grid grid-cols-2 gap-4"></div>
   <button id="retryBtn" class="bg-green-600 text-white px-4 py-2 rounded font-semibold hidden">Retry</button>
-  <div id="best-score" class="text-sm text-green-700 mt-2"></div>
+  <div id="best-score" class="text-sm text-green-700"></div>
   <ul id="leaderboard" class="text-left text-sm text-gray-600 mt-4 space-y-1"></ul>
 </div>
-
 <script>
-const flags = [
-  { country: "Japan", code: "jp" },
-  { country: "Germany", code: "de" },
-  { country: "France", code: "fr" },
-  { country: "Brazil", code: "br" },
-  { country: "India", code: "in" },
-  { country: "Canada", code: "ca" },
-  { country: "Australia", code: "au" },
-  { country: "Italy", code: "it" }
+const questions = [
+  { series: [2, 4, 6, 8], answer: 10 },
+  { series: [1, 4, 9, 16], answer: 25 },
+  { series: [5, 10, 20, 40], answer: 80 },
+  { series: [100, 90, 80, 70], answer: 60 },
+  { series: [2, 3, 5, 7], answer: 11 },
+  { series: [1, 3, 6, 10], answer: 15 },
+  { series: [0, 1, 1, 2, 3], answer: 5 } // Fibonacci next
 ];
 
-let current = {}, score = 0, timeLeft = 180, timerInterval;
+let index = 0, score = 0, timeLeft = 180, timerInterval;
 
-function loadFlag() {
-  current = flags[Math.floor(Math.random() * flags.length)];
-  document.getElementById("flag-img").src = `https://flagcdn.com/w320/${current.code}.png`;
-  const choices = [...flags]
-    .sort(() => 0.5 - Math.random())
-    .slice(0, 3);
-  if (!choices.find(c => c.country === current.country)) choices[0] = current;
-  choices.sort(() => 0.5 - Math.random());
-  const btns = document.getElementById("choices");
-  btns.innerHTML = "";
-  choices.forEach(c => {
+function loadQuestion() {
+  const q = questions[index];
+  document.getElementById("series").textContent = q.series.join(", ") + ", ?";
+  const opts = document.getElementById("options");
+  opts.innerHTML = "";
+  const answers = new Set([q.answer]);
+  while (answers.size < 4) {
+    answers.add(q.answer + Math.floor(Math.random() * 10 - 5));
+  }
+  Array.from(answers).sort(() => Math.random() - 0.5).forEach(opt => {
     const btn = document.createElement("button");
-    btn.textContent = c.country;
+    btn.textContent = opt;
     btn.className = "bg-gray-100 hover:bg-blue-100 px-4 py-2 rounded";
     btn.onclick = () => {
-      if (c.country === current.country) score++;
+      if (opt === q.answer) score++;
       document.getElementById("score").textContent = score;
-      loadFlag();
+      index = (index + 1) % questions.length;
+      loadQuestion();
     };
-    btns.appendChild(btn);
+    opts.appendChild(btn);
   });
 }
 
@@ -65,19 +62,20 @@ function startTimer() {
 
 function endGame() {
   clearInterval(timerInterval);
-  document.getElementById("flag-img").src = "";
-  document.getElementById("choices").innerHTML = "<p class='font-semibold'>Time's up!</p>";
+  document.getElementById("series").textContent = `Time's up! Final Score: ${score}`;
+  document.getElementById("options").innerHTML = "";
   document.getElementById("retryBtn").classList.remove("hidden");
-  submitScore("flag-flash", score);
+  submitScore("number-series", score);
 }
 
 function restartGame() {
+  index = 0;
   score = 0;
   timeLeft = 180;
   document.getElementById("score").textContent = score;
   document.getElementById("timer").textContent = timeLeft;
   document.getElementById("retryBtn").classList.add("hidden");
-  loadFlag();
+  loadQuestion();
   startTimer();
 }
 
@@ -110,8 +108,8 @@ function fetchStats(gameId) {
 }
 
 window.onload = () => {
-  fetchStats("flag-flash");
-  loadFlag();
+  fetchStats("number-series");
+  loadQuestion();
   startTimer();
   document.getElementById("retryBtn").addEventListener("click", restartGame);
 };

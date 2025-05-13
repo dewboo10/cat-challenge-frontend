@@ -1,65 +1,165 @@
-<!-- games/color-memory.html -->
 <!DOCTYPE html>
-
 <html lang="en">
 <head>
-<meta charset="utf-8"/>
-<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-<title>🎨 Color Memory</title>
-
+  <meta charset="UTF-8" />
+  <title>🎨 Color Memory – BrainGames</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    .color-box {
+      width: 60px;
+      height: 60px;
+      border-radius: 0.5rem;
+      display: inline-block;
+      margin: 0.5rem;
+      cursor: pointer;
+      border: 2px solid transparent;
+    }
+    .selected {
+      border-color: #3b82f6;
+    }
+  </style>
 </head>
-<body class="bg-white min-h-screen flex items-center justify-center text-gray-800 p-4"><div class="flex flex-col lg:flex-row gap-8 max-w-7xl w-full"><div class="flex-1 bg-white p-6 shadow-xl rounded-2xl border border-blue-200">
-<div class="text-green-600 font-semibold mb-3" id="best-score">Your Best Score: loading...</div><header class="p-4 border-b border-blue-200 bg-white flex justify-between items-center">
-<h1 class="text-xl font-bold text-blue-600">🎨 Color Memory</h1>
-<button class="text-sm text-blue-500 underline" onclick="goBack()">Back</button>
-</header>
-<main class="p-6 max-w-xl mx-auto text-center space-y-6">
-<p class="text-sm text-gray-600">Memorize the color sequence and then repeat it!</p>
-<div class="flex justify-center gap-4 flex-wrap" id="sequence"></div>
-<button class="bg-blue-600 text-white px-4 py-2 rounded font-semibold" id="start-btn" onclick="startGame()">Start</button>
-<div class="text-lg font-semibold hidden" id="feedback"></div>
-</main>
+<body class="bg-white min-h-screen flex items-center justify-center text-gray-800 p-4">
+  <div class="max-w-xl w-full bg-white shadow-xl p-6 border border-blue-200 rounded-xl text-center space-y-4">
+    <h1 class="text-2xl font-bold text-blue-700">🎨 Color Memory</h1>
+    <p>⏱ Time Left: <span id="timer">180</span>s | 🎯 Score: <span id="score">0</span></p>
+    <div id="instruction" class="text-sm text-gray-600">Memorize the order and repeat it.</div>
+    <div id="sequence" class="flex justify-center gap-2 flex-wrap"></div>
+    <div id="inputArea" class="flex justify-center gap-2 flex-wrap"></div>
+    <button id="submitBtn" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 hidden">Submit</button>
+    <button id="retryBtn" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 hidden">Retry</button>
+    <div id="best-score" class="text-sm text-green-700 mt-2"></div>
+    <ul id="leaderboard" class="text-left text-sm text-gray-600 mt-4 space-y-1"></ul>
+  </div>
 
-</div>
-<div class="w-full lg:w-72 bg-gray-50 border border-gray-200 p-4 rounded-xl shadow">
-<h2 class="font-bold mb-3 text-blue-700">🏆 Leaderboard</h2>
-<ul class="text-sm text-gray-700 space-y-2" id="leaderboard"></ul>
-</div>
-</div><script>
+<script>
+const colors = ["red", "blue", "green", "yellow", "purple", "orange"];
+let sequence = [], userInput = [], score = 0, timeLeft = 180, timerInterval;
+
+function generateSequence(length = 4) {
+  sequence = [];
+  for (let i = 0; i < length; i++) {
+    const color = colors[Math.floor(Math.random() * colors.length)];
+    sequence.push(color);
+  }
+}
+
+function displaySequence() {
+  const container = document.getElementById("sequence");
+  container.innerHTML = "";
+  sequence.forEach(color => {
+    const box = document.createElement("div");
+    box.className = "color-box";
+    box.style.backgroundColor = color;
+    container.appendChild(box);
+  });
+  setTimeout(() => {
+    container.innerHTML = ""; // hide colors
+    showInputArea();
+  }, 2000);
+}
+
+function showInputArea() {
+  userInput = [];
+  const area = document.getElementById("inputArea");
+  area.innerHTML = "";
+  document.getElementById("submitBtn").classList.remove("hidden");
+
+  colors.forEach(color => {
+    const box = document.createElement("div");
+    box.className = "color-box hover:scale-110 transition";
+    box.style.backgroundColor = color;
+    box.onclick = () => {
+      userInput.push(color);
+      box.classList.add("selected");
+      if (userInput.length === sequence.length) {
+        document.getElementById("submitBtn").disabled = false;
+      }
+    };
+    area.appendChild(box);
+  });
+}
+
+function checkAnswer() {
+  document.getElementById("submitBtn").classList.add("hidden");
+  if (JSON.stringify(userInput) === JSON.stringify(sequence)) {
+    score++;
+    document.getElementById("score").textContent = score;
+  }
+  nextRound();
+}
+
+function nextRound() {
+  document.getElementById("inputArea").innerHTML = "";
+  generateSequence();
+  setTimeout(displaySequence, 500);
+}
+
+function startGame() {
+  score = 0;
+  timeLeft = 180;
+  document.getElementById("score").textContent = score;
+  document.getElementById("timer").textContent = timeLeft;
+  document.getElementById("retryBtn").classList.add("hidden");
+  generateSequence();
+  displaySequence();
+  startTimer();
+}
+
+function startTimer() {
+  clearInterval(timerInterval);
+  timerInterval = setInterval(() => {
+    timeLeft--;
+    document.getElementById("timer").textContent = timeLeft;
+    if (timeLeft <= 0) endGame();
+  }, 1000);
+}
+
+function endGame() {
+  clearInterval(timerInterval);
+  document.getElementById("sequence").innerHTML = "<p class='font-semibold'>Time's up!</p>";
+  document.getElementById("inputArea").innerHTML = "";
+  document.getElementById("retryBtn").classList.remove("hidden");
+  submitScore("color-memory", score);
+}
+
+// 🔗 Backend integration
 const API_BASE = "https://ultimate-backend-vyse.onrender.com/api/brain-games";
 const username = localStorage.getItem("username");
 const isLoggedIn = localStorage.getItem("isLoggedIn") === "true";
 
-async function fetchUserBestScore(gameId) {
-  try {
-    const res = await fetch(`${API_BASE}/user?username=${username}&gameId=${gameId}`);
-    const data = await res.json();
-    document.getElementById("best-score").textContent = `Your Best Score: ${data.score || 0}`;
-  } catch {
-    document.getElementById("best-score").textContent = "Login to track score.";
-  }
+function submitScore(gameId, score) {
+  if (!isLoggedIn || !username) return;
+  fetch(`${API_BASE}/submit`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ username, gameId, score })
+  });
 }
 
-async function fetchLeaderboard(gameId) {
-  try {
-    const res = await fetch(`${API_BASE}/top?gameId=${gameId}`);
-    const data = await res.json();
-    const lb = document.getElementById("leaderboard");
-    lb.innerHTML = data.map((s, i) => `<li>${i + 1}. ${s.username} – ${s.score}</li>`).join("");
-  } catch {
-    document.getElementById("leaderboard").innerHTML = "<li>Could not load leaderboard.</li>";
-  }
+function fetchStats(gameId) {
+  if (!isLoggedIn || !username) return;
+  fetch(`${API_BASE}/user?username=${username}&gameId=${gameId}`)
+    .then(res => res.json())
+    .then(data => {
+      document.getElementById("best-score").textContent = `🏅 Your Best Score: ${data.score || 0}`;
+    });
+
+  fetch(`${API_BASE}/top?gameId=${gameId}`)
+    .then(res => res.json())
+    .then(data => {
+      document.getElementById("leaderboard").innerHTML =
+        data.map((s, i) => `<li>${i + 1}. ${s.username} – ${s.score}</li>`).join("");
+    });
 }
 
-window.addEventListener("DOMContentLoaded", () => {
-  const gameId = window.location.pathname.split("/").pop().replace(".html", "");
-  if (isLoggedIn && username) {
-    fetchUserBestScore(gameId);
-    fetchLeaderboard(gameId);
-  } else {
-    const bs = document.getElementById("best-score");
-    if (bs) bs.textContent = "Login to track score.";
-  }
-});
-    </script></body>
+window.onload = () => {
+  document.getElementById("submitBtn").addEventListener("click", checkAnswer);
+  document.getElementById("retryBtn").addEventListener("click", startGame);
+  fetchStats("color-memory");
+  startGame();
+};
+</script>
+</body>
 </html>

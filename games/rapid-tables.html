@@ -1,73 +1,109 @@
 <!DOCTYPE html>
-
 <html lang="en">
 <head>
-<meta charset="utf-8"/>
-<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-<title>Rapid Tables Blitz</title>
-
+  <meta charset="UTF-8">
+  <title>Rapid Tables – BrainGames</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-white min-h-screen flex items-center justify-center text-gray-800 p-4"><div class="flex flex-col lg:flex-row gap-8 max-w-7xl w-full"><div class="flex-1 bg-white p-6 shadow-xl rounded-2xl border border-blue-200">
-<div class="text-green-600 font-semibold mb-3" id="best-score">Your Best Score: loading...</div><header class="p-4 border-b border-blue-200 bg-white flex justify-between items-center">
-<h1 class="text-xl font-bold text-blue-600">⚡ Rapid Tables Blitz</h1>
-<button class="text-sm text-blue-500 underline" onclick="goBack()">Back</button>
-</header>
-<main class="p-6 max-w-md mx-auto space-y-4 text-center">
-<p class="text-sm text-gray-600">Answer as many multiplication facts as you can!</p>
-<div class="text-2xl font-bold text-blue-700" id="question">6 × 8</div>
-<input class="mt-2 w-full px-4 py-2 border rounded text-center" id="answer" onkeydown="handleKey(event)" placeholder="Your answer..." type="number"/>
-<div class="text-center text-lg font-semibold hidden" id="feedback"></div>
-<div class="flex justify-between text-sm text-gray-600 pt-2">
-<span>Correct: <span id="correct-count">0</span></span>
-<span>Time Left: <span id="time-left">180</span>s</span>
+<body class="bg-white min-h-screen flex items-center justify-center p-4 text-gray-800">
+<div class="max-w-xl w-full bg-white shadow-xl p-6 border border-blue-200 rounded-xl text-center space-y-4">
+  <h1 class="text-2xl font-bold text-blue-700">✖️ Rapid Tables</h1>
+  <p>⏱ Time Left: <span id="timer">180</span>s | 🎯 Score: <span id="score">0</span></p>
+  <p id="problem" class="text-xl font-semibold">Loading...</p>
+  <input id="answerInput" type="number" placeholder="Enter answer" class="w-full border p-2 rounded text-center">
+  <button id="submitBtn" class="bg-blue-600 text-white w-full py-2 rounded hover:bg-blue-700">Submit</button>
+  <button id="retryBtn" class="bg-green-600 text-white w-full py-2 rounded hover:bg-green-700 hidden">Retry</button>
+  <div id="best-score" class="text-sm text-green-700"></div>
+  <ul id="leaderboard" class="text-left text-sm text-gray-600 mt-4 space-y-1"></ul>
 </div>
-<div class="hidden mt-6" id="end-screen">
-<p class="text-lg font-bold text-green-600">⏱️ Time's up!</p>
-<p class="text-sm">You got <span id="final-score">0</span> correct.</p>
-<button class="mt-4 bg-blue-600 text-white px-4 py-2 rounded font-semibold" onclick="restartGame()">Play Again</button>
-</div>
-</main>
+<script>
+let currentAnswer = 0, score = 0, timeLeft = 180, timerInterval;
 
-</div>
-<div class="w-full lg:w-72 bg-gray-50 border border-gray-200 p-4 rounded-xl shadow">
-<h2 class="font-bold mb-3 text-blue-700">🏆 Leaderboard</h2>
-<ul class="text-sm text-gray-700 space-y-2" id="leaderboard"></ul>
-</div>
-</div><script>
+function generateProblem() {
+  const a = Math.floor(Math.random() * 12 + 1);
+  const b = Math.floor(Math.random() * 12 + 1);
+  currentAnswer = a * b;
+  document.getElementById("problem").textContent = `${a} × ${b} = ?`;
+  document.getElementById("answerInput").value = "";
+}
+
+function checkAnswer() {
+  const input = parseInt(document.getElementById("answerInput").value);
+  if (input === currentAnswer) {
+    score++;
+    document.getElementById("score").textContent = score;
+  }
+  generateProblem();
+}
+
+function startTimer() {
+  timerInterval = setInterval(() => {
+    timeLeft--;
+    document.getElementById("timer").textContent = timeLeft;
+    if (timeLeft <= 0) endGame();
+  }, 1000);
+}
+
+function endGame() {
+  clearInterval(timerInterval);
+  document.getElementById("problem").textContent = `Time's up! Final Score: ${score}`;
+  document.getElementById("submitBtn").disabled = true;
+  document.getElementById("answerInput").disabled = true;
+  document.getElementById("retryBtn").classList.remove("hidden");
+  submitScore("rapid-tables", score);
+}
+
+function restartGame() {
+  score = 0;
+  timeLeft = 180;
+  document.getElementById("score").textContent = score;
+  document.getElementById("timer").textContent = timeLeft;
+  document.getElementById("submitBtn").disabled = false;
+  document.getElementById("answerInput").disabled = false;
+  document.getElementById("retryBtn").classList.add("hidden");
+  generateProblem();
+  startTimer();
+}
+
 const API_BASE = "https://ultimate-backend-vyse.onrender.com/api/brain-games";
 const username = localStorage.getItem("username");
 const isLoggedIn = localStorage.getItem("isLoggedIn") === "true";
 
-async function fetchUserBestScore(gameId) {
-  try {
-    const res = await fetch(`${API_BASE}/user?username=${username}&gameId=${gameId}`);
-    const data = await res.json();
-    document.getElementById("best-score").textContent = `Your Best Score: ${data.score || 0}`;
-  } catch {
-    document.getElementById("best-score").textContent = "Login to track score.";
-  }
+function submitScore(gameId, score) {
+  if (!isLoggedIn || !username) return;
+  fetch(`${API_BASE}/submit`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ username, gameId, score })
+  });
 }
 
-async function fetchLeaderboard(gameId) {
-  try {
-    const res = await fetch(`${API_BASE}/top?gameId=${gameId}`);
-    const data = await res.json();
-    const lb = document.getElementById("leaderboard");
-    lb.innerHTML = data.map((s, i) => `<li>${i + 1}. ${s.username} – ${s.score}</li>`).join("");
-  } catch {
-    document.getElementById("leaderboard").innerHTML = "<li>Could not load leaderboard.</li>";
-  }
+function fetchStats(gameId) {
+  if (!isLoggedIn || !username) return;
+  fetch(`${API_BASE}/user?username=${username}&gameId=${gameId}`)
+    .then(res => res.json())
+    .then(data => {
+      document.getElementById("best-score").textContent = `🏅 Your Best Score: ${data.score || 0}`;
+    });
+  fetch(`${API_BASE}/top?gameId=${gameId}`)
+    .then(res => res.json())
+    .then(data => {
+      document.getElementById("leaderboard").innerHTML =
+        data.map((s, i) => `<li>${i + 1}. ${s.username} – ${s.score}</li>`).join("");
+    });
 }
 
-window.addEventListener("DOMContentLoaded", () => {
-  const gameId = window.location.pathname.split("/").pop().replace(".html", "");
-  if (isLoggedIn && username) {
-    fetchUserBestScore(gameId);
-    fetchLeaderboard(gameId);
-  } else {
-    const bs = document.getElementById("best-score");
-    if (bs) bs.textContent = "Login to track score.";
-  }
-});
-    </script></body>
+window.onload = () => {
+  fetchStats("rapid-tables");
+  generateProblem();
+  startTimer();
+  document.getElementById("submitBtn").addEventListener("click", checkAnswer);
+  document.getElementById("retryBtn").addEventListener("click", restartGame);
+  document.getElementById("answerInput").addEventListener("keypress", e => {
+    if (e.key === "Enter") checkAnswer();
+  });
+};
+</script>
+</body>
 </html>

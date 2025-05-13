@@ -1,79 +1,137 @@
 <!DOCTYPE html>
-
 <html lang="en">
 <head>
-<meta charset="utf-8"/>
-<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-<title>Input-Output Machine – BrainGames</title>
-
-<style>
-    .step-box {
-      @apply bg-blue-100 border border-blue-300 rounded px-4 py-2 my-1;
-    }
-    .highlight {
-      @apply bg-green-100 text-green-800 font-semibold;
-    }
-  </style>
+  <meta charset="UTF-8" />
+  <title>Input-Output Machine – BrainGames</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-white min-h-screen flex items-center justify-center text-gray-800 p-4"><div class="flex flex-col lg:flex-row gap-8 max-w-7xl w-full"><div class="flex-1 bg-white p-6 shadow-xl rounded-2xl border border-blue-200">
-<div class="text-green-600 font-semibold mb-3" id="best-score">Your Best Score: loading...</div><div class="w-full max-w-2xl bg-white p-6 rounded-2xl shadow-xl border border-blue-200">
-<h1 class="text-2xl font-bold text-blue-700 text-center mb-4">⚙️ Input-Output Machine</h1>
-<div class="text-sm text-gray-500 text-center mb-4">
-      ⏱ Time Left: <span class="font-semibold" id="timer">180s</span> | 🏆 Score: <span class="font-semibold" id="score">0</span>
-</div>
-<div class="mb-4" id="scenario">
-<!-- Machine steps here -->
-</div>
-<div class="mb-4 text-center">
-<p class="mb-2 font-medium">What will be the final output?</p>
-<input class="border border-blue-300 rounded px-4 py-2 w-full max-w-xs" id="userInput" placeholder="Enter your answer" type="text"/>
-</div>
-<div class="flex justify-center">
-<button class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded mr-2" onclick="checkAnswer()">Submit</button>
-<button class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded hidden" id="retryBtn" onclick="startGame()">Retry</button>
-</div>
-</div>
+<body class="bg-white min-h-screen flex items-center justify-center text-gray-800 p-4">
+  <div class="max-w-xl w-full bg-white shadow-xl p-6 border border-blue-200 rounded-xl text-center space-y-4">
+    <h1 class="text-2xl font-bold text-blue-700">🔁 Input-Output Machine</h1>
+    <p>⏱ Time Left: <span id="timer">180</span>s | 🎯 Score: <span id="score">0</span></p>
+    <div class="text-left bg-blue-50 p-4 rounded border">
+      <p><strong>Examples:</strong></p>
+      <ul id="examples" class="list-disc list-inside text-sm text-gray-700"></ul>
+    </div>
+    <p class="text-lg font-semibold">Input: <span id="currentInput"></span></p>
+    <input id="outputGuess" placeholder="Enter output" class="w-full border p-2 rounded text-center" type="number" />
+    <button id="submitBtn" class="bg-blue-600 text-white w-full py-2 rounded hover:bg-blue-700">Submit</button>
+    <button id="retryBtn" class="bg-green-600 text-white w-full py-2 rounded hover:bg-green-700 hidden">Retry</button>
+    <div id="best-score" class="text-sm text-green-700"></div>
+    <ul id="leaderboard" class="text-left text-sm text-gray-600 mt-4 space-y-1"></ul>
+  </div>
+<script>
+const machines = [
+  {
+    examples: [ [2, 5], [3, 7], [4, 9] ],
+    rule: x => x * 2 + 1
+  },
+  {
+    examples: [ [5, 15], [6, 18], [7, 21] ],
+    rule: x => x * 3
+  },
+  {
+    examples: [ [4, 16], [5, 25], [6, 36] ],
+    rule: x => x * x
+  },
+  {
+    examples: [ [3, 2], [4, 3], [5, 4] ],
+    rule: x => x - 1
+  }
+];
 
-</div>
-<div class="w-full lg:w-72 bg-gray-50 border border-gray-200 p-4 rounded-xl shadow">
-<h2 class="font-bold mb-3 text-blue-700">🏆 Leaderboard</h2>
-<ul class="text-sm text-gray-700 space-y-2" id="leaderboard"></ul>
-</div>
-</div><script>
+let score = 0, timeLeft = 180, timerInterval;
+let current = {}, currentInput = 0;
+
+function generateChallenge() {
+  current = machines[Math.floor(Math.random() * machines.length)];
+  const exList = document.getElementById("examples");
+  exList.innerHTML = "";
+  current.examples.forEach(pair => {
+    const li = document.createElement("li");
+    li.textContent = `${pair[0]} → ${pair[1]}`;
+    exList.appendChild(li);
+  });
+  currentInput = Math.floor(Math.random() * 10) + 5;
+  document.getElementById("currentInput").textContent = currentInput;
+  document.getElementById("outputGuess").value = "";
+}
+
+function checkAnswer() {
+  const guess = parseInt(document.getElementById("outputGuess").value);
+  if (guess === current.rule(currentInput)) {
+    score++;
+    document.getElementById("score").textContent = score;
+  }
+  generateChallenge();
+}
+
+function startTimer() {
+  timerInterval = setInterval(() => {
+    timeLeft--;
+    document.getElementById("timer").textContent = timeLeft;
+    if (timeLeft <= 0) endGame();
+  }, 1000);
+}
+
+function endGame() {
+  clearInterval(timerInterval);
+  document.getElementById("submitBtn").disabled = true;
+  document.getElementById("outputGuess").disabled = true;
+  document.getElementById("retryBtn").classList.remove("hidden");
+  document.getElementById("currentInput").textContent = "";
+  document.getElementById("examples").innerHTML = "<li class='text-gray-500'>Time's up!</li>";
+  submitScore("input-output-machine", score);
+}
+
+function restartGame() {
+  score = 0;
+  timeLeft = 180;
+  document.getElementById("score").textContent = score;
+  document.getElementById("timer").textContent = timeLeft;
+  document.getElementById("submitBtn").disabled = false;
+  document.getElementById("outputGuess").disabled = false;
+  document.getElementById("retryBtn").classList.add("hidden");
+  generateChallenge();
+  startTimer();
+}
+
 const API_BASE = "https://ultimate-backend-vyse.onrender.com/api/brain-games";
 const username = localStorage.getItem("username");
 const isLoggedIn = localStorage.getItem("isLoggedIn") === "true";
 
-async function fetchUserBestScore(gameId) {
-  try {
-    const res = await fetch(`${API_BASE}/user?username=${username}&gameId=${gameId}`);
-    const data = await res.json();
-    document.getElementById("best-score").textContent = `Your Best Score: ${data.score || 0}`;
-  } catch {
-    document.getElementById("best-score").textContent = "Login to track score.";
-  }
+function submitScore(gameId, score) {
+  if (!isLoggedIn || !username) return;
+  fetch(`${API_BASE}/submit`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ username, gameId, score })
+  });
 }
 
-async function fetchLeaderboard(gameId) {
-  try {
-    const res = await fetch(`${API_BASE}/top?gameId=${gameId}`);
-    const data = await res.json();
-    const lb = document.getElementById("leaderboard");
-    lb.innerHTML = data.map((s, i) => `<li>${i + 1}. ${s.username} – ${s.score}</li>`).join("");
-  } catch {
-    document.getElementById("leaderboard").innerHTML = "<li>Could not load leaderboard.</li>";
-  }
+function fetchStats(gameId) {
+  if (!isLoggedIn || !username) return;
+  fetch(`${API_BASE}/user?username=${username}&gameId=${gameId}`)
+    .then(res => res.json())
+    .then(data => {
+      document.getElementById("best-score").textContent = `🏅 Your Best Score: ${data.score || 0}`;
+    });
+  fetch(`${API_BASE}/top?gameId=${gameId}`)
+    .then(res => res.json())
+    .then(data => {
+      document.getElementById("leaderboard").innerHTML =
+        data.map((s, i) => `<li>${i + 1}. ${s.username} – ${s.score}</li>`).join("");
+    });
 }
 
-window.addEventListener("DOMContentLoaded", () => {
-  const gameId = window.location.pathname.split("/").pop().replace(".html", "");
-  if (isLoggedIn && username) {
-    fetchUserBestScore(gameId);
-    fetchLeaderboard(gameId);
-  } else {
-    const bs = document.getElementById("best-score");
-    if (bs) bs.textContent = "Login to track score.";
-  }
-});
-    </script></body>
+window.onload = () => {
+  fetchStats("input-output-machine");
+  generateChallenge();
+  startTimer();
+  document.getElementById("submitBtn").addEventListener("click", checkAnswer);
+  document.getElementById("retryBtn").addEventListener("click", restartGame);
+};
+</script>
+</body>
 </html>
