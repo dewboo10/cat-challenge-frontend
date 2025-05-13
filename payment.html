@@ -13,6 +13,7 @@
   </script>
   
   <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
   <script>
     tailwind.config = { darkMode: 'class' };
   </script>
@@ -27,41 +28,161 @@
 
 <!-- Main Content -->
 <main class="flex-1 p-4 sm:p-8 flex flex-col items-center justify-center text-center space-y-6">
-
   <h2 class="text-2xl sm:text-3xl font-bold text-blue-600">🎉 Unlock Full Access!</h2>
-  <p class="text-base sm:text-lg">Become a Premium Member and supercharge your preparation!</p>
+  <p class="text-base sm:text-lg">Choose your premium plan and supercharge your preparation!</p>
 
-  <div class="bg-gray-100 dark:bg-[#1a1a1a] p-6 rounded shadow-lg w-full max-w-xl">
-    <h3 class="text-lg sm:text-xl font-semibold mb-4">🚀 Premium Features</h3>
-    <ul class="text-left space-y-2 text-sm">
-      <li>✅ Full access to 100 Days Mock Challenge</li>
-      <li>✅ Exclusive access to StudyZone (Voice Chat + Groups)</li>
-      <li>✅ Unlimited performance tracking</li>
-      <li>✅ Priority support and future perks</li>
-    </ul>
+  <!-- Plan Selection -->
+  <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 w-full max-w-4xl">
+    <!-- Monthly Plan -->
+    <div class="bg-white dark:bg-[#1a1a1a] p-6 rounded-xl shadow-lg border-2 border-transparent hover:border-blue-500 transition-all cursor-pointer" onclick="selectPlan('monthly')">
+      <div class="text-2xl font-bold mb-2">Monthly Premium</div>
+      <div class="text-3xl font-bold text-blue-600 mb-4">₹499<span class="text-lg">/month</span></div>
+      <ul class="text-left space-y-2 mb-6">
+        <li class="flex items-center gap-2">
+          <span class="text-green-500">✓</span> Full access to 100 Days Mock Challenge
+        </li>
+        <li class="flex items-center gap-2">
+          <span class="text-green-500">✓</span> Exclusive StudyZone access
+        </li>
+        <li class="flex items-center gap-2">
+          <span class="text-green-500">✓</span> Performance analytics
+        </li>
+      </ul>
+      <button id="monthly-btn" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg transition-colors">
+        Select Monthly
+      </button>
+    </div>
+
+    <!-- Yearly Plan -->
+    <div class="bg-white dark:bg-[#1a1a1a] p-6 rounded-xl shadow-lg border-2 border-blue-500 relative overflow-hidden" onclick="selectPlan('yearly')">
+      <div class="absolute top-4 right-4 bg-yellow-500 text-white px-3 py-1 rounded-full text-sm font-semibold">
+        33% OFF
+      </div>
+      <div class="text-2xl font-bold mb-2">Yearly Premium</div>
+      <div class="text-3xl font-bold text-blue-600 mb-4">₹3,999<span class="text-lg">/year</span></div>
+      <ul class="text-left space-y-2 mb-6">
+        <li class="flex items-center gap-2">
+          <span class="text-green-500">✓</span> Everything in Monthly
+        </li>
+        <li class="flex items-center gap-2">
+          <span class="text-green-500">✓</span> Priority support
+        </li>
+        <li class="flex items-center gap-2">
+          <span class="text-green-500">✓</span> Save 33% (₹1,989)
+        </li>
+      </ul>
+      <button id="yearly-btn" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg transition-colors">
+        Select Yearly
+      </button>
+    </div>
   </div>
 
-  <button onclick="upgradeToPremium()" class="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded w-full max-w-xs">
-    Buy Premium Access 💳
-  </button>
-
+  <!-- Features Section -->
+  <div class="bg-gray-100 dark:bg-[#1a1a1a] p-6 rounded-xl shadow-lg w-full max-w-4xl mt-8">
+    <h3 class="text-lg sm:text-xl font-semibold mb-4">🚀 Premium Features</h3>
+    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+      <div class="p-4 bg-white dark:bg-[#2a2a2a] rounded-lg">
+        <span class="text-2xl">📚</span>
+        <h4 class="font-semibold my-2">Full Mock Access</h4>
+        <p class="text-sm text-gray-600 dark:text-gray-400">Access all 100 days of mock tests</p>
+      </div>
+      <div class="p-4 bg-white dark:bg-[#2a2a2a] rounded-lg">
+        <span class="text-2xl">👥</span>
+        <h4 class="font-semibold my-2">Study Groups</h4>
+        <p class="text-sm text-gray-600 dark:text-gray-400">Join exclusive study communities</p>
+      </div>
+      <div class="p-4 bg-white dark:bg-[#2a2a2a] rounded-lg">
+        <span class="text-2xl">📊</span>
+        <h4 class="font-semibold my-2">Analytics</h4>
+        <p class="text-sm text-gray-600 dark:text-gray-400">Detailed performance tracking</p>
+      </div>
+    </div>
+  </div>
 </main>
 
+<!-- Scripts -->
+<script src="js/config.js"></script>
+<script src="js/payment-config.js"></script>
 <script>
-function buyPremium() {
-  localStorage.setItem("isPaidUser", true);
-  alert("🎉 Congratulations! You are now a Premium Member.");
-  window.location.href = "dashboard.html";
+let selectedPlan = 'yearly'; // Default selected plan
+
+function selectPlan(plan) {
+  selectedPlan = plan;
+  document.querySelectorAll('[id$="-btn"]').forEach(btn => {
+    btn.textContent = `Select ${plan.charAt(0).toUpperCase() + plan.slice(1)}`;
+  });
+  document.getElementById(`${plan}-btn`).textContent = '✓ Selected';
+}
+
+async function upgradeToPremium() {
+  const user = JSON.parse(localStorage.getItem("user"));
+  if (!user) {
+    alert("Please login first.");
+    return;
+  }
+
+  try {
+    // Get order ID from backend
+    const orderRes = await fetch(`${CONFIG.AUTH_API}/create-order`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ 
+        plan: selectedPlan,
+        username: user.username 
+      })
+    });
+
+    const orderData = await orderRes.json();
+    if (!orderData.success) throw new Error(orderData.error);
+
+    // Configure Razorpay
+    const options = {
+      ...RAZORPAY_CONFIG,
+      order_id: orderData.orderId,
+      amount: PREMIUM_PLANS[selectedPlan].price,
+      handler: async function(response) {
+        // Verify payment
+        const verifyRes = await fetch(`${CONFIG.AUTH_API}/verify-payment`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            razorpay_order_id: response.razorpay_order_id,
+            razorpay_payment_id: response.razorpay_payment_id,
+            razorpay_signature: response.razorpay_signature,
+            username: user.username
+          })
+        });
+
+        const verifyData = await verifyRes.json();
+        if (verifyData.success) {
+          localStorage.setItem("user", JSON.stringify(verifyData.user));
+          localStorage.setItem("isPaidUser", true);
+          alert("✅ Payment successful! Welcome to Premium!");
+          window.location.href = "dashboard.html";
+        } else {
+          alert("❌ Payment verification failed. Please contact support.");
+        }
+      }
+    };
+
+    // Initialize Razorpay
+    const rzp = new Razorpay(options);
+    rzp.open();
+  } catch (err) {
+    console.error("Payment Error:", err);
+    alert("⚠️ Payment initialization failed. Please try again.");
+  }
 }
 
 function goBackDashboard() {
   window.location.href = "dashboard.html";
 }
-</script>
 
-<!-- Scripts -->
-<script src="js/config.js"></script>
-<script src="js/payment.js"></script>
+// Initialize
+document.addEventListener('DOMContentLoaded', () => {
+  selectPlan('yearly');
+});
+</script>
 
 </body>
 </html>

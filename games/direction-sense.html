@@ -1,42 +1,26 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>Direction Sense – BrainGames | Exam Prep</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta charset="UTF-8">
+  <title>Direction Sense – BrainGames</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <script src="https://cdn.tailwindcss.com"></script>
-  <style>
-    .cell {
-      width: 40px;
-      height: 40px;
-      border: 1px solid #ccc;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-weight: bold;
-    }
-    .start { background-color: #3b82f6; color: white; }
-    .goal { background-color: #16a34a; color: white; }
-  </style>
+  <script src="/js/config.js"></script>
+  <script src="components/auth-popup.js"></script>
+  <script src="components/brain-game-utils.js"></script>
 </head>
-<body class="bg-white min-h-screen flex items-center justify-center text-gray-800 p-4">
-<div class="max-w-xl w-full bg-white shadow-xl p-6 border border-blue-200 rounded-xl text-center space-y-4">
-  <h1 class="text-2xl font-bold text-blue-700">🧭 Direction Sense</h1>
-  <p>⏱ Time Left: <span id="timer">180</span>s | 🎯 Score: <span id="score">0</span></p>
-  <p id="instruction" class="font-medium">Loading...</p>
-  <div id="grid" class="grid grid-cols-5 gap-1 justify-center"></div>
-  <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
-    <button onclick="move('up')" class="bg-blue-500 text-white py-2 rounded">↑ North</button>
-    <button onclick="move('down')" class="bg-blue-500 text-white py-2 rounded">↓ South</button>
-    <button onclick="move('left')" class="bg-blue-500 text-white py-2 rounded">← West</button>
-    <button onclick="move('right')" class="bg-blue-500 text-white py-2 rounded">→ East</button>
-  </div>
-  <button id="retryBtn" class="w-full bg-green-600 text-white py-2 rounded hover:bg-green-700 hidden">Retry</button>
-  <div id="best-score" class="text-sm text-green-700 mt-2"></div>
-  <ul id="leaderboard" class="text-left text-sm text-gray-600 mt-4 space-y-1"></ul>
+<body class="bg-white text-gray-800 min-h-screen flex items-center justify-center p-4">
+<div class="max-w-2xl w-full bg-white shadow-xl p-6 border border-blue-200 rounded-xl text-center space-y-4 game-container">
+  <h1 class="text-2xl font-bold text-blue-700">Direction Sense</h1>
+  <p>⏱ Time Left: <span id="timer">90</span>s | 🎯 Score: <span id="score">0</span></p>
+  <p id="question" class="text-2xl font-semibold">Loading...</p>
+  
+  <button id="retryBtn" class="bg-green-600 text-white px-4 py-2 rounded font-semibold hidden">Retry</button>
 </div>
 
 <script>
+const GAME_ID = 'direction-sense';
+
 const instructions = [
   { start: [2, 2], goal: [2, 4], text: "Go 2 steps East." },
   { start: [1, 1], goal: [3, 1], text: "Go 2 steps South." },
@@ -45,7 +29,7 @@ const instructions = [
   { start: [3, 3], goal: [3, 1], text: "Go 2 steps West." }
 ];
 
-let score = 0, timeLeft = 180, timerInterval, current = 0, pos = [];
+let score = 0, timeLeft = 90, timerInterval, current = 0, pos = [];
 
 function drawGrid(start, goal) {
   const grid = document.getElementById("grid");
@@ -61,7 +45,7 @@ function drawGrid(start, goal) {
   }
 }
 
-function loadQuestion() {
+function generateQuestion() {
   const q = instructions[current];
   pos = [...q.start];
   document.getElementById("instruction").textContent = q.text;
@@ -79,7 +63,7 @@ function move(dir) {
     score++;
     document.getElementById("score").textContent = score;
     current = (current + 1) % instructions.length;
-    loadQuestion();
+    generateQuestion();
   }
 }
 
@@ -95,55 +79,31 @@ function endGame() {
   clearInterval(timerInterval);
   document.getElementById("instruction").textContent = `Time's up! Final Score: ${score}`;
   document.getElementById("retryBtn").classList.remove("hidden");
-  submitScore("direction-sense", score);
+  submitGameScore(GAME_ID, score);
 }
 
 function restartGame() {
   score = 0;
-  timeLeft = 180;
+  timeLeft = 90;
   current = 0;
   document.getElementById("score").textContent = score;
   document.getElementById("timer").textContent = timeLeft;
   document.getElementById("retryBtn").classList.add("hidden");
-  loadQuestion();
+  generateQuestion();
   startTimer();
 }
 
 // ✅ Backend
-const API_BASE = "https://ultimate-backend-vyse.onrender.com/api/brain-games";
-const username = localStorage.getItem("username");
-const isLoggedIn = localStorage.getItem("isLoggedIn") === "true";
 
-function submitScore(gameId, score) {
-  if (!isLoggedIn || !username) return;
-  fetch(`${API_BASE}/submit`, {
+
+/submit`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ username, gameId, score })
   });
 }
 
-function fetchStats(gameId) {
-  if (!isLoggedIn || !username) return;
-  fetch(`${API_BASE}/user?username=${username}&gameId=${gameId}`)
-    .then(res => res.json())
-    .then(data => {
-      document.getElementById("best-score").textContent = `🏅 Your Best Score: ${data.score || 0}`;
-    });
-  fetch(`${API_BASE}/top?gameId=${gameId}`)
-    .then(res => res.json())
-    .then(data => {
-      document.getElementById("leaderboard").innerHTML =
-        data.map((s, i) => `<li>${i + 1}. ${s.username} – ${s.score}</li>`).join("");
-    });
-}
 
-window.onload = () => {
-  fetchStats("direction-sense");
-  loadQuestion();
-  startTimer();
-  document.getElementById("retryBtn").addEventListener("click", restartGame);
-};
 </script>
 </body>
 </html>

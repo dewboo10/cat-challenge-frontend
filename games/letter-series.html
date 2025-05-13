@@ -1,25 +1,26 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8">
   <title>Letter Series – BrainGames</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <script src="https://cdn.tailwindcss.com"></script>
+  <script src="/js/config.js"></script>
+  <script src="components/auth-popup.js"></script>
+  <script src="components/brain-game-utils.js"></script>
 </head>
 <body class="bg-white text-gray-800 min-h-screen flex items-center justify-center p-4">
-<div class="max-w-xl w-full bg-white shadow-xl p-6 border border-blue-200 rounded-xl text-center space-y-4">
-  <h1 class="text-2xl font-bold text-blue-700">🔡 Letter Series</h1>
-  <p>⏱ Time Left: <span id="timer">180</span>s | 🎯 Score: <span id="score">0</span></p>
-  <p class="text-lg font-semibold">What comes next in the series?</p>
-  <p id="series" class="text-xl font-mono text-blue-600"></p>
-  <input id="letterInput" maxlength="1" class="w-24 border p-2 rounded text-center uppercase" placeholder="A-Z" />
-  <button id="submitBtn" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Submit</button>
+<div class="max-w-2xl w-full bg-white shadow-xl p-6 border border-blue-200 rounded-xl text-center space-y-4 game-container">
+  <h1 class="text-2xl font-bold text-blue-700">Letter Series</h1>
+  <p>⏱ Time Left: <span id="timer">90</span>s | 🎯 Score: <span id="score">0</span></p>
+  <p id="question" class="text-2xl font-semibold">Loading...</p>
+  
   <button id="retryBtn" class="bg-green-600 text-white px-4 py-2 rounded font-semibold hidden">Retry</button>
-  <div id="best-score" class="text-sm text-green-700 mt-2"></div>
-  <ul id="leaderboard" class="text-left text-sm text-gray-600 mt-4 space-y-1"></ul>
 </div>
 
 <script>
+const GAME_ID = 'letter-series';
+
 const seriesData = [
   { series: ["A", "C", "E"], next: "G" },
   { series: ["Z", "X", "V"], next: "T" },
@@ -28,7 +29,7 @@ const seriesData = [
   { series: ["B", "D", "F"], next: "H" }
 ];
 
-let current = {}, score = 0, timeLeft = 180, timerInterval;
+let current = {}, score = 0, timeLeft = 90, timerInterval;
 
 function generateSeries() {
   current = seriesData[Math.floor(Math.random() * seriesData.length)];
@@ -59,12 +60,12 @@ function endGame() {
   document.getElementById("submitBtn").disabled = true;
   document.getElementById("letterInput").disabled = true;
   document.getElementById("retryBtn").classList.remove("hidden");
-  submitScore("letter-series", score);
+  submitGameScore(GAME_ID, score);
 }
 
 function restartGame() {
   score = 0;
-  timeLeft = 180;
+  timeLeft = 90;
   document.getElementById("score").textContent = score;
   document.getElementById("timer").textContent = timeLeft;
   document.getElementById("submitBtn").disabled = false;
@@ -75,41 +76,16 @@ function restartGame() {
 }
 
 // 🔗 Backend integration
-const API_BASE = "https://ultimate-backend-vyse.onrender.com/api/brain-games";
-const username = localStorage.getItem("username");
-const isLoggedIn = localStorage.getItem("isLoggedIn") === "true";
 
-function submitScore(gameId, score) {
-  if (!isLoggedIn || !username) return;
-  fetch(`${API_BASE}/submit`, {
+
+/submit`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ username, gameId, score })
   });
 }
 
-function fetchStats(gameId) {
-  if (!isLoggedIn || !username) return;
-  fetch(`${API_BASE}/user?username=${username}&gameId=${gameId}`)
-    .then(res => res.json())
-    .then(data => {
-      document.getElementById("best-score").textContent = `🏅 Your Best Score: ${data.score || 0}`;
-    });
-  fetch(`${API_BASE}/top?gameId=${gameId}`)
-    .then(res => res.json())
-    .then(data => {
-      document.getElementById("leaderboard").innerHTML =
-        data.map((s, i) => `<li>${i + 1}. ${s.username} – ${s.score}</li>`).join("");
-    });
-}
 
-window.onload = () => {
-  fetchStats("letter-series");
-  generateSeries();
-  startTimer();
-  document.getElementById("submitBtn").addEventListener("click", checkAnswer);
-  document.getElementById("retryBtn").addEventListener("click", restartGame);
-};
 </script>
 </body>
 </html>

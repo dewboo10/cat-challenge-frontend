@@ -3,22 +3,25 @@
 <head>
   <meta charset="UTF-8">
   <title>Rapid Tables – BrainGames</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <script src="https://cdn.tailwindcss.com"></script>
+  <script src="/js/config.js"></script>
+  <script src="components/auth-popup.js"></script>
+  <script src="components/brain-game-utils.js"></script>
 </head>
-<body class="bg-white min-h-screen flex items-center justify-center p-4 text-gray-800">
-<div class="max-w-xl w-full bg-white shadow-xl p-6 border border-blue-200 rounded-xl text-center space-y-4">
-  <h1 class="text-2xl font-bold text-blue-700">✖️ Rapid Tables</h1>
-  <p>⏱ Time Left: <span id="timer">180</span>s | 🎯 Score: <span id="score">0</span></p>
-  <p id="problem" class="text-xl font-semibold">Loading...</p>
-  <input id="answerInput" type="number" placeholder="Enter answer" class="w-full border p-2 rounded text-center">
-  <button id="submitBtn" class="bg-blue-600 text-white w-full py-2 rounded hover:bg-blue-700">Submit</button>
-  <button id="retryBtn" class="bg-green-600 text-white w-full py-2 rounded hover:bg-green-700 hidden">Retry</button>
-  <div id="best-score" class="text-sm text-green-700"></div>
-  <ul id="leaderboard" class="text-left text-sm text-gray-600 mt-4 space-y-1"></ul>
+<body class="bg-white text-gray-800 min-h-screen flex items-center justify-center p-4">
+<div class="max-w-2xl w-full bg-white shadow-xl p-6 border border-blue-200 rounded-xl text-center space-y-4 game-container">
+  <h1 class="text-2xl font-bold text-blue-700">Rapid Tables</h1>
+  <p>⏱ Time Left: <span id="timer">90</span>s | 🎯 Score: <span id="score">0</span></p>
+  <p id="question" class="text-2xl font-semibold">Loading...</p>
+  
+  <button id="retryBtn" class="bg-green-600 text-white px-4 py-2 rounded font-semibold hidden">Retry</button>
 </div>
+
 <script>
-let currentAnswer = 0, score = 0, timeLeft = 180, timerInterval;
+const GAME_ID = 'rapid-tables';
+
+let currentAnswer = 0, score = 0, timeLeft = 90, timerInterval;
 
 function generateProblem() {
   const a = Math.floor(Math.random() * 12 + 1);
@@ -51,12 +54,12 @@ function endGame() {
   document.getElementById("submitBtn").disabled = true;
   document.getElementById("answerInput").disabled = true;
   document.getElementById("retryBtn").classList.remove("hidden");
-  submitScore("rapid-tables", score);
+  submitGameScore(GAME_ID, score);
 }
 
 function restartGame() {
   score = 0;
-  timeLeft = 180;
+  timeLeft = 90;
   document.getElementById("score").textContent = score;
   document.getElementById("timer").textContent = timeLeft;
   document.getElementById("submitBtn").disabled = false;
@@ -66,44 +69,16 @@ function restartGame() {
   startTimer();
 }
 
-const API_BASE = "https://ultimate-backend-vyse.onrender.com/api/brain-games";
-const username = localStorage.getItem("username");
-const isLoggedIn = localStorage.getItem("isLoggedIn") === "true";
 
-function submitScore(gameId, score) {
-  if (!isLoggedIn || !username) return;
-  fetch(`${API_BASE}/submit`, {
+
+/submit`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ username, gameId, score })
   });
 }
 
-function fetchStats(gameId) {
-  if (!isLoggedIn || !username) return;
-  fetch(`${API_BASE}/user?username=${username}&gameId=${gameId}`)
-    .then(res => res.json())
-    .then(data => {
-      document.getElementById("best-score").textContent = `🏅 Your Best Score: ${data.score || 0}`;
-    });
-  fetch(`${API_BASE}/top?gameId=${gameId}`)
-    .then(res => res.json())
-    .then(data => {
-      document.getElementById("leaderboard").innerHTML =
-        data.map((s, i) => `<li>${i + 1}. ${s.username} – ${s.score}</li>`).join("");
-    });
-}
 
-window.onload = () => {
-  fetchStats("rapid-tables");
-  generateProblem();
-  startTimer();
-  document.getElementById("submitBtn").addEventListener("click", checkAnswer);
-  document.getElementById("retryBtn").addEventListener("click", restartGame);
-  document.getElementById("answerInput").addEventListener("keypress", e => {
-    if (e.key === "Enter") checkAnswer();
-  });
-};
 </script>
 </body>
 </html>

@@ -1,76 +1,102 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>Coding-Decoding – BrainGames | Exam Prep</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta charset="UTF-8">
+  <title>Coding Decoding – BrainGames</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <script src="https://cdn.tailwindcss.com"></script>
-  <style>
-    .code-box {
-      padding: 0.5rem 1rem;
-      border: 1px solid #ccc;
-      border-radius: 0.375rem;
-      background-color: #f9fafb;
-      display: inline-block;
-      cursor: pointer;
-      margin: 0.25rem;
-    }
-  </style>
+  <script src="/js/config.js"></script>
+  <script src="components/auth-popup.js"></script>
+  <script src="components/brain-game-utils.js"></script>
 </head>
-<body class="bg-white min-h-screen flex items-center justify-center text-gray-800 p-4">
-<div class="max-w-2xl w-full bg-white shadow-xl p-6 border border-blue-200 rounded-xl text-center space-y-4">
-  <h1 class="text-2xl font-bold text-blue-700">🔤 Coding-Decoding</h1>
-  <p>⏱ Time Left: <span id="timer">180</span>s | 🎯 Score: <span id="score">0</span></p>
-  <p id="question" class="font-medium text-lg">Loading...</p>
-  <div id="options" class="flex flex-wrap justify-center gap-4"></div>
-  <button id="retryBtn" class="w-full bg-green-600 text-white py-2 rounded hover:bg-green-700 hidden">Retry</button>
-  <div id="best-score" class="text-sm text-green-700 mt-2"></div>
-  <ul id="leaderboard" class="text-left text-sm text-gray-600 mt-4 space-y-1"></ul>
+<body class="bg-white text-gray-800 min-h-screen flex items-center justify-center p-4">
+<div class="max-w-2xl w-full bg-white shadow-xl p-6 border border-blue-200 rounded-xl text-center space-y-4 game-container">
+  <h1 class="text-2xl font-bold text-blue-700">Coding Decoding</h1>
+  <p>⏱ Time Left: <span id="timer">90</span>s | 🎯 Score: <span id="score">0</span></p>
+  <p id="question" class="text-2xl font-semibold">Loading...</p>
+  <div id="options" class="grid grid-cols-1 sm:grid-cols-2 gap-4"></div>
+  <button id="retryBtn" class="bg-green-600 text-white px-4 py-2 rounded font-semibold hidden">Retry</button>
 </div>
 
 <script>
-const questions = [
-  {
-    q: "If TABLE is coded as GZYOV, how is CHAIR coded?",
-    options: ["XZQRI", "XZYRI", "XZVRI", "XZWRI"],
-    answer: "XZQRI"
-  },
-  {
-    q: "If BIRD is 219, then FISH is?",
-    options: ["276", "283", "284", "279"],
-    answer: "283"
-  },
-  {
-    q: "If CAT = XZG, then DOG = ?",
-    options: ["WLT", "WLT", "WMT", "WLQ"],
-    answer: "WLT"
-  },
-  {
-    q: "In a code, ROSE is written as 6821. CHAIR is written as 73456. What is the code for SEARCH?",
-    options: ["214356", "264378", "246183", "284365"],
-    answer: "246183"
-  }
-];
+const GAME_ID = 'coding-decoding';
 
-let index = 0, score = 0, timeLeft = 180, timerInterval;
+const GAME_ID = 'coding-decoding';
+let score = 0, timeLeft = 90, timerInterval, currentAnswer;
 
-function loadQuestion() {
-  const q = questions[index];
-  document.getElementById("question").textContent = q.q;
-  const opts = document.getElementById("options");
-  opts.innerHTML = "";
-  q.options.forEach(opt => {
-    const btn = document.createElement("button");
-    btn.className = "code-box hover:bg-blue-100";
-    btn.textContent = opt;
-    btn.onclick = () => {
-      if (opt === q.answer) score++;
-      document.getElementById("score").textContent = score;
-      index = (index + 1) % questions.length;
-      loadQuestion();
-    };
-    opts.appendChild(btn);
-  });
+function generateQuestion() {
+  const patterns = [
+    // Letter shift pattern
+    () => {
+      const shift = Math.floor(Math.random() * 5) + 1;
+      const word = ['CAT', 'DOG', 'RAT', 'PEN', 'BOX'][Math.floor(Math.random() * 5)];
+      const coded = word.split('').map(c => 
+        String.fromCharCode(((c.charCodeAt(0) - 65 + shift) % 26) + 65)
+      ).join('');
+      
+      const testWord = ['SUN', 'MAP', 'CUP', 'HAT', 'BAG'][Math.floor(Math.random() * 5)];
+      currentAnswer = testWord.split('').map(c => 
+        String.fromCharCode(((c.charCodeAt(0) - 65 + shift) % 26) + 65)
+      ).join('');
+      
+      return {
+        pattern: `${word} → ${coded}`,
+        question: `If the above pattern is followed, what would ${testWord} be coded as?`,
+        options: [
+          currentAnswer,
+          testWord.split('').reverse().join(''),
+          testWord.split('').map(c => 
+            String.fromCharCode(((c.charCodeAt(0) - 65 + shift + 1) % 26) + 65)
+          ).join(''),
+          testWord
+        ]
+      };
+    },
+    // Number substitution
+    () => {
+      const mapping = {};
+      '0123456789'.split('').forEach(n => {
+        mapping[n] = Math.floor(Math.random() * 10).toString();
+      });
+      
+      const example = '234';
+      const coded = example.split('').map(n => mapping[n]).join('');
+      
+      const test = '567';
+      currentAnswer = test.split('').map(n => mapping[n]).join('');
+      
+      return {
+        pattern: `${example} → ${coded}`,
+        question: `Using the same pattern, what would ${test} be coded as?`,
+        options: [
+          currentAnswer,
+          test.split('').reverse().join(''),
+          test.split('').map(n => ((parseInt(n) + 1) % 10).toString()).join(''),
+          coded
+        ]
+      };
+    }
+  ];
+
+  const pattern = patterns[Math.floor(Math.random() * patterns.length)]();
+  document.getElementById("pattern").textContent = pattern.pattern;
+  document.getElementById("question").textContent = pattern.question;
+  
+  const container = document.getElementById("options");
+  container.innerHTML = "";
+  pattern.options
+    .sort(() => Math.random() - 0.5)
+    .forEach(opt => {
+      const btn = document.createElement("button");
+      btn.textContent = opt;
+      btn.className = "bg-gray-100 hover:bg-blue-100 px-4 py-2 rounded transition-colors font-mono";
+      btn.onclick = () => {
+        if (opt === currentAnswer) score++;
+        document.getElementById("score").textContent = score;
+        generateQuestion();
+      };
+      container.appendChild(btn);
+    });
 }
 
 function startTimer() {
@@ -83,59 +109,34 @@ function startTimer() {
 
 function endGame() {
   clearInterval(timerInterval);
+  document.getElementById("pattern").textContent = "";
   document.getElementById("question").textContent = `Time's up! Final Score: ${score}`;
   document.getElementById("options").innerHTML = "";
   document.getElementById("retryBtn").classList.remove("hidden");
-  submitScore("coding-decoding", score);
+  submitGameScore(GAME_ID, score);
 }
 
 function restartGame() {
-  index = 0;
   score = 0;
-  timeLeft = 180;
+  timeLeft = 90;
   document.getElementById("score").textContent = score;
   document.getElementById("timer").textContent = timeLeft;
   document.getElementById("retryBtn").classList.add("hidden");
-  loadQuestion();
+  generateQuestion();
   startTimer();
 }
 
 // ✅ Backend Integration
-const API_BASE = "https://ultimate-backend-vyse.onrender.com/api/brain-games";
-const username = localStorage.getItem("username");
-const isLoggedIn = localStorage.getItem("isLoggedIn") === "true";
 
-function submitScore(gameId, score) {
-  if (!isLoggedIn || !username) return;
-  fetch(`${API_BASE}/submit`, {
+
+/submit`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ username, gameId, score })
   });
 }
 
-function fetchStats(gameId) {
-  if (!isLoggedIn || !username) return;
-  fetch(`${API_BASE}/user?username=${username}&gameId=${gameId}`)
-    .then(res => res.json())
-    .then(data => {
-      document.getElementById("best-score").textContent = `🏅 Your Best Score: ${data.score || 0}`;
-    });
 
-  fetch(`${API_BASE}/top?gameId=${gameId}`)
-    .then(res => res.json())
-    .then(data => {
-      document.getElementById("leaderboard").innerHTML =
-        data.map((s, i) => `<li>${i + 1}. ${s.username} – ${s.score}</li>`).join("");
-    });
-}
-
-window.onload = () => {
-  loadQuestion();
-  startTimer();
-  fetchStats("coding-decoding");
-  document.getElementById("retryBtn").addEventListener("click", restartGame);
-};
 </script>
 </body>
 </html>

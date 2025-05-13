@@ -3,20 +3,24 @@
 <head>
   <meta charset="UTF-8">
   <title>Seating Arrangement – BrainGames</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <script src="https://cdn.tailwindcss.com"></script>
+  <script src="/js/config.js"></script>
+  <script src="components/auth-popup.js"></script>
+  <script src="components/brain-game-utils.js"></script>
 </head>
-<body class="bg-white min-h-screen flex items-center justify-center text-gray-800 p-4">
-<div class="max-w-2xl w-full bg-white shadow-xl p-6 border border-blue-200 rounded-xl text-center space-y-4">
-  <h1 class="text-2xl font-bold text-blue-700">🪑 Seating Arrangement</h1>
-  <p>⏱ Time Left: <span id="timer">180</span>s | 🎯 Score: <span id="score">0</span></p>
-  <p id="question" class="text-lg font-semibold">Loading...</p>
+<body class="bg-white text-gray-800 min-h-screen flex items-center justify-center p-4">
+<div class="max-w-2xl w-full bg-white shadow-xl p-6 border border-blue-200 rounded-xl text-center space-y-4 game-container">
+  <h1 class="text-2xl font-bold text-blue-700">Seating Arrangement</h1>
+  <p>⏱ Time Left: <span id="timer">90</span>s | 🎯 Score: <span id="score">0</span></p>
+  <p id="question" class="text-2xl font-semibold">Loading...</p>
   <div id="options" class="grid grid-cols-1 sm:grid-cols-2 gap-4"></div>
   <button id="retryBtn" class="bg-green-600 text-white px-4 py-2 rounded font-semibold hidden">Retry</button>
-  <div id="best-score" class="text-sm text-green-700"></div>
-  <ul id="leaderboard" class="text-left text-sm text-gray-600 mt-4 space-y-1"></ul>
 </div>
+
 <script>
+const GAME_ID = 'seating-arrangement';
+
 const questions = [
   {
     q: "A, B, C, D and E are sitting in a row. B is to the right of A. C is between A and D. Who is sitting in the middle?",
@@ -35,9 +39,9 @@ const questions = [
   }
 ];
 
-let index = 0, score = 0, timeLeft = 180, timerInterval;
+let index = 0, score = 0, timeLeft = 90, timerInterval;
 
-function loadQuestion() {
+function generateQuestion() {
   const q = questions[index];
   document.getElementById("question").textContent = q.q;
   const container = document.getElementById("options");
@@ -45,12 +49,12 @@ function loadQuestion() {
   q.options.forEach(opt => {
     const btn = document.createElement("button");
     btn.textContent = opt;
-    btn.className = "bg-gray-100 hover:bg-blue-100 px-4 py-2 rounded";
+    btn.className = "bg-gray-100 hover:bg-blue-100 px-4 py-2 rounded transition-colors";
     btn.onclick = () => {
       if (opt === q.answer) score++;
       document.getElementById("score").textContent = score;
       index = (index + 1) % questions.length;
-      loadQuestion();
+      generateQuestion();
     };
     container.appendChild(btn);
   });
@@ -69,54 +73,30 @@ function endGame() {
   document.getElementById("question").textContent = `Time's up! Final Score: ${score}`;
   document.getElementById("options").innerHTML = "";
   document.getElementById("retryBtn").classList.remove("hidden");
-  submitScore("seating-arrangement", score);
+  submitGameScore(GAME_ID, score);
 }
 
 function restartGame() {
   index = 0;
   score = 0;
-  timeLeft = 180;
+  timeLeft = 90;
   document.getElementById("score").textContent = score;
   document.getElementById("timer").textContent = timeLeft;
   document.getElementById("retryBtn").classList.add("hidden");
-  loadQuestion();
+  generateQuestion();
   startTimer();
 }
 
-const API_BASE = "https://ultimate-backend-vyse.onrender.com/api/brain-games";
-const username = localStorage.getItem("username");
-const isLoggedIn = localStorage.getItem("isLoggedIn") === "true";
 
-function submitScore(gameId, score) {
-  if (!isLoggedIn || !username) return;
-  fetch(`${API_BASE}/submit`, {
+
+/submit`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ username, gameId, score })
   });
 }
 
-function fetchStats(gameId) {
-  if (!isLoggedIn || !username) return;
-  fetch(`${API_BASE}/user?username=${username}&gameId=${gameId}`)
-    .then(res => res.json())
-    .then(data => {
-      document.getElementById("best-score").textContent = `🏅 Your Best Score: ${data.score || 0}`;
-    });
-  fetch(`${API_BASE}/top?gameId=${gameId}`)
-    .then(res => res.json())
-    .then(data => {
-      document.getElementById("leaderboard").innerHTML =
-        data.map((s, i) => `<li>${i + 1}. ${s.username} – ${s.score}</li>`).join("");
-    });
-}
 
-window.onload = () => {
-  fetchStats("seating-arrangement");
-  loadQuestion();
-  startTimer();
-  document.getElementById("retryBtn").addEventListener("click", restartGame);
-};
 </script>
 </body>
 </html>

@@ -1,23 +1,26 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>Blood Relation – BrainGames | Exam Prep</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta charset="UTF-8">
+  <title>Blood Relation – BrainGames</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <script src="https://cdn.tailwindcss.com"></script>
+  <script src="/js/config.js"></script>
+  <script src="components/auth-popup.js"></script>
+  <script src="components/brain-game-utils.js"></script>
 </head>
-<body class="bg-white min-h-screen flex items-center justify-center text-gray-800 p-4">
-  <div class="max-w-xl w-full space-y-4 bg-white shadow-xl p-6 border border-blue-200 rounded-xl text-center">
-    <h1 class="text-2xl font-bold text-blue-700">👪 Blood Relation Puzzle</h1>
-    <p>⏱ Time Left: <span id="timer">180</span>s | 🎯 Score: <span id="score">0</span></p>
-    <p id="question" class="font-semibold my-4">Loading...</p>
-    <div id="options" class="space-y-2"></div>
-    <button id="retryBtn" class="w-full bg-green-600 text-white py-2 rounded hover:bg-green-700 mt-4 hidden">Retry</button>
-    <div id="best-score" class="text-sm text-green-700 mt-2"></div>
-    <ul id="leaderboard" class="text-left text-sm text-gray-600 mt-4 space-y-1"></ul>
-  </div>
+<body class="bg-white text-gray-800 min-h-screen flex items-center justify-center p-4">
+<div class="max-w-2xl w-full bg-white shadow-xl p-6 border border-blue-200 rounded-xl text-center space-y-4 game-container">
+  <h1 class="text-2xl font-bold text-blue-700">Blood Relation</h1>
+  <p>⏱ Time Left: <span id="timer">90</span>s | 🎯 Score: <span id="score">0</span></p>
+  <p id="question" class="text-2xl font-semibold">Loading...</p>
+  <div id="options" class="grid grid-cols-1 sm:grid-cols-2 gap-4"></div>
+  <button id="retryBtn" class="bg-green-600 text-white px-4 py-2 rounded font-semibold hidden">Retry</button>
+</div>
 
 <script>
+const GAME_ID = 'blood-relation';
+
   const questions = [
     {
       q: "A is the father of B. B is the sister of C. How is A related to C?",
@@ -46,9 +49,9 @@
     }
   ];
 
-  let current = 0, score = 0, timeLeft = 180, timerInterval;
+  let current = 0, score = 0, timeLeft = 90, timerInterval;
 
-  function loadQuestion() {
+  function generateQuestion() {
     const q = questions[current];
     document.getElementById("question").textContent = q.q;
     const options = document.getElementById("options");
@@ -61,7 +64,7 @@
         if (opt === q.answer) score++;
         current = (current + 1) % questions.length;
         document.getElementById("score").textContent = score;
-        loadQuestion();
+        generateQuestion();
       };
       options.appendChild(btn);
     });
@@ -80,56 +83,31 @@
     document.getElementById("question").textContent = `Time's up! Final Score: ${score}`;
     document.getElementById("options").innerHTML = "";
     document.getElementById("retryBtn").classList.remove("hidden");
-    submitScore("blood-relation", score);
+    submitGameScore(GAME_ID, score);
   }
 
   function restartGame() {
     current = 0;
     score = 0;
-    timeLeft = 180;
+    timeLeft = 90;
     document.getElementById("score").textContent = score;
     document.getElementById("timer").textContent = timeLeft;
     document.getElementById("retryBtn").classList.add("hidden");
-    loadQuestion();
+    generateQuestion();
     startTimer();
   }
 
   // Backend integration
-  const API_BASE = "https://ultimate-backend-vyse.onrender.com/api/brain-games";
-  const username = localStorage.getItem("username");
-  const isLoggedIn = localStorage.getItem("isLoggedIn") === "true";
+  
 
-  function submitScore(gameId, score) {
-    if (!isLoggedIn || !username) return;
-    fetch(`${API_BASE}/submit`, {
+  /submit`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ username, gameId, score })
     });
   }
 
-  function fetchStats(gameId) {
-    if (!isLoggedIn || !username) return;
-    fetch(`${API_BASE}/user?username=${username}&gameId=${gameId}`)
-      .then(res => res.json())
-      .then(data => {
-        document.getElementById("best-score").textContent = `🏅 Your Best Score: ${data.score || 0}`;
-      });
-
-    fetch(`${API_BASE}/top?gameId=${gameId}`)
-      .then(res => res.json())
-      .then(data => {
-        document.getElementById("leaderboard").innerHTML =
-          data.map((s, i) => `<li>${i + 1}. ${s.username} – ${s.score}</li>`).join("");
-      });
-  }
-
-  window.onload = () => {
-    loadQuestion();
-    startTimer();
-    fetchStats("blood-relation");
-    document.getElementById("retryBtn").addEventListener("click", restartGame);
-  };
+  
 </script>
 </body>
 </html>

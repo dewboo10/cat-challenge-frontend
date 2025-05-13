@@ -3,23 +3,24 @@
 <head>
   <meta charset="UTF-8">
   <title>Sentence Rearrangement – BrainGames</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <script src="https://cdn.tailwindcss.com"></script>
+  <script src="/js/config.js"></script>
+  <script src="components/auth-popup.js"></script>
+  <script src="components/brain-game-utils.js"></script>
 </head>
 <body class="bg-white text-gray-800 min-h-screen flex items-center justify-center p-4">
-<div class="max-w-2xl w-full bg-white shadow-xl p-6 border border-blue-200 rounded-xl text-center space-y-4">
-  <h1 class="text-2xl font-bold text-blue-700">🧩 Sentence Rearrangement</h1>
-  <p>⏱ Time Left: <span id="timer">180</span>s | 🎯 Score: <span id="score">0</span></p>
-  <p class="text-sm text-gray-600">Click the parts in the correct order to form the sentence.</p>
-  <div id="scrambled" class="flex flex-wrap justify-center gap-2 text-sm font-medium"></div>
-  <div id="selected" class="flex flex-wrap justify-center gap-2 mt-4"></div>
-  <button id="submitBtn" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Submit</button>
+<div class="max-w-2xl w-full bg-white shadow-xl p-6 border border-blue-200 rounded-xl text-center space-y-4 game-container">
+  <h1 class="text-2xl font-bold text-blue-700">Sentence Rearrangement</h1>
+  <p>⏱ Time Left: <span id="timer">90</span>s | 🎯 Score: <span id="score">0</span></p>
+  <p id="question" class="text-2xl font-semibold">Loading...</p>
+  
   <button id="retryBtn" class="bg-green-600 text-white px-4 py-2 rounded font-semibold hidden">Retry</button>
-  <div id="best-score" class="text-sm text-green-700"></div>
-  <ul id="leaderboard" class="text-left text-sm text-gray-600 mt-4 space-y-1"></ul>
 </div>
 
 <script>
+const GAME_ID = 'sentence-rearrangement';
+
 const questions = [
   {
     parts: ["The", "sun", "rises", "in", "the", "east"],
@@ -35,13 +36,13 @@ const questions = [
   }
 ];
 
-let current = {}, score = 0, timeLeft = 180, timerInterval;
+let current = {}, score = 0, timeLeft = 90, timerInterval;
 
 function shuffle(arr) {
   return [...arr].sort(() => Math.random() - 0.5);
 }
 
-function loadQuestion() {
+function generateQuestion() {
   current = questions[Math.floor(Math.random() * questions.length)];
   const scrambled = document.getElementById("scrambled");
   const selected = document.getElementById("selected");
@@ -68,7 +69,7 @@ function checkAnswer() {
     score++;
     document.getElementById("score").textContent = score;
   }
-  loadQuestion();
+  generateQuestion();
 }
 
 function startTimer() {
@@ -85,56 +86,31 @@ function endGame() {
   document.getElementById("selected").innerHTML = "";
   document.getElementById("submitBtn").disabled = true;
   document.getElementById("retryBtn").classList.remove("hidden");
-  submitScore("sentence-rearrangement", score);
+  submitGameScore(GAME_ID, score);
 }
 
 function restartGame() {
   score = 0;
-  timeLeft = 180;
+  timeLeft = 90;
   document.getElementById("score").textContent = score;
   document.getElementById("timer").textContent = timeLeft;
   document.getElementById("submitBtn").disabled = false;
   document.getElementById("retryBtn").classList.add("hidden");
-  loadQuestion();
+  generateQuestion();
   startTimer();
 }
 
 // Backend
-const API_BASE = "https://ultimate-backend-vyse.onrender.com/api/brain-games";
-const username = localStorage.getItem("username");
-const isLoggedIn = localStorage.getItem("isLoggedIn") === "true";
 
-function submitScore(gameId, score) {
-  if (!isLoggedIn || !username) return;
-  fetch(`${API_BASE}/submit`, {
+
+/submit`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ username, gameId, score })
   });
 }
 
-function fetchStats(gameId) {
-  if (!isLoggedIn || !username) return;
-  fetch(`${API_BASE}/user?username=${username}&gameId=${gameId}`)
-    .then(res => res.json())
-    .then(data => {
-      document.getElementById("best-score").textContent = `🏅 Your Best Score: ${data.score || 0}`;
-    });
-  fetch(`${API_BASE}/top?gameId=${gameId}`)
-    .then(res => res.json())
-    .then(data => {
-      document.getElementById("leaderboard").innerHTML =
-        data.map((s, i) => `<li>${i + 1}. ${s.username} – ${s.score}</li>`).join("");
-    });
-}
 
-window.onload = () => {
-  fetchStats("sentence-rearrangement");
-  loadQuestion();
-  startTimer();
-  document.getElementById("submitBtn").addEventListener("click", checkAnswer);
-  document.getElementById("retryBtn").addEventListener("click", restartGame);
-};
 </script>
 </body>
 </html>

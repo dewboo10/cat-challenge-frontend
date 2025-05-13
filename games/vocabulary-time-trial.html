@@ -5,18 +5,22 @@
   <title>Vocabulary Time Trial – BrainGames</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <script src="https://cdn.tailwindcss.com"></script>
+  <script src="/js/config.js"></script>
+  <script src="components/auth-popup.js"></script>
+  <script src="components/brain-game-utils.js"></script>
 </head>
 <body class="bg-white text-gray-800 min-h-screen flex items-center justify-center p-4">
-<div class="max-w-2xl w-full bg-white shadow-xl p-6 border border-blue-200 rounded-xl text-center space-y-4">
-  <h1 class="text-2xl font-bold text-blue-700">📘 Vocabulary Time Trial</h1>
-  <p>⏱ Time Left: <span id="timer">180</span>s | 🎯 Score: <span id="score">0</span></p>
-  <p id="question" class="text-lg font-semibold">Loading...</p>
+<div class="max-w-2xl w-full bg-white shadow-xl p-6 border border-blue-200 rounded-xl text-center space-y-4 game-container">
+  <h1 class="text-2xl font-bold text-blue-700">Vocabulary Time Trial</h1>
+  <p>⏱ Time Left: <span id="timer">90</span>s | 🎯 Score: <span id="score">0</span></p>
+  <p id="question" class="text-2xl font-semibold">Loading...</p>
   <div id="options" class="grid grid-cols-1 sm:grid-cols-2 gap-4"></div>
   <button id="retryBtn" class="bg-green-600 text-white px-4 py-2 rounded font-semibold hidden">Retry</button>
-  <div id="best-score" class="text-sm text-green-700"></div>
-  <ul id="leaderboard" class="text-left text-sm text-gray-600 mt-4 space-y-1"></ul>
 </div>
+
 <script>
+const GAME_ID = 'vocabulary-time-trial';
+
 const questions = [
   { word: "benevolent", answer: "kind and generous", options: ["cruel and harsh", "lazy and bored", "loud and angry"] },
   { word: "elated", answer: "extremely happy", options: ["somewhat confused", "totally exhausted", "slightly amused"] },
@@ -25,9 +29,11 @@ const questions = [
   { word: "contemplate", answer: "think deeply", options: ["ignore", "run away", "talk loudly"] }
 ];
 
-let score = 0, timeLeft = 180, timerInterval, current = {};
+let score = 0, timeLeft = 90, timerInterval, current = {};
+const isLoggedIn = localStorage.getItem("isLoggedIn") === "true";
+const username = localStorage.getItem("username");
 
-function loadQuestion() {
+function generateQuestion() {
   current = questions[Math.floor(Math.random() * questions.length)];
   document.getElementById("question").textContent = `What is the meaning of "${current.word}"?`;
   const opts = new Set([current.answer, ...current.options]);
@@ -36,11 +42,11 @@ function loadQuestion() {
   Array.from(opts).sort(() => Math.random() - 0.5).forEach(opt => {
     const btn = document.createElement("button");
     btn.textContent = opt;
-    btn.className = "bg-gray-100 hover:bg-blue-100 px-4 py-2 rounded";
+    btn.className = "bg-gray-100 hover:bg-blue-100 px-4 py-2 rounded transition-colors";
     btn.onclick = () => {
       if (opt === current.answer) score++;
       document.getElementById("score").textContent = score;
-      loadQuestion();
+      generateQuestion();
     };
     container.appendChild(btn);
   });
@@ -59,54 +65,55 @@ function endGame() {
   document.getElementById("question").textContent = `Time's up! Final Score: ${score}`;
   document.getElementById("options").innerHTML = "";
   document.getElementById("retryBtn").classList.remove("hidden");
-  submitScore("vocabulary-time-trial", score);
+  
+  if (!isLoggedIn) {
+    showAuthPopup();
+  } else {
+    submitGameScore(GAME_ID, score);
+  }
 }
 
 function restartGame() {
   score = 0;
-  timeLeft = 180;
+  timeLeft = 90;
   document.getElementById("score").textContent = score;
   document.getElementById("timer").textContent = timeLeft;
   document.getElementById("retryBtn").classList.add("hidden");
-  loadQuestion();
+  generateQuestion();
   startTimer();
 }
 
-// Backend
-const API_BASE = "https://ultimate-backend-vyse.onrender.com/api/brain-games";
-const username = localStorage.getItem("username");
-const isLoggedIn = localStorage.getItem("isLoggedIn") === "true";
+// Backend Integration
+const API_BASE = CONFIG.BRAIN_GAMES_API;
 
-function submitScore(gameId, score) {
-  if (!isLoggedIn || !username) return;
+
+
   fetch(`${API_BASE}/submit`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ username, gameId, score })
-  });
+  })
+  .then(res => res.json())
+  .then(() => {
+    fetchStats(gameId); // Refresh stats after submission
+  })
+  .catch(err => console.error("Error submitting score:", err));
 }
 
-function fetchStats(gameId) {
-  if (!isLoggedIn || !username) return;
-  fetch(`${API_BASE}/user?username=${username}&gameId=${gameId}`)
+/top?gameId=${gameId}`)
     .then(res => res.json())
     .then(data => {
-      document.getElementById("best-score").textContent = `🏅 Your Best Score: ${data.score || 0}`;
-    });
-  fetch(`${API_BASE}/top?gameId=${gameId}`)
-    .then(res => res.json())
-    .then(data => {
-      document.getElementById("leaderboard").innerHTML =
-        data.map((s, i) => `<li>${i + 1}. ${s.username} – ${s.score}</li>`).join("");
-    });
-}
+      document.getElementById("leaderboard").innerHTML = data
+        .map((s, i) => `<li class="flex justify-between items-center ${s.username === username ? 'text-blue-600 font-semibold' : ''}">
+          <span>${i + 1}. ${s.username}</span>
+          <span>${s.score}</span>
+        </li>`).join("");
+    })
+    .catch(err => console.error("Error fetching leaderboard:", err));
 
-window.onload = () => {
-  fetchStats("vocabulary-time-trial");
-  loadQuestion();
-  startTimer();
-  document.getElementById("retryBtn").addEventListener("click", restartGame);
-};
+  // Only fetch personal best if logged in
+  if (isLoggedIn && username) {
+    fetch(`${API_BASE}
 </script>
 </body>
 </html>
