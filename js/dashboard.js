@@ -127,7 +127,7 @@ function renderLeaderboard(user) {
     .slice(0, 10)
     .map((name, i) => `
       <div class="flex justify-between text-sm ${name === user?.username ? 'font-bold text-green-500' : ''}">
-        <span>${name}</span><span>#${i + 1}</span>
+        <span>${name}</span><span>${i + 1}</span>
       </div>
     `).join("");
 }
