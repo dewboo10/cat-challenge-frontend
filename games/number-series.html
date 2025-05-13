@@ -5,256 +5,135 @@
   <title>Number Series – BrainGames</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <script src="https://cdn.tailwindcss.com"></script>
-  <style>
-    .correct-answer {
-      animation: correctPulse 0.5s ease-out;
-    }
-    .wrong-answer {
-      animation: wrongShake 0.5s ease-in-out;
-    }
-    @keyframes correctPulse {
-      0% { background-color: rgb(34 197 94); transform: scale(1); }
-      50% { background-color: rgb(34 197 94); transform: scale(1.05); }
-      100% { background-color: rgb(243 244 246); transform: scale(1); }
-    }
-    @keyframes wrongShake {
-      0% { background-color: rgb(239 68 68); transform: translateX(0); }
-      25% { background-color: rgb(239 68 68); transform: translateX(-5px); }
-      75% { background-color: rgb(239 68 68); transform: translateX(5px); }
-      100% { background-color: rgb(243 244 246); transform: translateX(0); }
-    }
-  </style>
+  <script src="/js/config.js"></script>
+  <script src="components/auth-popup.js"></script>
+  <script src="components/brain-game-utils.js"></script>
 </head>
 <body class="bg-white text-gray-800 min-h-screen flex items-center justify-center p-4">
-<div class="max-w-2xl w-full bg-white shadow-xl p-6 border border-blue-200 rounded-xl text-center space-y-4">
+<div class="max-w-2xl w-full bg-white shadow-xl p-6 border border-blue-200 rounded-xl text-center space-y-4 game-container">
   <h1 class="text-2xl font-bold text-blue-700">Number Series</h1>
   <p>⏱ Time Left: <span id="timer">90</span>s | 🎯 Score: <span id="score">0</span></p>
   <p id="question" class="text-2xl font-semibold">Loading...</p>
   <div id="options" class="grid grid-cols-1 sm:grid-cols-2 gap-4"></div>
-  <button id="retryBtn" class="bg-green-600 text-white px-4 py-2 rounded font-semibold hidden hover:bg-green-700 transition-colors">Play Again</button>
+  <button id="retryBtn" class="bg-green-600 text-white px-4 py-2 rounded font-semibold hidden">Retry</button>
 </div>
 
 <script>
-let score = 0;
-let timeLeft = 90;
-let timerInterval;
-let currentAnswer;
-let currentExplanation;
+const GAME_ID = 'number-series';
 
-const patterns = [
-  // Arithmetic progression
-  () => {
-    const start = Math.floor(Math.random() * 20) - 10;
-    const diff = Math.floor(Math.random() * 5) + 1;
-    const series = Array(5).fill(0).map((_, i) => start + diff * i);
-    currentAnswer = start + diff * 5;
-    currentExplanation = `Each number increases by ${diff}`;
-    return {
-      series,
-      options: [
-        currentAnswer,
-        currentAnswer + diff,
-        currentAnswer - diff,
-        currentAnswer + 2 * diff
-      ]
-    };
-  },
-  // Geometric progression
-  () => {
-    const start = Math.floor(Math.random() * 5) + 1;
-    const ratio = Math.floor(Math.random() * 2) + 2;
-    const series = Array(5).fill(0).map((_, i) => start * Math.pow(ratio, i));
-    currentAnswer = start * Math.pow(ratio, 5);
-    currentExplanation = `Each number is multiplied by ${ratio}`;
-    return {
-      series,
-      options: [
-        currentAnswer,
-        currentAnswer * ratio,
-        Math.floor(currentAnswer / ratio),
-        currentAnswer + ratio
-      ]
-    };
-  },
-  // Fibonacci-like
-  () => {
-    const start = Math.floor(Math.random() * 5) + 1;
-    const series = [start];
-    for (let i = 1; i < 5; i++) {
-      series.push(series[i-1] + (i * 2));
-    }
-    currentAnswer = series[series.length-1] + (5 * 2);
-    currentExplanation = "The difference between consecutive terms increases by 2";
-    return {
-      series,
-      options: [
-        currentAnswer,
-        currentAnswer + 2,
-        currentAnswer - 2,
-        currentAnswer + 4
-      ]
-    };
-  },
-  // Square numbers
-  () => {
-    const start = Math.floor(Math.random() * 3) + 1;
-    const series = Array(5).fill(0).map((_, i) => Math.pow(start + i, 2));
-    currentAnswer = Math.pow(start + 5, 2);
-    currentExplanation = "Each number is a perfect square in sequence";
-    return {
-      series,
-      options: [
-        currentAnswer,
-        Math.pow(start + 4, 2),
-        Math.pow(start + 6, 2),
-        currentAnswer + start
-      ]
-    };
-  },
-  // Alternating addition/subtraction
-  () => {
-    const start = Math.floor(Math.random() * 20) + 10;
-    const add = Math.floor(Math.random() * 5) + 3;
-    const sub = Math.floor(Math.random() * 3) + 1;
-    const series = [start];
-    for (let i = 1; i < 5; i++) {
-      series.push(series[i-1] + (i % 2 === 0 ? -sub : add));
-    }
-    currentAnswer = series[series.length-1] + (5 % 2 === 0 ? -sub : add);
-    currentExplanation = `Alternately add ${add} and subtract ${sub}`;
-    return {
-      series,
-      options: [
-        currentAnswer,
-        currentAnswer + add,
-        currentAnswer - sub,
-        series[series.length-1]
-      ]
-    };
-  },
-  // Powers of a number
-  () => {
-    const base = Math.floor(Math.random() * 2) + 2;
-    const series = Array(5).fill(0).map((_, i) => Math.pow(base, i));
-    currentAnswer = Math.pow(base, 5);
-    currentExplanation = `Powers of ${base} (${base}^0, ${base}^1, ${base}^2, etc.)`;
-    return {
-      series,
-      options: [
-        currentAnswer,
-        Math.pow(base, 4),
-        Math.pow(base, 6),
-        currentAnswer + base
-      ]
-    };
-  }
-];
+const GAME_ID = 'number-series';
+let score = 0, timeLeft = 90, timerInterval, currentAnswer;
 
-function generateQuestion() {
+function generateSeries() {
+  const patterns = [
+    // Arithmetic progression
+    () => {
+      const start = Math.floor(Math.random() * 20) - 10;
+      const diff = Math.floor(Math.random() * 5) + 1;
+      const series = Array(5).fill(0).map((_, i) => start + diff * i);
+      currentAnswer = start + diff * 5;
+      return {
+        series,
+        options: [
+          currentAnswer,
+          currentAnswer + diff,
+          currentAnswer - diff,
+          currentAnswer + 2 * diff
+        ]
+      };
+    },
+    // Geometric progression
+    () => {
+      const start = Math.floor(Math.random() * 5) + 1;
+      const ratio = Math.floor(Math.random() * 2) + 2;
+      const series = Array(5).fill(0).map((_, i) => start * Math.pow(ratio, i));
+      currentAnswer = start * Math.pow(ratio, 5);
+      return {
+        series,
+        options: [
+          currentAnswer,
+          currentAnswer * ratio,
+          Math.floor(currentAnswer / ratio),
+          currentAnswer + ratio
+        ]
+      };
+    },
+    // Fibonacci-like
+    () => {
+      const start = Math.floor(Math.random() * 5) + 1;
+      const series = [start];
+      for (let i = 1; i < 5; i++) {
+        series.push(series[i-1] + (i * 2));
+      }
+      currentAnswer = series[series.length-1] + (5 * 2);
+      return {
+        series,
+        options: [
+          currentAnswer,
+          currentAnswer + 2,
+          currentAnswer - 2,
+          currentAnswer + 4
+        ]
+      };
+    }
+  ];
+
   const pattern = patterns[Math.floor(Math.random() * patterns.length)]();
-  
-  const questionEl = document.getElementById("question");
-  if (questionEl) {
-    questionEl.textContent = `What comes next in the series: ${pattern.series.join(", ")} ?`;
-  }
+  document.getElementById("question").textContent = 
+    `What comes next in the series: ${pattern.series.join(", ")} ?`;
   
   const container = document.getElementById("options");
-  if (container) {
-    container.innerHTML = "";
-    pattern.options
-      .sort(() => Math.random() - 0.5)
-      .forEach(opt => {
-        const btn = document.createElement("button");
-        btn.textContent = opt;
-        btn.className = "bg-gray-100 hover:bg-blue-100 px-4 py-2 rounded transition-colors font-mono";
-        btn.onclick = () => {
-          // Remove any existing animation classes from all buttons
-          container.querySelectorAll('button').forEach(b => {
-            b.classList.remove('correct-answer', 'wrong-answer');
-          });
-          
-          if (opt === currentAnswer) {
-            score++;
-            const scoreEl = document.getElementById("score");
-            if (scoreEl) scoreEl.textContent = score;
-            btn.classList.add('correct-answer');
-            // Wait for animation to finish before next question
-            setTimeout(generateQuestion, 500);
-          } else {
-            btn.classList.add('wrong-answer');
-            // Find and highlight the correct answer
-            container.querySelectorAll('button').forEach(b => {
-              if (Number(b.textContent) === currentAnswer) {
-                b.classList.add('correct-answer');
-              }
-            });
-            // Show explanation for wrong answers
-            questionEl.innerHTML = `
-              <div class="text-red-600 mb-2">Incorrect!</div>
-              <div class="text-sm text-gray-600">${currentExplanation}</div>
-              <div class="mt-2">The series: ${pattern.series.join(", ")}, <span class="font-bold">${currentAnswer}</span></div>
-            `;
-            // Wait longer for wrong answers so user can see the explanation
-            setTimeout(generateQuestion, 2000);
-          }
-          // Disable all buttons during animation
-          container.querySelectorAll('button').forEach(b => {
-            b.disabled = true;
-          });
-        };
-        container.appendChild(btn);
-      });
-  }
+  container.innerHTML = "";
+  pattern.options
+    .sort(() => Math.random() - 0.5)
+    .forEach(opt => {
+      const btn = document.createElement("button");
+      btn.textContent = opt;
+      btn.className = "bg-gray-100 hover:bg-blue-100 px-4 py-2 rounded transition-colors";
+      btn.onclick = () => {
+        if (opt === currentAnswer) score++;
+        document.getElementById("score").textContent = score;
+        generateSeries();
+      };
+      container.appendChild(btn);
+    });
 }
 
 function startTimer() {
-  clearInterval(timerInterval);
   timerInterval = setInterval(() => {
     timeLeft--;
-    const timerEl = document.getElementById("timer");
-    if (timerEl) timerEl.textContent = timeLeft;
-    
-    if (timeLeft <= 0) {
-      endGame();
-    }
+    document.getElementById("timer").textContent = timeLeft;
+    if (timeLeft <= 0) endGame();
   }, 1000);
 }
 
 function endGame() {
   clearInterval(timerInterval);
-  const questionEl = document.getElementById("question");
-  const optionsEl = document.getElementById("options");
-  const retryBtn = document.getElementById("retryBtn");
-  
-  if (questionEl) questionEl.textContent = `Time's up! Final Score: ${score}`;
-  if (optionsEl) optionsEl.innerHTML = "";
-  if (retryBtn) retryBtn.classList.remove("hidden");
+  document.getElementById("question").textContent = `Time's up! Final Score: ${score}`;
+  document.getElementById("options").innerHTML = "";
+  document.getElementById("retryBtn").classList.remove("hidden");
+  submitGameScore(GAME_ID, score);
 }
 
-function startGame() {
+function restartGame() {
   score = 0;
   timeLeft = 90;
-  
-  const scoreEl = document.getElementById("score");
-  const timerEl = document.getElementById("timer");
-  const retryBtn = document.getElementById("retryBtn");
-  
-  if (scoreEl) scoreEl.textContent = score;
-  if (timerEl) timerEl.textContent = timeLeft;
-  if (retryBtn) retryBtn.classList.add("hidden");
-  
-  generateQuestion();
+  document.getElementById("score").textContent = score;
+  document.getElementById("timer").textContent = timeLeft;
+  document.getElementById("retryBtn").classList.add("hidden");
+  generateSeries();
   startTimer();
 }
 
-// Initialize game
-document.addEventListener('DOMContentLoaded', () => {
-  const retryBtn = document.getElementById('retryBtn');
-  if (retryBtn) {
-    retryBtn.onclick = startGame;
-  }
-  startGame();
-});
+
+
+
+window.onload = () => {
+  initGameStats(GAME_ID);
+  generateQuestion();
+  startTimer();
+  document.getElementById("retryBtn").addEventListener("click", restartGame);
+};
 </script>
 </body>
 </html>

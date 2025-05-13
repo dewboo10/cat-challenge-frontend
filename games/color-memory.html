@@ -5,262 +5,123 @@
   <title>Color Memory – BrainGames</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <script src="https://cdn.tailwindcss.com"></script>
-  <style>
-    .correct-answer {
-      animation: correctPulse 0.5s ease-out;
-    }
-    .wrong-answer {
-      animation: wrongShake 0.5s ease-in-out;
-    }
-    @keyframes correctPulse {
-      0% { transform: scale(1); }
-      50% { transform: scale(1.05); }
-      100% { transform: scale(1); }
-    }
-    @keyframes wrongShake {
-      0% { transform: translateX(0); }
-      25% { transform: translateX(-5px); }
-      75% { transform: translateX(5px); }
-      100% { transform: translateX(0); }
-    }
-    .color-box {
-      width: 80px;
-      height: 80px;
-      margin: 10px;
-      border-radius: 10px;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    }
-    .color-box:hover {
-      transform: scale(1.05);
-      box-shadow: 0 6px 8px rgba(0, 0, 0, 0.15);
-    }
-    .color-box.selected {
-      transform: scale(0.95);
-      box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
-    }
-    .color-box.flash {
-      animation: flash 0.5s ease-out;
-    }
-    @keyframes flash {
-      0% { transform: scale(1); opacity: 1; }
-      50% { transform: scale(1.1); opacity: 0.8; }
-      100% { transform: scale(1); opacity: 1; }
-    }
-    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; }
-    .sequence-container {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      flex-wrap: wrap;
-      gap: 10px;
-      margin: 20px 0;
-    }
-    .input-container {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      flex-wrap: wrap;
-      gap: 10px;
-      margin: 20px 0;
-    }
-    .level-badge {
-      background: linear-gradient(135deg, #6366f1, #8b5cf6);
-      padding: 4px 12px;
-      border-radius: 9999px;
-      color: white;
-      font-size: 0.875rem;
-      font-weight: 600;
-    }
-  </style>
+  <script src="/js/config.js"></script>
+  <script src="components/auth-popup.js"></script>
+  <script src="components/brain-game-utils.js"></script>
 </head>
 <body class="bg-white text-gray-800 min-h-screen flex items-center justify-center p-4">
-<div class="max-w-2xl w-full bg-white shadow-xl p-6 border border-blue-200 rounded-xl text-center space-y-4">
+<div class="max-w-2xl w-full bg-white shadow-xl p-6 border border-blue-200 rounded-xl text-center space-y-4 game-container">
   <h1 class="text-2xl font-bold text-blue-700">Color Memory</h1>
-  <div class="flex justify-center items-center space-x-4">
-    <p>⏱ Time Left: <span id="timer" class="mono">90</span>s</p>
-    <p>🎯 Score: <span id="score" class="mono">0</span></p>
-    <p>Level: <span class="level-badge">1</span></p>
-  </div>
-  <p id="instruction" class="text-lg text-gray-600">Watch the sequence carefully...</p>
-  <div id="sequence" class="sequence-container"></div>
-  <div id="input-area" class="input-container hidden"></div>
-  <button id="retryBtn" class="bg-green-600 text-white px-6 py-3 rounded-lg font-semibold hidden hover:bg-green-700 transition-colors">Play Again</button>
+  <p>⏱ Time Left: <span id="timer">90</span>s | 🎯 Score: <span id="score">0</span></p>
+  <p id="question" class="text-2xl font-semibold">Loading...</p>
+  
+  <button id="retryBtn" class="bg-green-600 text-white px-4 py-2 rounded font-semibold hidden">Retry</button>
 </div>
 
 <script>
-const colors = [
-  { name: "red", hex: "#ef4444" },
-  { name: "blue", hex: "#3b82f6" },
-  { name: "green", hex: "#22c55e" },
-  { name: "yellow", hex: "#eab308" },
-  { name: "purple", hex: "#a855f7" },
-  { name: "orange", hex: "#f97316" },
-  { name: "pink", hex: "#ec4899" },
-  { name: "teal", hex: "#14b8a6" }
-];
+const GAME_ID = 'color-memory';
 
-let sequence = [];
-let userInput = [];
-let score = 0;
-let timeLeft = 90;
-let timerInterval;
-let currentLevel = 1;
-let sequenceLength = 3;
+const colors = ["red", "blue", "green", "yellow", "purple", "orange"];
+let sequence = [], userInput = [], score = 0, timeLeft = 90, timerInterval;
 
-function generateSequence() {
+function generateSequence(length = 4) {
   sequence = [];
-  for (let i = 0; i < sequenceLength; i++) {
+  for (let i = 0; i < length; i++) {
     const color = colors[Math.floor(Math.random() * colors.length)];
     sequence.push(color);
   }
 }
 
-async function displaySequence() {
-  const container = document.getElementById("sequence");
-  const instruction = document.getElementById("instruction");
-  instruction.textContent = "Watch the sequence carefully...";
+function displaySequence() {
+  const container = document.getElementById("question");
   container.innerHTML = "";
-  
-  // Create all boxes first
   sequence.forEach(color => {
     const box = document.createElement("div");
     box.className = "color-box";
-    box.style.backgroundColor = color.hex;
+    box.style.backgroundColor = color;
     container.appendChild(box);
   });
-
-  // Flash each box in sequence
-  const boxes = container.children;
-  for (let i = 0; i < sequence.length; i++) {
-    await new Promise(resolve => setTimeout(resolve, 500));
-    boxes[i].classList.add("flash");
-    await new Promise(resolve => setTimeout(resolve, 500));
-    boxes[i].classList.remove("flash");
-  }
-
-  // Wait a moment before showing input
-  await new Promise(resolve => setTimeout(resolve, 500));
-  instruction.textContent = "Now repeat the sequence!";
-  showInputArea();
+  setTimeout(() => {
+    container.innerHTML = ""; // hide colors
+    showInputArea();
+  }, 2000);
 }
 
 function showInputArea() {
   userInput = [];
-  const container = document.getElementById("input-area");
-  container.innerHTML = "";
-  container.classList.remove("hidden");
-  
+  const area = document.getElementById("inputArea");
+  area.innerHTML = "";
+  document.getElementById("submitBtn").classList.remove("hidden");
+
   colors.forEach(color => {
     const box = document.createElement("div");
-    box.className = "color-box";
-    box.style.backgroundColor = color.hex;
-    box.onclick = () => handleColorClick(color, box);
-    container.appendChild(box);
+    box.className = "color-box hover:scale-110 transition";
+    box.style.backgroundColor = color;
+    box.onclick = () => {
+      userInput.push(color);
+      box.classList.add("selected");
+      if (userInput.length === sequence.length) {
+        document.getElementById("submitBtn").disabled = false;
+      }
+    };
+    area.appendChild(box);
   });
 }
 
-function handleColorClick(color, box) {
-  userInput.push(color);
-  box.classList.add("selected");
-  
-  setTimeout(() => box.classList.remove("selected"), 200);
-  
-  if (userInput.length === sequence.length) {
-    checkAnswer();
-  }
-}
-
-async function checkAnswer() {
-  const instruction = document.getElementById("instruction");
-  const inputArea = document.getElementById("input-area");
-  inputArea.classList.add("hidden");
-  
-  const isCorrect = userInput.every((color, index) => color.name === sequence[index].name);
-  
-  if (isCorrect) {
+function checkAnswer() {
+  document.getElementById("submitBtn").classList.add("hidden");
+  if (JSON.stringify(userInput) === JSON.stringify(sequence)) {
     score++;
     document.getElementById("score").textContent = score;
-    instruction.textContent = "Correct! 🎉";
-    instruction.classList.add("text-green-600");
-    
-    // Level up every 3 correct answers
-    if (score % 3 === 0) {
-      currentLevel++;
-      sequenceLength++;
-      document.querySelector(".level-badge").textContent = currentLevel;
-    }
-  } else {
-    instruction.textContent = "Wrong sequence! Try again 😅";
-    instruction.classList.add("text-red-600");
   }
-  
-  await new Promise(resolve => setTimeout(resolve, 1000));
-  instruction.classList.remove("text-green-600", "text-red-600");
   nextRound();
 }
 
 function nextRound() {
+  document.getElementById("inputArea").innerHTML = "";
+  generateSequence();
+  setTimeout(displaySequence, 500);
+}
+
+function startGame() {
+  score = 0;
+  timeLeft = 90;
+  document.getElementById("score").textContent = score;
+  document.getElementById("timer").textContent = timeLeft;
+  document.getElementById("retryBtn").classList.add("hidden");
   generateSequence();
   displaySequence();
+  startTimer();
 }
 
 function startTimer() {
   clearInterval(timerInterval);
   timerInterval = setInterval(() => {
     timeLeft--;
-    const timerEl = document.getElementById("timer");
-    if (timerEl) timerEl.textContent = timeLeft;
-    
-    if (timeLeft <= 0) {
-      endGame();
-    }
+    document.getElementById("timer").textContent = timeLeft;
+    if (timeLeft <= 0) endGame();
   }, 1000);
 }
 
 function endGame() {
   clearInterval(timerInterval);
-  const instruction = document.getElementById("instruction");
-  const sequence = document.getElementById("sequence");
-  const inputArea = document.getElementById("input-area");
-  const retryBtn = document.getElementById("retryBtn");
-  
-  instruction.textContent = `Game Over! Final Score: ${score} | Highest Level: ${currentLevel}`;
-  sequence.innerHTML = "";
-  inputArea.classList.add("hidden");
-  retryBtn.classList.remove("hidden");
+  document.getElementById("question").innerHTML = "<p class='font-semibold'>Time's up!</p>";
+  document.getElementById("inputArea").innerHTML = "";
+  document.getElementById("retryBtn").classList.remove("hidden");
+  submitGameScore(GAME_ID, score);
 }
 
-function startGame() {
-  score = 0;
-  timeLeft = 90;
-  currentLevel = 1;
-  sequenceLength = 3;
-  
-  const scoreEl = document.getElementById("score");
-  const timerEl = document.getElementById("timer");
-  const retryBtn = document.getElementById("retryBtn");
-  const levelBadge = document.querySelector(".level-badge");
-  
-  if (scoreEl) scoreEl.textContent = score;
-  if (timerEl) timerEl.textContent = timeLeft;
-  if (retryBtn) retryBtn.classList.add("hidden");
-  if (levelBadge) levelBadge.textContent = currentLevel;
-  
-  generateSequence();
-  displaySequence();
-  startTimer();
+// 🔗 Backend integration
+
+
+/submit`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ username, gameId, score })
+  });
 }
 
-// Initialize game
-document.addEventListener('DOMContentLoaded', () => {
-  const retryBtn = document.getElementById('retryBtn');
-  if (retryBtn) {
-    retryBtn.onclick = startGame;
-  }
-  startGame();
-});
+
 </script>
 </body>
 </html>

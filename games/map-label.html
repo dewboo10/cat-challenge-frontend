@@ -5,308 +5,90 @@
   <title>Map Label – BrainGames</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <script src="https://cdn.tailwindcss.com"></script>
-  <style>
-    .map-container {
-      position: relative;
-      width: 100%;
-      max-width: 800px;
-      margin: 0 auto;
-      user-select: none;
-    }
-    .map-point {
-      position: absolute;
-      width: 20px;
-      height: 20px;
-      background-color: rgba(59, 130, 246, 0.5);
-      border: 2px solid #3b82f6;
-      border-radius: 50%;
-      transform: translate(-50%, -50%);
-      cursor: pointer;
-      transition: all 0.3s ease;
-    }
-    .map-point:hover {
-      background-color: rgba(59, 130, 246, 0.8);
-      transform: translate(-50%, -50%) scale(1.2);
-    }
-    .map-point.correct {
-      background-color: rgba(34, 197, 94, 0.5);
-      border-color: #22c55e;
-    }
-    .map-point.wrong {
-      background-color: rgba(239, 68, 68, 0.5);
-      border-color: #ef4444;
-    }
-    .label {
-      position: absolute;
-      background-color: white;
-      padding: 4px 8px;
-      border-radius: 4px;
-      font-size: 0.875rem;
-      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-      transform: translate(-50%, -100%);
-      margin-top: -8px;
-      pointer-events: none;
-    }
-    @keyframes pulse {
-      0% { transform: translate(-50%, -50%) scale(1); }
-      50% { transform: translate(-50%, -50%) scale(1.2); }
-      100% { transform: translate(-50%, -50%) scale(1); }
-    }
-    .pulse {
-      animation: pulse 1s infinite;
-    }
-  </style>
+  <script src="/js/config.js"></script>
+  <script src="components/auth-popup.js"></script>
+  <script src="components/brain-game-utils.js"></script>
 </head>
 <body class="bg-white text-gray-800 min-h-screen flex items-center justify-center p-4">
-  <div class="max-w-4xl w-full bg-white shadow-xl p-6 border border-blue-200 rounded-xl text-center space-y-4">
-    <h1 class="text-2xl font-bold text-blue-700">Map Label Challenge</h1>
-    
-    <div class="flex justify-center items-center space-x-4">
-      <p>⏱ Time Left: <span id="timer" class="font-mono">90</span>s</p>
-      <p>🎯 Score: <span id="score" class="font-mono">0</span></p>
-      <p>Level: <span id="level" class="bg-gradient-to-r from-indigo-500 to-purple-500 text-white px-3 py-1 rounded-full text-sm font-semibold">1</span></p>
-    </div>
-
-    <div id="instruction" class="text-lg text-gray-600 mb-4">Click on the correct location for the highlighted place!</div>
-    
-    <div id="target-location" class="text-xl font-bold text-blue-600 mb-4"></div>
-    
-    <div class="map-container">
-      <img src="https://raw.githubusercontent.com/mohitk05/world-map/main/world-map.svg" alt="World Map" class="w-full">
-      <div id="points"></div>
-    </div>
-    
-    <div class="space-y-4 mt-6">
-      <div id="feedback" class="text-sm font-medium hidden"></div>
-      <button id="nextBtn" class="bg-green-600 text-white px-6 py-2 rounded-lg font-semibold hidden hover:bg-green-700 transition-colors">
-        Next Location
-      </button>
-      <button id="retryBtn" class="bg-green-600 text-white px-6 py-2 rounded-lg font-semibold hidden hover:bg-green-700 transition-colors">
-        Play Again
-      </button>
-    </div>
-  </div>
+<div class="max-w-2xl w-full bg-white shadow-xl p-6 border border-blue-200 rounded-xl text-center space-y-4 game-container">
+  <h1 class="text-2xl font-bold text-blue-700">Map Label</h1>
+  <p>⏱ Time Left: <span id="timer">90</span>s | 🎯 Score: <span id="score">0</span></p>
+  <p id="question" class="text-2xl font-semibold">Loading...</p>
+  <div id="options" class="grid grid-cols-1 sm:grid-cols-2 gap-4"></div>
+  <button id="retryBtn" class="bg-green-600 text-white px-4 py-2 rounded font-semibold hidden">Retry</button>
+</div>
 
 <script>
 const GAME_ID = 'map-label';
 
-const locations = [
-  // Level 1 - Major cities and landmarks
-  {
-    name: "New York City",
-    coordinates: { x: 29.5, y: 39 },
-    level: 1
-  },
-  {
-    name: "London",
-    coordinates: { x: 47, y: 33 },
-    level: 1
-  },
-  {
-    name: "Tokyo",
-    coordinates: { x: 82, y: 40 },
-    level: 1
-  },
-  
-  // Level 2 - Less obvious cities and geographical features
-  {
-    name: "Sydney",
-    coordinates: { x: 85, y: 75 },
-    level: 2
-  },
-  {
-    name: "Cairo",
-    coordinates: { x: 55, y: 45 },
-    level: 2
-  },
-  {
-    name: "Rio de Janeiro",
-    coordinates: { x: 35, y: 65 },
-    level: 2
-  },
-  
-  // Level 3 - Challenging locations
-  {
-    name: "Mumbai",
-    coordinates: { x: 68, y: 48 },
-    level: 3
-  },
-  {
-    name: "Cape Town",
-    coordinates: { x: 52, y: 72 },
-    level: 3
-  },
-  {
-    name: "Moscow",
-    coordinates: { x: 58, y: 30 },
-    level: 3
-  }
+const states = [
+  { name: "Gujarat", img: "https://upload.wikimedia.org/wikipedia/commons/thumb/6/65/IN-GJ.svg/300px-IN-GJ.svg.png" },
+  { name: "Tamil Nadu", img: "https://upload.wikimedia.org/wikipedia/commons/thumb/6/63/IN-TN.svg/300px-IN-TN.svg.png" },
+  { name: "Maharashtra", img: "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0c/IN-MH.svg/300px-IN-MH.svg.png" },
+  { name: "West Bengal", img: "https://upload.wikimedia.org/wikipedia/commons/thumb/7/7e/IN-WB.svg/300px-IN-WB.svg.png" },
+  { name: "Karnataka", img: "https://upload.wikimedia.org/wikipedia/commons/thumb/4/49/IN-KA.svg/300px-IN-KA.svg.png" }
 ];
 
-let score = 0;
-let timeLeft = 90;
-let timerInterval;
-let currentLevel = 1;
-let currentLocation;
-let selectedPoint = null;
-
-function calculateDistance(point1, point2) {
-  const dx = point1.x - point2.x;
-  const dy = point1.y - point2.y;
-  return Math.sqrt(dx * dx + dy * dy);
-}
-
-function createPoint(x, y) {
-  const point = document.createElement('div');
-  point.className = 'map-point';
-  point.style.left = x + '%';
-  point.style.top = y + '%';
-  return point;
-}
-
-function createLabel(text, x, y) {
-  const label = document.createElement('div');
-  label.className = 'label';
-  label.textContent = text;
-  label.style.left = x + '%';
-  label.style.top = y + '%';
-  return label;
-}
-
-function handleMapClick(event) {
-  if (selectedPoint) return;
-  
-  const mapContainer = document.querySelector('.map-container');
-  const rect = mapContainer.getBoundingClientRect();
-  const x = ((event.clientX - rect.left) / rect.width) * 100;
-  const y = ((event.clientY - rect.top) / rect.height) * 100;
-  
-  selectedPoint = createPoint(x, y);
-  mapContainer.appendChild(selectedPoint);
-  
-  const distance = calculateDistance(
-    { x, y },
-    currentLocation.coordinates
-  );
-  
-  if (distance < 5) {
-    handleCorrectGuess(x, y);
-  } else {
-    handleWrongGuess(x, y);
-  }
-}
-
-function handleCorrectGuess(x, y) {
-  score += currentLevel;
-  document.getElementById('score').textContent = score;
-  
-  selectedPoint.classList.add('correct');
-  
-  const label = createLabel(currentLocation.name, x, y);
-  document.querySelector('.map-container').appendChild(label);
-  
-  document.getElementById('feedback').textContent = '🎉 Perfect! You found the exact location!';
-  document.getElementById('feedback').classList.remove('hidden');
-  
-  if (score >= currentLevel * 3 && currentLevel < 3) {
-    currentLevel++;
-    document.getElementById('level').textContent = currentLevel;
-  }
-  
-  document.getElementById('nextBtn').classList.remove('hidden');
-}
-
-function handleWrongGuess(x, y) {
-  selectedPoint.classList.add('wrong');
-  
-  const correctPoint = createPoint(currentLocation.coordinates.x, currentLocation.coordinates.y);
-  correctPoint.classList.add('correct', 'pulse');
-  document.querySelector('.map-container').appendChild(correctPoint);
-  
-  const label = createLabel(currentLocation.name, currentLocation.coordinates.x, currentLocation.coordinates.y);
-  document.querySelector('.map-container').appendChild(label);
-  
-  document.getElementById('feedback').textContent = '❌ Not quite right. This was the correct location.';
-  document.getElementById('feedback').classList.remove('hidden');
-  
-  document.getElementById('nextBtn').classList.remove('hidden');
-}
+let current = {}, score = 0, timeLeft = 90, timerInterval;
 
 function generateQuestion() {
-  const levelLocations = locations.filter(loc => loc.level <= currentLevel);
-  currentLocation = levelLocations[Math.floor(Math.random() * levelLocations.length)];
-  
-  document.getElementById('target-location').textContent = `Find: ${currentLocation.name}`;
-  selectedPoint = null;
-  
-  const points = document.getElementById('points');
-  points.innerHTML = '';
-}
-
-function nextQuestion() {
-  document.getElementById('feedback').classList.add('hidden');
-  document.getElementById('nextBtn').classList.add('hidden');
-  document.querySelectorAll('.map-point, .label').forEach(el => el.remove());
-  generateQuestion();
+  current = states[Math.floor(Math.random() * states.length)];
+  document.getElementById("map-image").src = current.img;
+  const opts = [...states].sort(() => 0.5 - Math.random()).slice(0, 4);
+  if (!opts.find(s => s.name === current.name)) opts[0] = current;
+  opts.sort(() => 0.5 - Math.random());
+  const optionsDiv = document.getElementById("options");
+  optionsDiv.innerHTML = "";
+  opts.forEach(opt => {
+    const btn = document.createElement("button");
+    btn.textContent = opt.name;
+    btn.className = "bg-gray-100 hover:bg-blue-100 px-4 py-2 rounded transition-colors";
+    btn.onclick = () => {
+      if (opt.name === current.name) score++;
+      document.getElementById("score").textContent = score;
+      generateQuestion();
+    };
+    optionsDiv.appendChild(btn);
+  });
 }
 
 function startTimer() {
-  clearInterval(timerInterval);
   timerInterval = setInterval(() => {
     timeLeft--;
-    document.getElementById('timer').textContent = timeLeft;
-    
-    if (timeLeft <= 0) {
-      endGame();
-    }
+    document.getElementById("timer").textContent = timeLeft;
+    if (timeLeft <= 0) endGame();
   }, 1000);
 }
 
 function endGame() {
   clearInterval(timerInterval);
-  
-  const finalMessage = `
-    <div class="space-y-4">
-      <h2 class="text-2xl font-bold">Game Over!</h2>
-      <p class="text-xl">Final Score: ${score}</p>
-      <p class="text-lg">Highest Level: ${currentLevel}</p>
-      <p class="text-sm text-gray-600">How's your geography knowledge?</p>
-    </div>
-  `;
-  
-  document.getElementById('target-location').innerHTML = finalMessage;
-  document.querySelectorAll('.map-point, .label').forEach(el => el.remove());
-  document.getElementById('feedback').classList.add('hidden');
-  document.getElementById('nextBtn').classList.add('hidden');
-  document.getElementById('retryBtn').classList.remove('hidden');
-  document.getElementById('instruction').textContent = 'Thanks for playing!';
+  document.getElementById("map-image").src = "";
+  document.getElementById("question").textContent = `Time's up! Final Score: ${score}`;
+  document.getElementById("options").innerHTML = "";
+  document.getElementById("retryBtn").classList.remove("hidden");
+  submitGameScore(GAME_ID, score);
 }
 
-function startGame() {
+function restartGame() {
   score = 0;
   timeLeft = 90;
-  currentLevel = 1;
-  
-  document.getElementById('score').textContent = score;
-  document.getElementById('timer').textContent = timeLeft;
-  document.getElementById('level').textContent = currentLevel;
-  document.getElementById('retryBtn').classList.add('hidden');
-  document.getElementById('feedback').classList.add('hidden');
-  document.getElementById('nextBtn').classList.add('hidden');
-  document.getElementById('instruction').textContent = 'Click on the correct location for the highlighted place!';
-  
-  document.querySelectorAll('.map-point, .label').forEach(el => el.remove());
+  document.getElementById("score").textContent = score;
+  document.getElementById("timer").textContent = timeLeft;
+  document.getElementById("retryBtn").classList.add("hidden");
   generateQuestion();
   startTimer();
 }
 
-// Event Listeners
-document.querySelector('.map-container').onclick = handleMapClick;
-document.getElementById('nextBtn').onclick = nextQuestion;
-document.getElementById('retryBtn').onclick = startGame;
 
-// Initialize game
-document.addEventListener('DOMContentLoaded', startGame);
+
+/submit`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ username, gameId, score })
+  });
+}
+
+
 </script>
 </body>
 </html>

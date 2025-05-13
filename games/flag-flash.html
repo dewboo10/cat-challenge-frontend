@@ -5,358 +5,94 @@
   <title>Flag Flash – BrainGames</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <script src="https://cdn.tailwindcss.com"></script>
-  <style>
-    .correct-answer {
-      animation: correctPulse 0.5s ease-out;
-    }
-    .wrong-answer {
-      animation: wrongShake 0.5s ease-in-out;
-    }
-    @keyframes correctPulse {
-      0% { transform: scale(1); }
-      50% { transform: scale(1.05); background-color: #86efac; }
-      100% { transform: scale(1); }
-    }
-    @keyframes wrongShake {
-      0% { transform: translateX(0); }
-      25% { transform: translateX(-5px); background-color: #fca5a5; }
-      75% { transform: translateX(5px); background-color: #fca5a5; }
-      100% { transform: translateX(0); }
-    }
-    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; }
-    .level-badge {
-      background: linear-gradient(135deg, #6366f1, #8b5cf6);
-      padding: 4px 12px;
-      border-radius: 9999px;
-      color: white;
-      font-size: 0.875rem;
-      font-weight: 600;
-    }
-    .flag-card {
-      perspective: 1000px;
-      width: 300px;
-      height: 200px;
-      margin: 0 auto;
-    }
-    .flag-inner {
-      position: relative;
-      width: 100%;
-      height: 100%;
-      text-align: center;
-      transition: transform 0.6s;
-      transform-style: preserve-3d;
-    }
-    .flag-card.flipped .flag-inner {
-      transform: rotateY(180deg);
-    }
-    .flag-front, .flag-back {
-      position: absolute;
-      width: 100%;
-      height: 100%;
-      backface-visibility: hidden;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      border-radius: 0.5rem;
-      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-    }
-    .flag-front {
-      background: white;
-    }
-    .flag-back {
-      background: #f3f4f6;
-      transform: rotateY(180deg);
-    }
-    .option-button {
-      transition: all 0.2s ease;
-    }
-    .option-button:hover {
-      transform: translateY(-2px);
-    }
-  </style>
+  <script src="/js/config.js"></script>
+  <script src="components/auth-popup.js"></script>
+  <script src="components/brain-game-utils.js"></script>
 </head>
 <body class="bg-white text-gray-800 min-h-screen flex items-center justify-center p-4">
-<div class="max-w-2xl w-full bg-white shadow-xl p-6 border border-blue-200 rounded-xl text-center space-y-4">
+<div class="max-w-2xl w-full bg-white shadow-xl p-6 border border-blue-200 rounded-xl text-center space-y-4 game-container">
   <h1 class="text-2xl font-bold text-blue-700">Flag Flash</h1>
+  <p>⏱ Time Left: <span id="timer">90</span>s | 🎯 Score: <span id="score">0</span></p>
+  <p id="question" class="text-2xl font-semibold">Loading...</p>
   
-  <div class="flex justify-center items-center space-x-4">
-    <p>⏱ Time Left: <span id="timer" class="mono">90</span>s</p>
-    <p>🎯 Score: <span id="score" class="mono">0</span></p>
-    <p>Level: <span class="level-badge">1</span></p>
-  </div>
-
-  <div class="flag-card" id="flagCard">
-    <div class="flag-inner">
-      <div class="flag-front">
-        <img id="flagImage" class="w-full h-full object-cover rounded-lg" src="" alt="Country Flag">
-      </div>
-      <div class="flag-back">
-        <div id="countryInfo" class="text-xl font-bold"></div>
-      </div>
-    </div>
-  </div>
-
-  <div class="grid grid-cols-2 gap-4 mt-6" id="options-container">
-    <!-- Options will be dynamically inserted here -->
-  </div>
-
-  <div class="space-y-4">
-    <div id="feedback" class="text-sm font-medium hidden"></div>
-    <div id="hint" class="text-sm text-gray-600 hidden"></div>
-    <button id="nextBtn" class="bg-blue-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-blue-700 transition-colors hidden">
-      Next Flag
-    </button>
-    <button id="retryBtn" class="bg-green-600 text-white px-6 py-2 rounded-lg font-semibold hidden hover:bg-green-700 transition-colors">
-      Play Again
-    </button>
-  </div>
+  <button id="retryBtn" class="bg-green-600 text-white px-4 py-2 rounded font-semibold hidden">Retry</button>
 </div>
 
 <script>
+const GAME_ID = 'flag-flash';
+
 const flags = [
-  {
-    country: "India",
-    flag: "https://flagcdn.com/w320/in.png",
-    capital: "New Delhi",
-    hint: "World's largest democracy"
-  },
-  {
-    country: "Japan",
-    flag: "https://flagcdn.com/w320/jp.png",
-    capital: "Tokyo",
-    hint: "Land of the Rising Sun"
-  },
-  {
-    country: "Brazil",
-    flag: "https://flagcdn.com/w320/br.png",
-    capital: "Brasília",
-    hint: "Largest country in South America"
-  },
-  {
-    country: "France",
-    flag: "https://flagcdn.com/w320/fr.png",
-    capital: "Paris",
-    hint: "Known for the Eiffel Tower"
-  },
-  {
-    country: "South Africa",
-    flag: "https://flagcdn.com/w320/za.png",
-    capital: "Pretoria",
-    hint: "Rainbow Nation"
-  },
-  {
-    country: "Canada",
-    flag: "https://flagcdn.com/w320/ca.png",
-    capital: "Ottawa",
-    hint: "Known for maple leaves"
-  },
-  {
-    country: "Australia",
-    flag: "https://flagcdn.com/w320/au.png",
-    capital: "Canberra",
-    hint: "Land Down Under"
-  },
-  {
-    country: "Germany",
-    flag: "https://flagcdn.com/w320/de.png",
-    capital: "Berlin",
-    hint: "Europe's largest economy"
-  },
-  {
-    country: "United Kingdom",
-    flag: "https://flagcdn.com/w320/gb.png",
-    capital: "London",
-    hint: "Home of Big Ben"
-  },
-  {
-    country: "Mexico",
-    flag: "https://flagcdn.com/w320/mx.png",
-    capital: "Mexico City",
-    hint: "Known for ancient pyramids"
-  }
+  { country: "Japan", code: "jp" },
+  { country: "Germany", code: "de" },
+  { country: "France", code: "fr" },
+  { country: "Brazil", code: "br" },
+  { country: "India", code: "in" },
+  { country: "Canada", code: "ca" },
+  { country: "Australia", code: "au" },
+  { country: "Italy", code: "it" }
 ];
 
-let score = 0;
-let timeLeft = 90;
-let timerInterval;
-let currentLevel = 1;
-let currentFlag = 0;
-let wrongAttempts = 0;
+let current = {}, score = 0, timeLeft = 90, timerInterval;
 
-function shuffleArray(array) {
-  for (let i = array.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [array[i], array[j]] = [array[j], array[i]];
-  }
-  return array;
-}
-
-function displayFlag() {
-  const flag = flags[currentFlag];
-  const flagImage = document.getElementById('flagImage');
-  const countryInfo = document.getElementById('countryInfo');
-  const optionsContainer = document.getElementById('options-container');
-  
-  // Reset flag card
-  document.getElementById('flagCard').classList.remove('flipped');
-  
-  // Display flag
-  flagImage.src = flag.flag;
-  countryInfo.textContent = `${flag.country}\n${flag.capital}`;
-  
-  // Generate options
-  const options = [flag.country];
-  while (options.length < 4) {
-    const randomFlag = flags[Math.floor(Math.random() * flags.length)];
-    if (!options.includes(randomFlag.country)) {
-      options.push(randomFlag.country);
-    }
-  }
-  
-  // Shuffle options
-  const shuffledOptions = shuffleArray([...options]);
-  
-  // Create option buttons
-  optionsContainer.innerHTML = '';
-  shuffledOptions.forEach(option => {
-    const button = document.createElement('button');
-    button.className = 'option-button w-full p-4 text-lg font-medium border rounded-lg hover:bg-gray-50 transition-all';
-    button.textContent = option;
-    button.onclick = () => checkAnswer(option);
-    optionsContainer.appendChild(button);
+function loadFlag() {
+  current = flags[Math.floor(Math.random() * flags.length)];
+  document.getElementById("flag-img").src = `https://flagcdn.com/w320/${current.code}.png`;
+  const choices = [...flags]
+    .sort(() => 0.5 - Math.random())
+    .slice(0, 3);
+  if (!choices.find(c => c.country === current.country)) choices[0] = current;
+  choices.sort(() => 0.5 - Math.random());
+  const btns = document.getElementById("choices");
+  btns.innerHTML = "";
+  choices.forEach(c => {
+    const btn = document.createElement("button");
+    btn.textContent = c.country;
+    btn.className = "bg-gray-100 hover:bg-blue-100 px-4 py-2 rounded transition-colors";
+    btn.onclick = () => {
+      if (c.country === current.country) score++;
+      document.getElementById("score").textContent = score;
+      loadFlag();
+    };
+    btns.appendChild(btn);
   });
-  
-  // Reset UI elements
-  document.getElementById('feedback').classList.add('hidden');
-  document.getElementById('hint').classList.add('hidden');
-  document.getElementById('nextBtn').classList.add('hidden');
-  wrongAttempts = 0;
-}
-
-function checkAnswer(selectedCountry) {
-  const flag = flags[currentFlag];
-  const buttons = document.querySelectorAll('.option-button');
-  const correctButton = Array.from(buttons).find(btn => btn.textContent === flag.country);
-  const selectedButton = Array.from(buttons).find(btn => btn.textContent === selectedCountry);
-  
-  buttons.forEach(btn => btn.disabled = true);
-  
-  if (selectedCountry === flag.country) {
-    handleCorrectAnswer(selectedButton);
-  } else {
-    handleWrongAnswer(selectedButton, correctButton);
-  }
-  
-  // Flip the card to show country info
-  document.getElementById('flagCard').classList.add('flipped');
-}
-
-function handleCorrectAnswer(button) {
-  score++;
-  document.getElementById('score').textContent = score;
-  button.classList.add('correct-answer', 'bg-green-100');
-  
-  // Level up every 3 correct answers
-  if (score % 3 === 0) {
-    currentLevel++;
-    document.querySelector('.level-badge').textContent = currentLevel;
-  }
-  
-  showFeedback(true);
-}
-
-function handleWrongAnswer(wrongButton, correctButton) {
-  wrongAttempts++;
-  wrongButton.classList.add('wrong-answer', 'bg-red-100');
-  correctButton.classList.add('bg-green-100');
-  
-  // Show hint after first wrong attempt
-  if (wrongAttempts === 1) {
-    document.getElementById('hint').textContent = '💡 Hint: ' + flags[currentFlag].hint;
-    document.getElementById('hint').classList.remove('hidden');
-  }
-  
-  showFeedback(false);
-}
-
-function showFeedback(isCorrect) {
-  const feedback = document.getElementById('feedback');
-  const nextBtn = document.getElementById('nextBtn');
-  
-  feedback.textContent = isCorrect ? '🎉 Correct!' : '❌ Not quite right.';
-  feedback.className = `text-sm font-medium ${isCorrect ? 'text-green-600' : 'text-red-600'}`;
-  
-  feedback.classList.remove('hidden');
-  nextBtn.classList.remove('hidden');
-}
-
-function nextFlag() {
-  currentFlag = (currentFlag + 1) % flags.length;
-  displayFlag();
 }
 
 function startTimer() {
-  clearInterval(timerInterval);
   timerInterval = setInterval(() => {
     timeLeft--;
-    document.getElementById('timer').textContent = timeLeft;
-    
-    if (timeLeft <= 0) {
-      endGame();
-    }
+    document.getElementById("timer").textContent = timeLeft;
+    if (timeLeft <= 0) endGame();
   }, 1000);
 }
 
 function endGame() {
   clearInterval(timerInterval);
-  const flagCard = document.getElementById('flagCard');
-  const optionsContainer = document.getElementById('options-container');
-  const feedback = document.getElementById('feedback');
-  const hint = document.getElementById('hint');
-  const nextBtn = document.getElementById('nextBtn');
-  const retryBtn = document.getElementById('retryBtn');
-  
-  flagCard.innerHTML = `<div class="text-2xl font-bold">Game Over!<br>Final Score: ${score}<br>Highest Level: ${currentLevel}</div>`;
-  optionsContainer.innerHTML = '';
-  feedback.classList.add('hidden');
-  hint.classList.add('hidden');
-  nextBtn.classList.add('hidden');
-  retryBtn.classList.remove('hidden');
+  document.getElementById("flag-img").src = "";
+  document.getElementById("choices").innerHTML = "<p class='font-semibold'>Time's up!</p>";
+  document.getElementById("retryBtn").classList.remove("hidden");
+  submitGameScore(GAME_ID, score);
 }
 
-function startGame() {
+function restartGame() {
   score = 0;
   timeLeft = 90;
-  currentLevel = 1;
-  currentFlag = 0;
-  wrongAttempts = 0;
-  
-  document.getElementById('score').textContent = score;
-  document.getElementById('timer').textContent = timeLeft;
-  document.querySelector('.level-badge').textContent = currentLevel;
-  document.getElementById('retryBtn').classList.add('hidden');
-  
-  // Shuffle flags array
-  shuffleArray(flags);
-  
-  displayFlag();
+  document.getElementById("score").textContent = score;
+  document.getElementById("timer").textContent = timeLeft;
+  document.getElementById("retryBtn").classList.add("hidden");
+  loadFlag();
   startTimer();
 }
 
-// Initialize game
-document.addEventListener('DOMContentLoaded', () => {
-  const nextBtn = document.getElementById('nextBtn');
-  const retryBtn = document.getElementById('retryBtn');
-  
-  if (nextBtn) {
-    nextBtn.onclick = nextFlag;
-  }
-  if (retryBtn) {
-    retryBtn.onclick = startGame;
-  }
-  
-  startGame();
-});
+
+
+/submit`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ username, gameId, score })
+  });
+}
+
+
 </script>
 </body>
 </html>

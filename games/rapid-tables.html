@@ -5,248 +5,80 @@
   <title>Rapid Tables – BrainGames</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <script src="https://cdn.tailwindcss.com"></script>
-  <style>
-    .option {
-      transition: all 0.3s ease;
-    }
-    .option:hover {
-      transform: scale(1.02);
-    }
-    .correct {
-      background-color: rgba(34, 197, 94, 0.2);
-      border-color: rgb(34, 197, 94);
-    }
-    .wrong {
-      background-color: rgba(239, 68, 68, 0.2);
-      border-color: rgb(239, 68, 68);
-    }
-    @keyframes shake {
-      0%, 100% { transform: translateX(0); }
-      25% { transform: translateX(-5px); }
-      75% { transform: translateX(5px); }
-    }
-    .shake {
-      animation: shake 0.5s ease-in-out;
-    }
-    .level-badge {
-      background: linear-gradient(135deg, #6366f1, #8b5cf6);
-      padding: 4px 12px;
-      border-radius: 9999px;
-      color: white;
-      font-size: 0.875rem;
-      font-weight: 600;
-    }
-    .question-appear {
-      animation: appear 0.5s ease-out;
-    }
-    @keyframes appear {
-      from { 
-        opacity: 0;
-        transform: translateY(-20px);
-      }
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
-    }
-    .streak-badge {
-      background: linear-gradient(135deg, #f59e0b, #d97706);
-      padding: 4px 12px;
-      border-radius: 9999px;
-      color: white;
-      font-size: 0.875rem;
-      font-weight: 600;
-    }
-  </style>
+  <script src="/js/config.js"></script>
+  <script src="components/auth-popup.js"></script>
+  <script src="components/brain-game-utils.js"></script>
 </head>
 <body class="bg-white text-gray-800 min-h-screen flex items-center justify-center p-4">
-  <div class="max-w-2xl w-full bg-white shadow-xl p-6 border border-blue-200 rounded-xl text-center space-y-4">
-    <h1 class="text-2xl font-bold text-blue-700">Rapid Tables</h1>
-    
-    <div class="flex justify-center items-center space-x-4">
-      <p>⏱ Time Left: <span id="timer" class="font-mono">90</span>s</p>
-      <p>🎯 Score: <span id="score" class="font-mono">0</span></p>
-      <p>Level: <span id="level" class="level-badge">1</span></p>
-      <p>Streak: <span id="streak" class="streak-badge">0</span></p>
-    </div>
-
-    <div id="instruction" class="text-lg text-gray-600 mb-4">Solve the multiplication problems as quickly as you can!</div>
-    
-    <div id="question" class="text-4xl font-bold text-blue-600 mb-8 question-appear"></div>
-    
-    <div id="options" class="grid grid-cols-2 gap-4"></div>
-    
-    <div class="space-y-4 mt-6">
-      <div id="feedback" class="text-sm font-medium hidden"></div>
-      <button id="retryBtn" class="bg-green-600 text-white px-6 py-2 rounded-lg font-semibold hidden hover:bg-green-700 transition-colors">
-        Play Again
-      </button>
-    </div>
-  </div>
+<div class="max-w-2xl w-full bg-white shadow-xl p-6 border border-blue-200 rounded-xl text-center space-y-4 game-container">
+  <h1 class="text-2xl font-bold text-blue-700">Rapid Tables</h1>
+  <p>⏱ Time Left: <span id="timer">90</span>s | 🎯 Score: <span id="score">0</span></p>
+  <p id="question" class="text-2xl font-semibold">Loading...</p>
+  
+  <button id="retryBtn" class="bg-green-600 text-white px-4 py-2 rounded font-semibold hidden">Retry</button>
+</div>
 
 <script>
 const GAME_ID = 'rapid-tables';
 
-let score = 0;
-let timeLeft = 90;
-let timerInterval;
-let currentLevel = 1;
-let streak = 0;
-let currentAnswer;
+let currentAnswer = 0, score = 0, timeLeft = 90, timerInterval;
 
-function generateQuestion() {
-  let num1, num2;
-  
-  switch(currentLevel) {
-    case 1: // Basic tables (2-5)
-      num1 = Math.floor(Math.random() * 4) + 2;
-      num2 = Math.floor(Math.random() * 10) + 1;
-      break;
-    case 2: // Intermediate tables (6-9)
-      num1 = Math.floor(Math.random() * 4) + 6;
-      num2 = Math.floor(Math.random() * 10) + 1;
-      break;
-    case 3: // Advanced tables (11-15)
-      num1 = Math.floor(Math.random() * 5) + 11;
-      num2 = Math.floor(Math.random() * 10) + 1;
-      break;
-  }
-  
-  currentAnswer = num1 * num2;
-  
-  document.getElementById('question').textContent = `${num1} × ${num2} = ?`;
-  generateOptions(currentAnswer);
+function generateProblem() {
+  const a = Math.floor(Math.random() * 12 + 1);
+  const b = Math.floor(Math.random() * 12 + 1);
+  currentAnswer = a * b;
+  document.getElementById("problem").textContent = `${a} × ${b} = ?`;
+  document.getElementById("answerInput").value = "";
 }
 
-function generateOptions(answer) {
-  const options = [answer];
-  
-  // Generate 3 wrong options
-  while (options.length < 4) {
-    // Create plausible wrong answers by adding/subtracting small numbers
-    const offset = Math.floor(Math.random() * 5) + 1;
-    const wrongAnswer = answer + (Math.random() < 0.5 ? offset : -offset);
-    
-    if (!options.includes(wrongAnswer) && wrongAnswer > 0) {
-      options.push(wrongAnswer);
-    }
+function checkAnswer() {
+  const input = parseInt(document.getElementById("answerInput").value);
+  if (input === currentAnswer) {
+    score++;
+    document.getElementById("score").textContent = score;
   }
-  
-  // Shuffle options
-  const shuffledOptions = options.sort(() => Math.random() - 0.5);
-  
-  const optionsDiv = document.getElementById('options');
-  optionsDiv.innerHTML = '';
-  
-  shuffledOptions.forEach(option => {
-    const button = document.createElement('button');
-    button.className = 'option p-4 text-xl border-2 rounded-lg hover:bg-blue-50 transition-colors';
-    button.textContent = option;
-    button.onclick = () => checkAnswer(button, option);
-    optionsDiv.appendChild(button);
-  });
-}
-
-function checkAnswer(button, selected) {
-  const buttons = document.querySelectorAll('.option');
-  buttons.forEach(btn => btn.disabled = true);
-  
-  if (selected === currentAnswer) {
-    handleCorrectAnswer(button);
-  } else {
-    handleWrongAnswer(button);
-  }
-  
-  setTimeout(() => {
-    buttons.forEach(btn => {
-      btn.classList.remove('correct', 'wrong', 'shake');
-    });
-    generateQuestion();
-    buttons.forEach(btn => btn.disabled = false);
-  }, 1000);
-}
-
-function handleCorrectAnswer(button) {
-  streak++;
-  score += currentLevel + Math.floor(streak / 3); // Bonus points for streaks
-  
-  document.getElementById('score').textContent = score;
-  document.getElementById('streak').textContent = streak;
-  
-  button.classList.add('correct');
-  
-  if (score >= currentLevel * 10 && currentLevel < 3) {
-    currentLevel++;
-    document.getElementById('level').textContent = currentLevel;
-  }
-}
-
-function handleWrongAnswer(button) {
-  streak = 0;
-  document.getElementById('streak').textContent = streak;
-  
-  button.classList.add('wrong', 'shake');
-  
-  const correctButton = Array.from(document.querySelectorAll('.option'))
-    .find(btn => parseInt(btn.textContent) === currentAnswer);
-  correctButton.classList.add('correct');
+  generateProblem();
 }
 
 function startTimer() {
-  clearInterval(timerInterval);
   timerInterval = setInterval(() => {
     timeLeft--;
-    document.getElementById('timer').textContent = timeLeft;
-    
-    if (timeLeft <= 0) {
-      endGame();
-    }
+    document.getElementById("timer").textContent = timeLeft;
+    if (timeLeft <= 0) endGame();
   }, 1000);
 }
 
 function endGame() {
   clearInterval(timerInterval);
-  
-  const finalMessage = `
-    <div class="space-y-4">
-      <h2 class="text-2xl font-bold">Game Over!</h2>
-      <p class="text-xl">Final Score: ${score}</p>
-      <p class="text-lg">Highest Level: ${currentLevel}</p>
-      <p class="text-sm">Longest Streak: ${streak}</p>
-      <p class="text-sm text-gray-600">Keep practicing to improve your multiplication skills!</p>
-    </div>
-  `;
-  
-  document.getElementById('question').textContent = '';
-  document.getElementById('options').innerHTML = finalMessage;
-  document.getElementById('feedback').classList.add('hidden');
-  document.getElementById('retryBtn').classList.remove('hidden');
-  document.getElementById('instruction').textContent = 'Thanks for playing!';
+  document.getElementById("problem").textContent = `Time's up! Final Score: ${score}`;
+  document.getElementById("submitBtn").disabled = true;
+  document.getElementById("answerInput").disabled = true;
+  document.getElementById("retryBtn").classList.remove("hidden");
+  submitGameScore(GAME_ID, score);
 }
 
-function startGame() {
+function restartGame() {
   score = 0;
   timeLeft = 90;
-  currentLevel = 1;
-  streak = 0;
-  
-  document.getElementById('score').textContent = score;
-  document.getElementById('timer').textContent = timeLeft;
-  document.getElementById('level').textContent = currentLevel;
-  document.getElementById('streak').textContent = streak;
-  document.getElementById('retryBtn').classList.add('hidden');
-  document.getElementById('feedback').classList.add('hidden');
-  document.getElementById('instruction').textContent = 'Solve the multiplication problems as quickly as you can!';
-  
-  generateQuestion();
+  document.getElementById("score").textContent = score;
+  document.getElementById("timer").textContent = timeLeft;
+  document.getElementById("submitBtn").disabled = false;
+  document.getElementById("answerInput").disabled = false;
+  document.getElementById("retryBtn").classList.add("hidden");
+  generateProblem();
   startTimer();
 }
 
-// Event Listeners
-document.getElementById('retryBtn').onclick = startGame;
 
-// Initialize game
-document.addEventListener('DOMContentLoaded', startGame);
+
+/submit`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ username, gameId, score })
+  });
+}
+
+
 </script>
 </body>
 </html>

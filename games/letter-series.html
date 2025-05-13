@@ -5,341 +5,87 @@
   <title>Letter Series – BrainGames</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <script src="https://cdn.tailwindcss.com"></script>
-  <style>
-    .correct-answer {
-      animation: correctPulse 0.5s ease-out;
-    }
-    .wrong-answer {
-      animation: wrongShake 0.5s ease-in-out;
-    }
-    @keyframes correctPulse {
-      0% { transform: scale(1); }
-      50% { transform: scale(1.05); background-color: #86efac; }
-      100% { transform: scale(1); }
-    }
-    @keyframes wrongShake {
-      0% { transform: translateX(0); }
-      25% { transform: translateX(-5px); background-color: #fca5a5; }
-      75% { transform: translateX(5px); background-color: #fca5a5; }
-      100% { transform: translateX(0); }
-    }
-    .level-badge {
-      background: linear-gradient(135deg, #6366f1, #8b5cf6);
-      padding: 4px 12px;
-      border-radius: 9999px;
-      color: white;
-      font-size: 0.875rem;
-      font-weight: 600;
-    }
-    .letter-box {
-      width: 40px;
-      height: 40px;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      border: 2px solid #e5e7eb;
-      border-radius: 8px;
-      font-weight: bold;
-      font-size: 1.25rem;
-      margin: 0 2px;
-      transition: all 0.3s ease;
-    }
-    .letter-box.highlight {
-      border-color: #3b82f6;
-      background-color: #eff6ff;
-      transform: translateY(-2px);
-    }
-    @keyframes popIn {
-      0% { transform: scale(0.8); opacity: 0; }
-      100% { transform: scale(1); opacity: 1; }
-    }
-    .pop-in {
-      animation: popIn 0.3s ease-out forwards;
-    }
-  </style>
+  <script src="/js/config.js"></script>
+  <script src="components/auth-popup.js"></script>
+  <script src="components/brain-game-utils.js"></script>
 </head>
 <body class="bg-white text-gray-800 min-h-screen flex items-center justify-center p-4">
-<div class="max-w-2xl w-full bg-white shadow-xl p-6 border border-blue-200 rounded-xl text-center space-y-4">
+<div class="max-w-2xl w-full bg-white shadow-xl p-6 border border-blue-200 rounded-xl text-center space-y-4 game-container">
   <h1 class="text-2xl font-bold text-blue-700">Letter Series</h1>
+  <p>⏱ Time Left: <span id="timer">90</span>s | 🎯 Score: <span id="score">0</span></p>
+  <p id="question" class="text-2xl font-semibold">Loading...</p>
   
-  <div class="flex justify-center items-center space-x-4">
-    <p>⏱ Time Left: <span id="timer" class="font-mono">90</span>s</p>
-    <p>🎯 Score: <span id="score" class="font-mono">0</span></p>
-    <p>Level: <span class="level-badge">1</span></p>
-  </div>
-
-  <div id="instruction" class="text-lg text-gray-600 mb-4">Find the next letter in the sequence!</div>
-  
-  <div id="series-container" class="py-8 space-y-8">
-    <div id="series" class="text-2xl font-bold space-x-2"></div>
-    <div id="options" class="flex justify-center gap-4"></div>
-  </div>
-  
-  <div class="space-y-4 mt-6">
-    <div id="feedback" class="text-sm font-medium hidden"></div>
-    <button id="nextBtn" class="bg-green-600 text-white px-6 py-2 rounded-lg font-semibold hidden hover:bg-green-700 transition-colors">
-      Next Series
-    </button>
-    <button id="retryBtn" class="bg-green-600 text-white px-6 py-2 rounded-lg font-semibold hidden hover:bg-green-700 transition-colors">
-      Play Again
-    </button>
-  </div>
+  <button id="retryBtn" class="bg-green-600 text-white px-4 py-2 rounded font-semibold hidden">Retry</button>
 </div>
 
 <script>
 const GAME_ID = 'letter-series';
 
-const patterns = [
-  // Level 1 - Simple patterns
-  {
-    generate: () => {
-      const start = Math.floor(Math.random() * 20);
-      return {
-        series: Array.from({length: 4}, (_, i) => String.fromCharCode(65 + start + i)),
-        next: String.fromCharCode(65 + start + 4),
-        description: "Next letter in alphabet",
-        level: 1
-      };
-    }
-  },
-  {
-    generate: () => {
-      const start = Math.floor(Math.random() * 20);
-      return {
-        series: Array.from({length: 4}, (_, i) => String.fromCharCode(65 + start + i * 2)),
-        next: String.fromCharCode(65 + start + 8),
-        description: "Skip one letter",
-        level: 1
-      };
-    }
-  },
-  
-  // Level 2 - Alternating patterns
-  {
-    generate: () => {
-      const start = Math.floor(Math.random() * 20);
-      return {
-        series: Array.from({length: 4}, (_, i) => String.fromCharCode(65 + start + (i % 2 === 0 ? i : i + 1))),
-        next: String.fromCharCode(65 + start + 7),
-        description: "Alternating steps",
-        level: 2
-      };
-    }
-  },
-  {
-    generate: () => {
-      const vowels = ['A', 'E', 'I', 'O', 'U'];
-      const start = Math.floor(Math.random() * (vowels.length - 1));
-      return {
-        series: vowels.slice(start, start + 4),
-        next: vowels[start + 4],
-        description: "Vowel sequence",
-        level: 2
-      };
-    }
-  },
-  
-  // Level 3 - Complex patterns
-  {
-    generate: () => {
-      const start = Math.floor(Math.random() * 15);
-      return {
-        series: Array.from({length: 4}, (_, i) => String.fromCharCode(65 + start + i * (i + 1))),
-        next: String.fromCharCode(65 + start + 20),
-        description: "Increasing steps",
-        level: 3
-      };
-    }
-  },
-  {
-    generate: () => {
-      const start = Math.floor(Math.random() * 20);
-      return {
-        series: Array.from({length: 4}, (_, i) => String.fromCharCode(65 + start + fibonacci(i))),
-        next: String.fromCharCode(65 + start + fibonacci(4)),
-        description: "Fibonacci steps",
-        level: 3
-      };
-    }
-  }
+const seriesData = [
+  { series: ["A", "C", "E"], next: "G" },
+  { series: ["Z", "X", "V"], next: "T" },
+  { series: ["D", "G", "J"], next: "M" },
+  { series: ["M", "K", "I"], next: "G" },
+  { series: ["B", "D", "F"], next: "H" }
 ];
 
-function fibonacci(n) {
-  if (n <= 1) return n;
-  return fibonacci(n - 1) + fibonacci(n - 2);
+let current = {}, score = 0, timeLeft = 90, timerInterval;
+
+function generateSeries() {
+  current = seriesData[Math.floor(Math.random() * seriesData.length)];
+  document.getElementById("series").textContent = current.series.join(", ");
+  document.getElementById("letterInput").value = "";
 }
 
-let score = 0;
-let timeLeft = 90;
-let timerInterval;
-let currentLevel = 1;
-let currentPattern;
-let currentSeries;
-
-function generateOptions(correct) {
-  const options = [correct];
-  const usedChars = new Set([correct]);
-  
-  while (options.length < 4) {
-    const randomChar = String.fromCharCode(65 + Math.floor(Math.random() * 26));
-    if (!usedChars.has(randomChar)) {
-      options.push(randomChar);
-      usedChars.add(randomChar);
-    }
+function checkAnswer() {
+  const input = document.getElementById("letterInput").value.toUpperCase();
+  if (input === current.next) {
+    score++;
+    document.getElementById("score").textContent = score;
   }
-  
-  return options.sort(() => Math.random() - 0.5);
-}
-
-function displaySeries(series) {
-  const container = document.getElementById("series");
-  container.innerHTML = "";
-  
-  series.forEach((letter, index) => {
-    const box = document.createElement("span");
-    box.className = "letter-box pop-in";
-    box.style.animationDelay = `${index * 0.1}s`;
-    box.textContent = letter;
-    container.appendChild(box);
-  });
-  
-  const questionBox = document.createElement("span");
-  questionBox.className = "letter-box";
-  questionBox.textContent = "?";
-  questionBox.style.animationDelay = `${series.length * 0.1}s`;
-  container.appendChild(questionBox);
-}
-
-function displayOptions(options) {
-  const container = document.getElementById("options");
-  container.innerHTML = "";
-  
-  options.forEach((letter, index) => {
-    const button = document.createElement("button");
-    button.className = "letter-box hover:bg-blue-50 hover:border-blue-300 pop-in";
-    button.style.animationDelay = `${(index + 5) * 0.1}s`;
-    button.textContent = letter;
-    button.onclick = () => checkAnswer(letter);
-    container.appendChild(button);
-  });
-}
-
-function generateQuestion() {
-  const levelPatterns = patterns.filter(p => p.level <= currentLevel);
-  const pattern = levelPatterns[Math.floor(Math.random() * levelPatterns.length)];
-  currentPattern = pattern.generate();
-  currentSeries = currentPattern.series;
-  
-  displaySeries(currentSeries);
-  displayOptions(generateOptions(currentPattern.next));
-}
-
-function checkAnswer(selected) {
-  const buttons = document.querySelectorAll('#options .letter-box');
-  buttons.forEach(btn => btn.disabled = true);
-  
-  if (selected === currentPattern.next) {
-    handleCorrectAnswer(selected);
-  } else {
-    handleWrongAnswer(selected, currentPattern.next);
-  }
-}
-
-function handleCorrectAnswer(selected) {
-  score += currentLevel;
-  document.getElementById("score").textContent = score;
-  document.getElementById("feedback").textContent = "🎉 Correct!";
-  document.getElementById("feedback").classList.remove("hidden");
-  
-  const selectedBtn = Array.from(document.querySelectorAll('#options .letter-box'))
-    .find(btn => btn.textContent === selected);
-  selectedBtn.classList.add('correct-answer', 'bg-green-200');
-  
-  // Level up every 5 correct answers
-  if (score >= currentLevel * 5 && currentLevel < 3) {
-    currentLevel++;
-    document.querySelector('.level-badge').textContent = currentLevel;
-  }
-  
-  document.getElementById("nextBtn").classList.remove("hidden");
-}
-
-function handleWrongAnswer(selected, correct) {
-  document.getElementById("feedback").textContent = `❌ Not quite right. The correct answer was ${correct}`;
-  document.getElementById("feedback").classList.remove("hidden");
-  
-  const buttons = document.querySelectorAll('#options .letter-box');
-  buttons.forEach(btn => {
-    if (btn.textContent === selected) {
-      btn.classList.add('wrong-answer', 'bg-red-200');
-    } else if (btn.textContent === correct) {
-      btn.classList.add('bg-green-200');
-    }
-  });
-  
-  document.getElementById("nextBtn").classList.remove("hidden");
-}
-
-function nextQuestion() {
-  document.getElementById("feedback").classList.add("hidden");
-  document.getElementById("nextBtn").classList.add("hidden");
-  generateQuestion();
+  generateSeries();
 }
 
 function startTimer() {
-  clearInterval(timerInterval);
   timerInterval = setInterval(() => {
     timeLeft--;
     document.getElementById("timer").textContent = timeLeft;
-    
-    if (timeLeft <= 0) {
-      endGame();
-    }
+    if (timeLeft <= 0) endGame();
   }, 1000);
 }
 
 function endGame() {
   clearInterval(timerInterval);
-  
-  const finalMessage = `
-    <div class="space-y-4">
-      <h2 class="text-2xl font-bold">Game Over!</h2>
-      <p class="text-xl">Final Score: ${score}</p>
-      <p class="text-lg">Highest Level: ${currentLevel}</p>
-      <p class="text-sm text-gray-600">Can you spot more patterns?</p>
-    </div>
-  `;
-  
-  document.getElementById("series-container").innerHTML = finalMessage;
-  document.getElementById("feedback").classList.add("hidden");
-  document.getElementById("nextBtn").classList.add("hidden");
+  document.getElementById("series").textContent = "Time's up!";
+  document.getElementById("submitBtn").disabled = true;
+  document.getElementById("letterInput").disabled = true;
   document.getElementById("retryBtn").classList.remove("hidden");
-  document.getElementById("instruction").textContent = "Thanks for playing!";
+  submitGameScore(GAME_ID, score);
 }
 
-function startGame() {
+function restartGame() {
   score = 0;
   timeLeft = 90;
-  currentLevel = 1;
-  
   document.getElementById("score").textContent = score;
   document.getElementById("timer").textContent = timeLeft;
-  document.querySelector('.level-badge').textContent = currentLevel;
+  document.getElementById("submitBtn").disabled = false;
+  document.getElementById("letterInput").disabled = false;
   document.getElementById("retryBtn").classList.add("hidden");
-  document.getElementById("feedback").classList.add("hidden");
-  document.getElementById("nextBtn").classList.add("hidden");
-  document.getElementById("instruction").textContent = "Find the next letter in the sequence!";
-  
-  generateQuestion();
+  generateSeries();
   startTimer();
 }
 
-// Event Listeners
-document.getElementById("nextBtn").onclick = nextQuestion;
-document.getElementById("retryBtn").onclick = startGame;
+// 🔗 Backend integration
 
-// Initialize game
-document.addEventListener('DOMContentLoaded', startGame);
+
+/submit`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ username, gameId, score })
+  });
+}
+
+
 </script>
 </body>
 </html>

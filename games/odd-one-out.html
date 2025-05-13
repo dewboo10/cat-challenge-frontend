@@ -5,260 +5,86 @@
   <title>Odd One Out – BrainGames</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <script src="https://cdn.tailwindcss.com"></script>
-  <style>
-    .option {
-      transition: all 0.3s ease;
-    }
-    .option:hover {
-      transform: scale(1.05);
-    }
-    .correct {
-      background-color: rgba(34, 197, 94, 0.2);
-      border-color: rgb(34, 197, 94);
-    }
-    .wrong {
-      background-color: rgba(239, 68, 68, 0.2);
-      border-color: rgb(239, 68, 68);
-    }
-    @keyframes shake {
-      0%, 100% { transform: translateX(0); }
-      25% { transform: translateX(-5px); }
-      75% { transform: translateX(5px); }
-    }
-    .shake {
-      animation: shake 0.5s ease-in-out;
-    }
-    .level-badge {
-      background: linear-gradient(135deg, #6366f1, #8b5cf6);
-      padding: 4px 12px;
-      border-radius: 9999px;
-      color: white;
-      font-size: 0.875rem;
-      font-weight: 600;
-    }
-  </style>
+  <script src="/js/config.js"></script>
+  <script src="components/auth-popup.js"></script>
+  <script src="components/brain-game-utils.js"></script>
 </head>
 <body class="bg-white text-gray-800 min-h-screen flex items-center justify-center p-4">
-  <div class="max-w-2xl w-full bg-white shadow-xl p-6 border border-blue-200 rounded-xl text-center space-y-4">
-    <h1 class="text-2xl font-bold text-blue-700">Odd One Out</h1>
-    
-    <div class="flex justify-center items-center space-x-4">
-      <p>⏱ Time Left: <span id="timer" class="font-mono">90</span>s</p>
-      <p>🎯 Score: <span id="score" class="font-mono">0</span></p>
-      <p>Level: <span id="level" class="level-badge">1</span></p>
-    </div>
-
-    <div id="instruction" class="text-lg text-gray-600 mb-4">Find the item that doesn't belong in the pattern!</div>
-    
-    <div id="pattern-type" class="text-sm font-medium text-blue-600 mb-4"></div>
-    
-    <div id="options" class="grid grid-cols-2 sm:grid-cols-3 gap-4"></div>
-    
-    <div class="space-y-4 mt-6">
-      <div id="feedback" class="text-sm font-medium hidden"></div>
-      <button id="nextBtn" class="bg-green-600 text-white px-6 py-2 rounded-lg font-semibold hidden hover:bg-green-700 transition-colors">
-        Next Pattern
-      </button>
-      <button id="retryBtn" class="bg-green-600 text-white px-6 py-2 rounded-lg font-semibold hidden hover:bg-green-700 transition-colors">
-        Play Again
-      </button>
-    </div>
-  </div>
+<div class="max-w-2xl w-full bg-white shadow-xl p-6 border border-blue-200 rounded-xl text-center space-y-4 game-container">
+  <h1 class="text-2xl font-bold text-blue-700">Odd One Out</h1>
+  <p>⏱ Time Left: <span id="timer">90</span>s | 🎯 Score: <span id="score">0</span></p>
+  <p id="question" class="text-2xl font-semibold">Loading...</p>
+  <div id="options" class="grid grid-cols-1 sm:grid-cols-2 gap-4"></div>
+  <button id="retryBtn" class="bg-green-600 text-white px-4 py-2 rounded font-semibold hidden">Retry</button>
+</div>
 
 <script>
 const GAME_ID = 'odd-one-out';
 
-const patterns = {
-  1: [ // Level 1 - Simple patterns
-    {
-      type: "Numbers: Even numbers",
-      items: ["2", "4", "6", "7", "8", "10"],
-      oddOne: "7",
-      explanation: "All numbers except 7 are even numbers."
-    },
-    {
-      type: "Colors: Primary colors",
-      items: ["🔴", "🟡", "🟢", "🔵"],
-      oddOne: "🟢",
-      explanation: "Green is not a primary color, while Red, Yellow, and Blue are."
-    },
-    {
-      type: "Shapes: Circles",
-      items: ["⭕", "🔴", "⚪", "🟦", "⚫"],
-      oddOne: "🟦",
-      explanation: "All shapes except the blue square are circles."
-    }
-  ],
-  2: [ // Level 2 - Moderate patterns
-    {
-      type: "Numbers: Multiples of 3",
-      items: ["3", "6", "9", "10", "12", "15"],
-      oddOne: "10",
-      explanation: "All numbers except 10 are multiples of 3."
-    },
-    {
-      type: "Words: Animals",
-      items: ["🐶", "🐱", "🌳", "🐰", "🐨", "🐯"],
-      oddOne: "🌳",
-      explanation: "All items except the tree are animals."
-    },
-    {
-      type: "Patterns: Ascending",
-      items: ["2", "4", "6", "9", "8", "10"],
-      oddOne: "8",
-      explanation: "All numbers are in ascending order except 8."
-    }
-  ],
-  3: [ // Level 3 - Complex patterns
-    {
-      type: "Math: Square numbers",
-      items: ["1", "4", "9", "12", "16", "25"],
-      oddOne: "12",
-      explanation: "All numbers except 12 are perfect squares."
-    },
-    {
-      type: "Logic: Binary",
-      items: ["10", "01", "11", "23", "00", "01"],
-      oddOne: "23",
-      explanation: "All numbers except 23 are binary numbers (0s and 1s only)."
-    },
-    {
-      type: "Sequence: Fibonacci",
-      items: ["1", "1", "2", "3", "4", "5", "8"],
-      oddOne: "4",
-      explanation: "All numbers except 4 follow the Fibonacci sequence."
-    }
-  ]
-};
+const sets = [
+  { options: ["Apple", "Banana", "Carrot", "Mango"], answer: "Carrot" },
+  { options: ["Red", "Blue", "Circle", "Green"], answer: "Circle" },
+  { options: ["2", "4", "5", "6"], answer: "5" },
+  { options: ["Dog", "Cat", "Cow", "Eagle"], answer: "Eagle" },
+  { options: ["Asia", "Africa", "Australia", "Russia"], answer: "Russia" }
+];
 
-let score = 0;
-let timeLeft = 90;
-let timerInterval;
-let currentLevel = 1;
-let currentPattern;
+let score = 0, timeLeft = 90, timerInterval, current = {};
 
-function generatePattern() {
-  const levelPatterns = patterns[currentLevel];
-  currentPattern = levelPatterns[Math.floor(Math.random() * levelPatterns.length)];
-  
-  document.getElementById('pattern-type').textContent = currentPattern.type;
-  
-  const optionsDiv = document.getElementById('options');
-  optionsDiv.innerHTML = '';
-  
-  const shuffledItems = [...currentPattern.items].sort(() => Math.random() - 0.5);
-  
-  shuffledItems.forEach(item => {
-    const button = document.createElement('button');
-    button.className = 'option p-4 border-2 rounded-lg text-xl hover:bg-blue-50 transition-colors';
-    button.textContent = item;
-    button.onclick = () => checkAnswer(button, item);
-    optionsDiv.appendChild(button);
+function loadSet() {
+  current = sets[Math.floor(Math.random() * sets.length)];
+  const shuffled = [...current.options].sort(() => Math.random() - 0.5);
+  const container = document.getElementById("options");
+  container.innerHTML = "";
+  shuffled.forEach(opt => {
+    const btn = document.createElement("button");
+    btn.textContent = opt;
+    btn.className = "bg-gray-100 hover:bg-blue-100 px-4 py-2 rounded transition-colors";
+    btn.onclick = () => {
+      if (opt === current.answer) score++;
+      document.getElementById("score").textContent = score;
+      loadSet();
+    };
+    container.appendChild(btn);
   });
 }
 
-function checkAnswer(button, selected) {
-  const buttons = document.querySelectorAll('.option');
-  buttons.forEach(btn => btn.disabled = true);
-  
-  if (selected === currentPattern.oddOne) {
-    handleCorrectAnswer(button);
-  } else {
-    handleWrongAnswer(button);
-  }
-}
-
-function handleCorrectAnswer(button) {
-  score += currentLevel;
-  document.getElementById('score').textContent = score;
-  
-  button.classList.add('correct');
-  
-  document.getElementById('feedback').textContent = '🎉 Correct! ' + currentPattern.explanation;
-  document.getElementById('feedback').classList.remove('hidden');
-  
-  if (score >= currentLevel * 5 && currentLevel < 3) {
-    currentLevel++;
-    document.getElementById('level').textContent = currentLevel;
-  }
-  
-  document.getElementById('nextBtn').classList.remove('hidden');
-}
-
-function handleWrongAnswer(button) {
-  button.classList.add('wrong', 'shake');
-  
-  const correctButton = Array.from(document.querySelectorAll('.option'))
-    .find(btn => btn.textContent === currentPattern.oddOne);
-  correctButton.classList.add('correct');
-  
-  document.getElementById('feedback').textContent = '❌ Not quite. ' + currentPattern.explanation;
-  document.getElementById('feedback').classList.remove('hidden');
-  
-  document.getElementById('nextBtn').classList.remove('hidden');
-}
-
-function nextPattern() {
-  document.getElementById('feedback').classList.add('hidden');
-  document.getElementById('nextBtn').classList.add('hidden');
-  generatePattern();
-}
-
 function startTimer() {
-  clearInterval(timerInterval);
   timerInterval = setInterval(() => {
     timeLeft--;
-    document.getElementById('timer').textContent = timeLeft;
-    
-    if (timeLeft <= 0) {
-      endGame();
-    }
+    document.getElementById("timer").textContent = timeLeft;
+    if (timeLeft <= 0) endGame();
   }, 1000);
 }
 
 function endGame() {
   clearInterval(timerInterval);
-  
-  const finalMessage = `
-    <div class="space-y-4">
-      <h2 class="text-2xl font-bold">Game Over!</h2>
-      <p class="text-xl">Final Score: ${score}</p>
-      <p class="text-lg">Highest Level: ${currentLevel}</p>
-      <p class="text-sm text-gray-600">Keep practicing to improve your pattern recognition!</p>
-    </div>
-  `;
-  
-  document.getElementById('options').innerHTML = finalMessage;
-  document.getElementById('pattern-type').textContent = '';
-  document.getElementById('feedback').classList.add('hidden');
-  document.getElementById('nextBtn').classList.add('hidden');
-  document.getElementById('retryBtn').classList.remove('hidden');
-  document.getElementById('instruction').textContent = 'Thanks for playing!';
+  document.getElementById("question").textContent = `Time's up! Final Score: ${score}`;
+  document.getElementById("options").innerHTML = "";
+  document.getElementById("retryBtn").classList.remove("hidden");
+  submitGameScore(GAME_ID, score);
 }
 
-function startGame() {
+function restartGame() {
   score = 0;
   timeLeft = 90;
-  currentLevel = 1;
-  
-  document.getElementById('score').textContent = score;
-  document.getElementById('timer').textContent = timeLeft;
-  document.getElementById('level').textContent = currentLevel;
-  document.getElementById('retryBtn').classList.add('hidden');
-  document.getElementById('feedback').classList.add('hidden');
-  document.getElementById('nextBtn').classList.add('hidden');
-  document.getElementById('instruction').textContent = 'Find the item that doesn\'t belong in the pattern!';
-  
-  generatePattern();
+  document.getElementById("score").textContent = score;
+  document.getElementById("timer").textContent = timeLeft;
+  document.getElementById("retryBtn").classList.add("hidden");
+  loadSet();
   startTimer();
 }
 
-// Event Listeners
-document.getElementById('nextBtn').onclick = nextPattern;
-document.getElementById('retryBtn').onclick = startGame;
 
-// Initialize game
-document.addEventListener('DOMContentLoaded', startGame);
+
+/submit`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ username, gameId, score })
+  });
+}
+
+
 </script>
 </body>
 </html>

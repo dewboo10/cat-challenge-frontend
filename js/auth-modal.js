@@ -1,34 +1,46 @@
-// js/auth-modal.js
+
+
 function showAuthModal(tab = "signup") {
-  const modal = document.getElementById("auth-modal");
-  modal.classList.remove("hidden");
-  switchTab(tab);
-}
-
-function closeAuthModal() {
-  document.getElementById("auth-modal").classList.add("hidden");
-}
-
-function switchTab(tab) {
-  // Hide all tabs first
-  document.getElementById("auth-login").classList.add("hidden");
-  document.getElementById("auth-step-1").classList.add("hidden");
-  
-  // Show selected tab
-  if (tab === "login") {
-    document.getElementById("auth-login").classList.remove("hidden");
-    document.getElementById("tab-login").classList.add("active");
-    document.getElementById("tab-signup").classList.remove("active");
-  } else {
-    document.getElementById("auth-step-1").classList.remove("hidden");
-    document.getElementById("tab-signup").classList.add("active");
-    document.getElementById("tab-login").classList.remove("active");
+    document.getElementById("auth-modal").classList.remove("hidden");
+    switchTab(tab);
   }
-}
-
-function switchStep(step) {
-  [1, 2, 3].forEach(s => {
-    document.getElementById(`auth-step-${s}`).classList.add("hidden");
-  });
-  document.getElementById(`auth-step-${step}`).classList.remove("hidden");
-}
+  
+  function closeAuthModal() {
+    document.getElementById("auth-modal").classList.add("hidden");
+  }
+  
+  function switchTab(tab) {
+    const loginTab = document.getElementById("auth-login");
+    const signup1 = document.getElementById("auth-step-1");
+    const signup2 = document.getElementById("auth-step-2");
+    const signup3 = document.getElementById("auth-step-3");
+    const loginBtn = document.getElementById("tab-login");
+    const signupBtn = document.getElementById("tab-signup");
+  
+    // Hide all
+    loginTab?.classList.add("hidden");
+    signup1?.classList.add("hidden");
+    signup2?.classList.add("hidden");
+    signup3?.classList.add("hidden");
+  
+    // Reset tab highlight
+    loginBtn?.classList.remove("text-blue-600", "underline");
+    signupBtn?.classList.remove("text-blue-600", "underline");
+  
+    // Show based on selected tab
+    if (tab === "login") {
+      loginTab?.classList.remove("hidden");
+      loginBtn?.classList.add("text-blue-600", "underline");
+    } else {
+      signup1?.classList.remove("hidden");
+      signupBtn?.classList.add("text-blue-600", "underline");
+    }
+  }
+  
+  function switchStep(step) {
+    [1, 2, 3].forEach(s =>
+      document.getElementById(`auth-step-${s}`)?.classList.add("hidden")
+    );
+    document.getElementById(`auth-step-${step}`)?.classList.remove("hidden");
+  }
+  

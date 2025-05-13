@@ -5,346 +5,94 @@
   <title>Graph Memory Snap – BrainGames</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <script src="https://cdn.tailwindcss.com"></script>
-  <style>
-    .correct-answer {
-      animation: correctPulse 0.5s ease-out;
-    }
-    .wrong-answer {
-      animation: wrongShake 0.5s ease-in-out;
-    }
-    @keyframes correctPulse {
-      0% { transform: scale(1); }
-      50% { transform: scale(1.05); background-color: #86efac; }
-      100% { transform: scale(1); }
-    }
-    @keyframes wrongShake {
-      0% { transform: translateX(0); }
-      25% { transform: translateX(-5px); background-color: #fca5a5; }
-      75% { transform: translateX(5px); background-color: #fca5a5; }
-      100% { transform: translateX(0); }
-    }
-    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; }
-    .level-badge {
-      background: linear-gradient(135deg, #6366f1, #8b5cf6);
-      padding: 4px 12px;
-      border-radius: 9999px;
-      color: white;
-      font-size: 0.875rem;
-      font-weight: 600;
-    }
-    .grid-container {
-      display: grid;
-      grid-template-columns: repeat(5, 1fr);
-      gap: 4px;
-      aspect-ratio: 1;
-      max-width: 400px;
-      margin: 0 auto;
-    }
-    .grid-cell {
-      aspect-ratio: 1;
-      border-radius: 4px;
-      border: 2px solid #e5e7eb;
-      transition: all 0.2s ease;
-      cursor: pointer;
-    }
-    .grid-cell:hover {
-      border-color: #93c5fd;
-    }
-    .grid-cell.active {
-      background-color: #3b82f6;
-      border-color: #2563eb;
-    }
-    .grid-cell.correct {
-      background-color: #34d399;
-      border-color: #059669;
-    }
-    .grid-cell.wrong {
-      background-color: #f87171;
-      border-color: #dc2626;
-    }
-    .flash {
-      animation: flash 0.5s ease-out;
-    }
-    @keyframes flash {
-      0% { opacity: 0.5; }
-      100% { opacity: 1; }
-    }
-  </style>
+  <script src="/js/config.js"></script>
+  <script src="components/auth-popup.js"></script>
+  <script src="components/brain-game-utils.js"></script>
 </head>
 <body class="bg-white text-gray-800 min-h-screen flex items-center justify-center p-4">
-<div class="max-w-2xl w-full bg-white shadow-xl p-6 border border-blue-200 rounded-xl text-center space-y-4">
+<div class="max-w-2xl w-full bg-white shadow-xl p-6 border border-blue-200 rounded-xl text-center space-y-4 game-container">
   <h1 class="text-2xl font-bold text-blue-700">Graph Memory Snap</h1>
-  
-  <div class="flex justify-center items-center space-x-4">
-    <p>⏱ Time Left: <span id="timer" class="mono">90</span>s</p>
-    <p>🎯 Score: <span id="score" class="mono">0</span></p>
-    <p>Level: <span class="level-badge">1</span></p>
-  </div>
-
-  <div id="instruction" class="text-lg text-gray-600 mb-4">Watch the pattern carefully!</div>
-
-  <div class="grid-container" id="gameGrid">
-    <!-- Grid cells will be dynamically inserted here -->
-  </div>
-
-  <div class="space-y-4 mt-6">
-    <div id="feedback" class="text-sm font-medium hidden"></div>
-    <button id="checkBtn" class="bg-blue-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-blue-700 transition-colors hidden">
-      Check Pattern
-    </button>
-    <button id="nextBtn" class="bg-green-600 text-white px-6 py-2 rounded-lg font-semibold hidden hover:bg-green-700 transition-colors">
-      Next Pattern
-    </button>
-    <button id="retryBtn" class="bg-green-600 text-white px-6 py-2 rounded-lg font-semibold hidden hover:bg-green-700 transition-colors">
-      Play Again
-    </button>
-  </div>
+  <p>⏱ Time Left: <span id="timer">90</span>s | 🎯 Score: <span id="score">0</span></p>
+  <p id="question" class="text-2xl font-semibold">Loading...</p>
+  <div id="options" class="grid grid-cols-1 sm:grid-cols-2 gap-4"></div>
+  <button id="retryBtn" class="bg-green-600 text-white px-4 py-2 rounded font-semibold hidden">Retry</button>
 </div>
 
 <script>
-const gridSize = 5;
-const patterns = [
-  // Level 1: Simple patterns (3 cells)
-  [
-    [0,0,1,0,0],
-    [0,0,1,0,0],
-    [0,0,1,0,0],
-    [0,0,0,0,0],
-    [0,0,0,0,0]
-  ],
-  [
-    [0,0,0,0,0],
-    [0,1,1,1,0],
-    [0,0,0,0,0],
-    [0,0,0,0,0],
-    [0,0,0,0,0]
-  ],
-  // Level 2: Medium patterns (4-5 cells)
-  [
-    [0,0,0,0,0],
-    [0,1,1,0,0],
-    [0,1,1,0,0],
-    [0,0,0,0,0],
-    [0,0,0,0,0]
-  ],
-  [
-    [1,0,0,0,1],
-    [0,1,0,1,0],
-    [0,0,1,0,0],
-    [0,0,0,0,0],
-    [0,0,0,0,0]
-  ],
-  // Level 3: Complex patterns (6+ cells)
-  [
-    [1,0,1,0,1],
-    [0,1,0,1,0],
-    [1,0,1,0,1],
-    [0,0,0,0,0],
-    [0,0,0,0,0]
-  ],
-  [
-    [1,1,1,1,1],
-    [1,0,0,0,1],
-    [1,0,0,0,1],
-    [1,0,0,0,1],
-    [1,1,1,1,1]
-  ]
-];
+const GAME_ID = 'graph-memory-snap';
 
-let score = 0;
-let timeLeft = 90;
-let timerInterval;
-let currentLevel = 1;
-let currentPattern = 0;
-let userPattern = Array(gridSize).fill().map(() => Array(gridSize).fill(0));
-let isShowingPattern = true;
-let patternTimeout;
+let bars = [], answerIndex = 0, score = 0, timeLeft = 90, timerInterval;
 
-function createGrid() {
-  const grid = document.getElementById('gameGrid');
-  grid.innerHTML = '';
-  
-  for (let i = 0; i < gridSize; i++) {
-    for (let j = 0; j < gridSize; j++) {
-      const cell = document.createElement('div');
-      cell.className = 'grid-cell';
-      cell.dataset.row = i;
-      cell.dataset.col = j;
-      cell.onclick = () => toggleCell(i, j);
-      grid.appendChild(cell);
-    }
-  }
-}
-
-function toggleCell(row, col) {
-  if (isShowingPattern) return;
-  
-  userPattern[row][col] = userPattern[row][col] ? 0 : 1;
-  const cell = document.querySelector(`[data-row="${row}"][data-col="${col}"]`);
-  cell.classList.toggle('active');
-  
-  // Show check button when user starts interacting
-  document.getElementById('checkBtn').classList.remove('hidden');
-}
-
-function showPattern() {
-  const pattern = patterns[currentPattern];
-  const cells = document.querySelectorAll('.grid-cell');
-  isShowingPattern = true;
-  
-  cells.forEach(cell => {
-    const row = parseInt(cell.dataset.row);
-    const col = parseInt(cell.dataset.col);
-    if (pattern[row][col]) {
-      cell.classList.add('active', 'flash');
-    } else {
-      cell.classList.remove('active', 'flash');
-    }
+function generateGraph() {
+  bars = Array.from({ length: 5 }, () => Math.floor(Math.random() * 80 + 20));
+  answerIndex = bars.indexOf(Math.max(...bars));
+  const container = document.getElementById("graph");
+  container.innerHTML = "";
+  bars.forEach(height => {
+    const div = document.createElement("div");
+    div.className = "bar";
+    div.style.height = height + "px";
+    container.appendChild(div);
   });
-  
-  // Hide pattern after delay based on level
-  const viewTime = Math.max(4000 - (currentLevel * 500), 1500);
-  patternTimeout = setTimeout(() => {
-    cells.forEach(cell => cell.classList.remove('active', 'flash'));
-    isShowingPattern = false;
-    document.getElementById('instruction').textContent = 'Now recreate the pattern!';
-  }, viewTime);
-}
-
-function checkPattern() {
-  const pattern = patterns[currentPattern];
-  const cells = document.querySelectorAll('.grid-cell');
-  let isCorrect = true;
-  
-  cells.forEach(cell => {
-    const row = parseInt(cell.dataset.row);
-    const col = parseInt(cell.dataset.col);
-    
-    if (pattern[row][col] !== userPattern[row][col]) {
-      isCorrect = false;
-      if (userPattern[row][col]) {
-        cell.classList.add('wrong');
-      }
-    } else if (pattern[row][col]) {
-      cell.classList.add('correct');
-    }
-  });
-  
-  if (isCorrect) {
-    handleSuccess();
-  } else {
-    handleWrongPattern();
-  }
-}
-
-function handleSuccess() {
-  score++;
-  document.getElementById('score').textContent = score;
-  document.getElementById('feedback').textContent = '🎉 Correct pattern!';
-  document.getElementById('feedback').classList.remove('hidden');
-  
-  // Level up every 2 correct patterns
-  if (score % 2 === 0) {
-    currentLevel++;
-    document.querySelector('.level-badge').textContent = currentLevel;
-  }
-  
-  document.getElementById('checkBtn').classList.add('hidden');
-  document.getElementById('nextBtn').classList.remove('hidden');
-}
-
-function handleWrongPattern() {
-  document.getElementById('feedback').textContent = '❌ Not quite right. Try again!';
-  document.getElementById('feedback').classList.remove('hidden');
-  
   setTimeout(() => {
-    const cells = document.querySelectorAll('.grid-cell');
-    cells.forEach(cell => {
-      cell.classList.remove('wrong', 'correct');
-    });
-    resetUserPattern();
-  }, 1500);
+    container.innerHTML = "<p class='text-sm text-gray-500'>Which bar was tallest?</p>";
+    showOptions();
+  }, 2500);
 }
 
-function resetUserPattern() {
-  userPattern = Array(gridSize).fill().map(() => Array(gridSize).fill(0));
-  const cells = document.querySelectorAll('.grid-cell');
-  cells.forEach(cell => cell.classList.remove('active'));
-}
-
-function nextPattern() {
-  currentPattern = (currentPattern + 1) % patterns.length;
-  resetUserPattern();
-  document.getElementById('feedback').classList.add('hidden');
-  document.getElementById('nextBtn').classList.add('hidden');
-  document.getElementById('instruction').textContent = 'Watch the pattern carefully!';
-  showPattern();
+function showOptions() {
+  const opts = document.getElementById("options");
+  opts.innerHTML = "";
+  bars.forEach((_, i) => {
+    const btn = document.createElement("button");
+    btn.textContent = `Bar ${i + 1}`;
+    btn.className = "px-4 py-2 border rounded hover:bg-blue-100";
+    btn.onclick = () => {
+      if (i === answerIndex) score++;
+      document.getElementById("score").textContent = score;
+      generateGraph();
+    };
+    opts.appendChild(btn);
+  });
 }
 
 function startTimer() {
-  clearInterval(timerInterval);
   timerInterval = setInterval(() => {
     timeLeft--;
-    document.getElementById('timer').textContent = timeLeft;
-    
-    if (timeLeft <= 0) {
-      endGame();
-    }
+    document.getElementById("timer").textContent = timeLeft;
+    if (timeLeft <= 0) endGame();
   }, 1000);
 }
 
 function endGame() {
   clearInterval(timerInterval);
-  clearTimeout(patternTimeout);
-  
-  const gameGrid = document.getElementById('gameGrid');
-  const feedback = document.getElementById('feedback');
-  const checkBtn = document.getElementById('checkBtn');
-  const nextBtn = document.getElementById('nextBtn');
-  const retryBtn = document.getElementById('retryBtn');
-  
-  gameGrid.innerHTML = `<div class="col-span-5 text-2xl font-bold">Game Over!<br>Final Score: ${score}<br>Highest Level: ${currentLevel}</div>`;
-  feedback.classList.add('hidden');
-  checkBtn.classList.add('hidden');
-  nextBtn.classList.add('hidden');
-  retryBtn.classList.remove('hidden');
+  document.getElementById("graph").innerHTML = "<p class='font-semibold'>Time's up!</p>";
+  document.getElementById("options").innerHTML = "";
+  document.getElementById("retryBtn").classList.remove("hidden");
+  submitGameScore(GAME_ID, score);
 }
 
-function startGame() {
+function restartGame() {
   score = 0;
   timeLeft = 90;
-  currentLevel = 1;
-  currentPattern = 0;
-  
-  document.getElementById('score').textContent = score;
-  document.getElementById('timer').textContent = timeLeft;
-  document.querySelector('.level-badge').textContent = currentLevel;
-  document.getElementById('retryBtn').classList.add('hidden');
-  document.getElementById('feedback').classList.add('hidden');
-  
-  createGrid();
-  showPattern();
+  document.getElementById("score").textContent = score;
+  document.getElementById("timer").textContent = timeLeft;
+  document.getElementById("retryBtn").classList.add("hidden");
+  generateGraph();
   startTimer();
 }
 
-// Initialize game
-document.addEventListener('DOMContentLoaded', () => {
-  const checkBtn = document.getElementById('checkBtn');
-  const nextBtn = document.getElementById('nextBtn');
-  const retryBtn = document.getElementById('retryBtn');
-  
-  if (checkBtn) {
-    checkBtn.onclick = checkPattern;
-  }
-  if (nextBtn) {
-    nextBtn.onclick = nextPattern;
-  }
-  if (retryBtn) {
-    retryBtn.onclick = startGame;
-  }
-  
-  startGame();
-});
+// 🔗 Backend integration
+
+
+/submit`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ username, gameId, score })
+  });
+}
+
+
 </script>
 </body>
 </html>

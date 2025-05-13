@@ -1,79 +1,186 @@
-// js/auth.js
-const API_BASE = "http://localhost:5000/api/auth";
-
-async function handleAuth(endpoint, body) {
-  try {
-    const res = await fetch(`${API_BASE}/${endpoint}`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body)
-    });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || "Request failed");
-    return data;
-  } catch (err) {
-    console.error(err);
-    alert(err.message);
-    return null;
-  }
-}
+const API_BASE = CONFIG.AUTH_API;
 
 async function sendOtp() {
   const email = document.getElementById("auth-email").value.trim();
-  if (!validateEmail(email)) return alert("Invalid email");
-  
-  const btn = document.getElementById("otp-btn");
-  btn.disabled = true;
-  btn.textContent = "Sending...";
+  const otpBtn = document.getElementById("otp-btn");
 
-  const result = await handleAuth("send-otp", { email });
-  btn.disabled = false;
-  btn.textContent = "Send OTP";
+  if (!email) return alert("Enter a valid email");
+  if (!email.includes("@")) return alert("Enter a valid email address");
   
-  if (result) {
-    alert("OTP sent to your email");
-    switchStep(2);
+  otpBtn.disabled = true;
+  otpBtn.innerText = "Sending...";
+
+  try {
+    const res = await fetch(`${API_BASE}/send-otp`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email })
+    });
+    
+    if (!res.ok) {
+      throw new Error(`HTTP error! status: ${res.status}`);
+    }
+    
+    const data = await res.json();
+
+    if (data.success) {
+      alert("📨 OTP sent! Check your email");
+      switchStep(2);
+      startOtpTimer();
+    } else {
+      alert("❌ " + (data.error || "Failed to send OTP"));
+    }
+  } catch (err) {
+    console.error("Send OTP Error:", err);
+    alert("❌ Failed to connect to server. Please try again.");
+  } finally {
+    otpBtn.disabled = false;
+    otpBtn.innerText = "Send OTP";
   }
+}
+
+function startOtpTimer() {
+  const otpBtn = document.getElementById("otp-btn");
+  const otpTimer = document.getElementById("otp-timer");
+  const countEl = document.getElementById("timer-count");
+
+  if (!otpBtn || !otpTimer || !countEl) {
+    console.error("Required elements not found");
+    return;
+  }
+
+  otpBtn.disabled = true;
+  otpTimer.classList.remove("hidden");
+  let time = 60;
+
+  const interval = setInterval(() => {
+    time--;
+    countEl.textContent = time;
+    if (time <= 0) {
+      clearInterval(interval);
+      otpBtn.disabled = false;
+      otpTimer.classList.add("hidden");
+    }
+  }, 1000);
 }
 
 async function verifyOtp() {
   const email = document.getElementById("auth-email").value.trim();
   const otp = document.getElementById("otp-input").value.trim();
-  
-  const result = await handleAuth("verify-otp", { email, otp });
-  if (result) {
-    localStorage.setItem("tempToken", result.tempToken);
-    switchStep(3);
+
+  if (!email || !otp) {
+    alert("Please fill in all fields");
+    return;
+  }
+
+  if (otp.length !== 6) {
+    alert("Please enter a 6-digit OTP");
+    return;
+  }
+
+  try {
+    const res = await fetch(`${API_BASE}/verify-otp`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, otp })
+    });
+
+    if (!res.ok) {
+      throw new Error(`HTTP error! status: ${res.status}`);
+    }
+
+    const data = await res.json();
+    if (data.success) {
+      alert("✅ OTP verified successfully!");
+      switchStep(3);
+      document.getElementById("auth-email-hidden").value = email;
+    } else {
+      alert("❌ " + (data.error || "Invalid OTP"));
+    }
+  } catch (err) {
+    console.error("Verify OTP Error:", err);
+    alert("❌ Failed to verify OTP. Please try again.");
   }
 }
 
 async function registerUser() {
   const username = document.getElementById("auth-username").value.trim();
   const password = document.getElementById("auth-password").value.trim();
-  const tempToken = localStorage.getItem("tempToken");
-  
-  const result = await handleAuth("register", { username, password, tempToken });
-  if (result) {
-    localStorage.setItem("user", JSON.stringify(result.user));
-    localStorage.setItem("token", result.token);
-    closeAuthModal();
-    location.reload();
+  const email = document.getElementById("auth-email-hidden").value.trim();
+
+  if (!username || !password || !email) {
+    alert("Please fill in all fields");
+    return;
+  }
+
+  if (password.length < 6) {
+    alert("Password must be at least 6 characters long");
+    return;
+  }
+
+  try {
+    const res = await fetch(`${API_BASE}/register`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username, password, email })
+    });
+
+    if (!res.ok) {
+      throw new Error(`HTTP error! status: ${res.status}`);
+    }
+
+    const data = await res.json();
+    if (data.success) {
+      localStorage.setItem("user", JSON.stringify(data.user));
+      localStorage.setItem("isPaidUser", data.user.isPremium);
+      localStorage.setItem("isLoggedIn", "true");
+      localStorage.setItem("username", data.user.username);
+      alert(`🎉 Welcome ${data.user.username}! Registration successful.`);
+      closeAuthModal();
+      location.reload();
+    } else {
+      alert("❌ " + (data.error || "Registration failed"));
+    }
+  } catch (err) {
+    console.error("Registration Error:", err);
+    alert("❌ Registration failed. Please try again.");
   }
 }
 
 async function loginUser() {
-  const email = document.getElementById("login-email").value.trim();
+  const username = document.getElementById("login-username").value.trim();
   const password = document.getElementById("login-password").value.trim();
-  
-  const result = await handleAuth("login", { email, password });
-  if (result) {
-    localStorage.setItem("user", JSON.stringify(result.user));
-    localStorage.setItem("token", result.token);
-    closeAuthModal();
-    location.reload();
-  }
-}
 
-function validateEmail(email) {
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  if (!username || !password) {
+    alert("Please enter both username and password");
+    return;
+  }
+
+  try {
+    const res = await fetch(`${API_BASE}/login`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username, password })
+    });
+
+    if (!res.ok) {
+      throw new Error(`HTTP error! status: ${res.status}`);
+    }
+
+    const data = await res.json();
+    if (data.success) {
+      localStorage.setItem("user", JSON.stringify(data.user));
+      localStorage.setItem("isPaidUser", data.user.isPremium);
+      localStorage.setItem("isLoggedIn", "true");
+      localStorage.setItem("username", data.user.username);
+      alert(`✅ Welcome back, ${data.user.username}!`);
+      closeAuthModal();
+      location.reload();
+    } else {
+      alert("❌ " + (data.error || "Invalid credentials"));
+    }
+  } catch (err) {
+    console.error("Login Error:", err);
+    alert("❌ Login failed. Please try again.");
+  }
 }
