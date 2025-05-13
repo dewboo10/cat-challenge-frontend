@@ -6,7 +6,7 @@ async function upgradeToPremium() {
     }
   
     try {
-        const res = await fetch("https://ultimate-backend-vyse.onrender.com/api/auth/make-premium", {
+        const res = await fetch(`${CONFIG.AUTH_API}/make-premium`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ username: user.username }),

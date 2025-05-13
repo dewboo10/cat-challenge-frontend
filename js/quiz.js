@@ -42,7 +42,7 @@ let sectionCompleted = { Quant: false, VARC: false, LRDI: false };
       const user = JSON.parse(localStorage.getItem("user"));
 
       if (user) {
-        fetch(`https://ultimate-backend-vyse.onrender.com/api/quiz/attempt?username=${user.username}&exam=${selectedExam}&day=${currentDay}`)
+        fetch(`${CONFIG.QUIZ_API}/attempt?username=${user.username}&exam=${selectedExam}&day=${currentDay}`)
           .then(res => res.json())
           .then(data => {
             if (data?.completed) {
@@ -245,7 +245,7 @@ function submitQuiz() {
   const user = JSON.parse(localStorage.getItem("user"));
   if (!user) return alert("Login required");
 
-  fetch("https://ultimate-backend-vyse.onrender.com/api/quiz/submit", {
+  fetch(`${CONFIG.QUIZ_API}/submit`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({

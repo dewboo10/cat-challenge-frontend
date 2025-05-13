@@ -98,7 +98,7 @@ function renderQuizCards(user, exam) {
     }
 
     if (user) {
-      fetch(`https://ultimate-backend-vyse.onrender.com/api/quiz/attempt?username=${user.username}&exam=${exam}&day=${day}`)
+      fetch(`${CONFIG.QUIZ_API}/attempt?username=${user.username}&exam=${exam}&day=${day}`)
         .then(res => res.ok ? res.json() : null)
         .then(data => {
           const completed = data?.completed;

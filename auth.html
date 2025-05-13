@@ -135,94 +135,9 @@
   </div>
 </div>
 
-<!-- ✅ Real Backend Logic -->
-<script>
-const API_BASE = "https://ultimate-backend-vyse.onrender.com/api/auth";
-
-async function loginUser() {
-  const email = document.getElementById("email").value.trim();
-  const password = document.getElementById("password").value.trim();
-
-  if (!email || !password) {
-    alert("🚫 Please fill all fields!");
-    return;
-  }
-
-  try {
-    const res = await fetch(`${API_BASE}/login`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ username: email, password }) // backend expects username
-    });
-
-    const data = await res.json();
-
-    if (data.success) {
-      localStorage.setItem("user", JSON.stringify(data.user));
-      localStorage.setItem("isLoggedIn", "true");
-      localStorage.setItem("username", data.user.username);
-      localStorage.setItem("isPaidUser", data.user.isPremium);
-
-      alert(`✅ Welcome ${data.user.username}`);
-      window.location.href = "exam-select.html";
-    } else {
-      alert("🚫 " + data.error);
-    }
-  } catch (err) {
-    alert("❌ Login failed. Try again.");
-    console.error(err);
-  }
-}
-
-async function registerUser() {
-  const email = prompt("Enter your Email:");
-  const password = prompt("Set a Password:");
-
-  if (!email || !password) {
-    alert("🚫 Both fields are required to register.");
-    return;
-  }
-
-  const username = email.split("@")[0];
-
-  try {
-    const res = await fetch(`${API_BASE}/register`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password, username })
-    });
-
-    const data = await res.json();
-
-    if (data.success) {
-      localStorage.setItem("user", JSON.stringify(data.user));
-      localStorage.setItem("isLoggedIn", "true");
-      localStorage.setItem("username", data.user.username);
-      localStorage.setItem("isPaidUser", data.user.isPremium);
-
-      alert(`🎉 Registered as ${data.user.username}`);
-      window.location.href = "exam-select.html";
-    } else {
-      alert("❌ " + data.error);
-    }
-  } catch (err) {
-    alert("❌ Registration failed.");
-    console.error(err);
-  }
-}
-
-// Add scroll animation
-const observer = new IntersectionObserver((entries) => {
-  entries.forEach(entry => {
-    if (entry.isIntersecting) {
-      entry.target.style.opacity = '1';
-      entry.target.style.transform = 'translateY(0)';
-    }
-  });
-}, { threshold: 0.1 });
-
-document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
-</script>
+<!-- Scripts -->
+<script src="js/config.js"></script>
+<script src="js/auth.js"></script>
 
 </body>
 </html>
