@@ -1,94 +1,79 @@
 // js/auth.js
-const API_BASE = CONFIG.AUTH_API;
+const API_BASE = "http://localhost:5000/api/auth";
 
-async function sendOtp() {
-  const email = document.getElementById("auth-email")?.value.trim();
-  if (!email || !email.includes("@")) return alert("Enter valid email");
-
-  const otpBtn = document.getElementById("otp-btn");
-  otpBtn.disabled = true;
-  otpBtn.textContent = "Sending...";
-
+async function handleAuth(endpoint, body) {
   try {
-    const res = await fetch(`${API_BASE}/send-otp`, {
+    const res = await fetch(`${API_BASE}/${endpoint}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email })
+      body: JSON.stringify(body)
     });
-    
-    if (!res.ok) throw await res.json();
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || "Request failed");
+    return data;
+  } catch (err) {
+    console.error(err);
+    alert(err.message);
+    return null;
+  }
+}
+
+async function sendOtp() {
+  const email = document.getElementById("auth-email").value.trim();
+  if (!validateEmail(email)) return alert("Invalid email");
+  
+  const btn = document.getElementById("otp-btn");
+  btn.disabled = true;
+  btn.textContent = "Sending...";
+
+  const result = await handleAuth("send-otp", { email });
+  btn.disabled = false;
+  btn.textContent = "Send OTP";
+  
+  if (result) {
     alert("OTP sent to your email");
     switchStep(2);
-  } catch (err) {
-    alert(err.error || "Failed to send OTP");
-  } finally {
-    otpBtn.disabled = false;
-    otpBtn.textContent = "Send OTP";
   }
 }
 
 async function verifyOtp() {
-  const email = document.getElementById("auth-email")?.value.trim();
-  const otp = document.getElementById("otp-input")?.value.trim();
-
-  try {
-    const res = await fetch(`${API_BASE}/verify-otp`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, otp })
-    });
-
-    const data = await res.json();
-    if (!res.ok) throw data;
-    
-    localStorage.setItem("tempToken", data.tempToken);
+  const email = document.getElementById("auth-email").value.trim();
+  const otp = document.getElementById("otp-input").value.trim();
+  
+  const result = await handleAuth("verify-otp", { email, otp });
+  if (result) {
+    localStorage.setItem("tempToken", result.tempToken);
     switchStep(3);
-  } catch (err) {
-    alert(err.error || "Invalid OTP");
   }
 }
 
 async function registerUser() {
+  const username = document.getElementById("auth-username").value.trim();
+  const password = document.getElementById("auth-password").value.trim();
   const tempToken = localStorage.getItem("tempToken");
-  const username = document.getElementById("auth-username")?.value.trim();
-  const password = document.getElementById("auth-password")?.value.trim();
-
-  try {
-    const res = await fetch(`${API_BASE}/register`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ username, password, tempToken })
-    });
-
-    const data = await res.json();
-    if (!res.ok) throw data;
-    
-    localStorage.setItem("token", data.token);
-    localStorage.setItem("user", JSON.stringify(data.user));
-    location.href = "dashboard.html";
-  } catch (err) {
-    alert(err.error || "Registration failed");
+  
+  const result = await handleAuth("register", { username, password, tempToken });
+  if (result) {
+    localStorage.setItem("user", JSON.stringify(result.user));
+    localStorage.setItem("token", result.token);
+    closeAuthModal();
+    location.reload();
   }
 }
 
 async function loginUser() {
-  const email = document.getElementById("login-email")?.value.trim();
-  const password = document.getElementById("login-password")?.value.trim();
-
-  try {
-    const res = await fetch(`${API_BASE}/login`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password })
-    });
-
-    const data = await res.json();
-    if (!res.ok) throw data;
-    
-    localStorage.setItem("token", data.token);
-    localStorage.setItem("user", JSON.stringify(data.user));
-    location.href = "dashboard.html";
-  } catch (err) {
-    alert(err.error || "Login failed");
+  const email = document.getElementById("login-email").value.trim();
+  const password = document.getElementById("login-password").value.trim();
+  
+  const result = await handleAuth("login", { email, password });
+  if (result) {
+    localStorage.setItem("user", JSON.stringify(result.user));
+    localStorage.setItem("token", result.token);
+    closeAuthModal();
+    location.reload();
   }
+}
+
+function validateEmail(email) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
