@@ -3,10 +3,10 @@ const isDevelopment = window.location.hostname === 'localhost' || window.locatio
 const baseUrl = isDevelopment ? 'http://localhost:5000' : 'https://ultimate-backend-vyse.onrender.com';
 
 const CONFIG = {
-  API_BASE: baseUrl,
-  AUTH_API: `${baseUrl}/api/auth`,
+  API_BASE: "https://ultimate-backend-vyse.onrender.com",
+  AUTH_API: "https://ultimate-backend-vyse.onrender.com/auth",
   QUIZ_API: `${baseUrl}/api/quiz`,
-  BRAIN_GAMES_API: `${baseUrl}/api/brain-games`
+  BRAIN_GAMES_API: "https://ultimate-backend-vyse.onrender.com/brain-games"
 };
 
 // Prevent modifications to the config object

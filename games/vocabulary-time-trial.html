@@ -6,8 +6,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="/js/config.js"></script>
-  <script src="components/auth-popup.js"></script>
-  <script src="components/brain-game-utils.js"></script>
+  <script src="/components/auth-popup.js"></script>
+  <script src="/js/brain-game-utils.js"></script>
 </head>
 <body class="bg-white text-gray-800 min-h-screen flex items-center justify-center p-4">
 <div class="max-w-2xl w-full bg-white shadow-xl p-6 border border-blue-200 rounded-xl text-center space-y-4 game-container">
@@ -44,8 +44,10 @@ function generateQuestion() {
     btn.textContent = opt;
     btn.className = "bg-gray-100 hover:bg-blue-100 px-4 py-2 rounded transition-colors";
     btn.onclick = () => {
-      if (opt === current.answer) score++;
-      document.getElementById("score").textContent = score;
+      if (opt === current.answer) {
+        score++;
+        document.getElementById("score").textContent = score;
+      }
       generateQuestion();
     };
     container.appendChild(btn);
@@ -86,8 +88,34 @@ function restartGame() {
 // Backend Integration
 const API_BASE = CONFIG.BRAIN_GAMES_API;
 
+function fetchStats(gameId) {
+  fetch(`${API_BASE}/stats?gameId=${gameId}`)
+    .then(res => res.json())
+    .then(data => {
+      document.getElementById("leaderboard").innerHTML = data
+        .map((s, i) => `<li class="flex justify-between items-center ${s.username === username ? 'text-blue-600 font-semibold' : ''}">
+          <span>${i + 1}. ${s.username}</span>
+          <span>${s.score}</span>
+        </li>`).join("");
+    })
+    .catch(err => console.error("Error fetching leaderboard:", err));
+}
 
+// Only fetch personal best if logged in
+if (isLoggedIn && username) {
+  fetch(`${API_BASE}/personal-best?gameId=${GAME_ID}`)
+    .then(res => res.json())
+    .then(data => {
+      if (data.score > score) {
+        document.getElementById("retryBtn").classList.add("hidden");
+        document.getElementById("score").textContent = data.score;
+        document.getElementById("timer").textContent = data.timeLeft;
+      }
+    })
+    .catch(err => console.error("Error fetching personal best:", err));
+}
 
+function submitGameScore(gameId, score) {
   fetch(`${API_BASE}/submit`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -100,20 +128,8 @@ const API_BASE = CONFIG.BRAIN_GAMES_API;
   .catch(err => console.error("Error submitting score:", err));
 }
 
-/top?gameId=${gameId}`)
-    .then(res => res.json())
-    .then(data => {
-      document.getElementById("leaderboard").innerHTML = data
-        .map((s, i) => `<li class="flex justify-between items-center ${s.username === username ? 'text-blue-600 font-semibold' : ''}">
-          <span>${i + 1}. ${s.username}</span>
-          <span>${s.score}</span>
-        </li>`).join("");
-    })
-    .catch(err => console.error("Error fetching leaderboard:", err));
-
-  // Only fetch personal best if logged in
-  if (isLoggedIn && username) {
-    fetch(`${API_BASE}
+// Register the game function globally
+window['vocabulary-time-trial'] = generateQuestion;
 </script>
 </body>
 </html>
