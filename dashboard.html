@@ -95,7 +95,7 @@
           <circle class="progress-ring text-blue-600" stroke-width="8" stroke="currentColor" fill="transparent" r="40" cx="50" cy="50"/>
         </svg>
         <div class="absolute inset-0 flex items-center justify-center">
-          <p id="days-left" class="text-2l font-bold">--</p>
+          <p id="days-left" class="text-2xl font-bold">--</p>
         </div>
       </div>
     </div>
@@ -220,7 +220,7 @@
     </div>
 
     <div id="auth-login" class="space-y-3 hidden">
-      <input id="login-email" type="text" placeholder="Username" class="w-full px-3 py-2 border rounded" />
+      <input id="login-username" type="text" placeholder="Username" class="w-full px-3 py-2 border rounded" />
       <input id="login-password" type="password" placeholder="Password" class="w-full px-3 py-2 border rounded" />
       <button onclick="loginUser()" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded font-semibold">Login</button>
       <p class="text-xs text-gray-500">New here? <button onclick="switchTab('signup')" class="text-blue-600 underline">Create account</button></p>
@@ -314,9 +314,7 @@
 
   function updateProgressSection() {
     const progressSection = document.getElementById("progress-section");
-    const userRaw = localStorage.getItem("user");
-const user = userRaw && userRaw !== "undefined" ? JSON.parse(userRaw) : null;
-
+    const user = JSON.parse(localStorage.getItem("user"));
 
     if (!user) {
       progressSection.innerHTML = `
@@ -362,6 +360,7 @@ const user = userRaw && userRaw !== "undefined" ? JSON.parse(userRaw) : null;
 
 <!-- Scripts -->
 <script src="js/config.js"></script>
+<script src="js/theme.js"></script>
 <script src="js/dashboard.js"></script>
 <script src="js/auth-modal.js"></script>
 <script src="js/auth.js"></script>

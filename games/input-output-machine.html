@@ -5,337 +5,107 @@
   <title>Input Output Machine – BrainGames</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <script src="https://cdn.tailwindcss.com"></script>
-  <style>
-    .correct-answer {
-      animation: correctPulse 0.5s ease-out;
-    }
-    .wrong-answer {
-      animation: wrongShake 0.5s ease-in-out;
-    }
-    @keyframes correctPulse {
-      0% { transform: scale(1); }
-      50% { transform: scale(1.05); background-color: #86efac; }
-      100% { transform: scale(1); }
-    }
-    @keyframes wrongShake {
-      0% { transform: translateX(0); }
-      25% { transform: translateX(-5px); background-color: #fca5a5; }
-      75% { transform: translateX(5px); background-color: #fca5a5; }
-      100% { transform: translateX(0); }
-    }
-    .level-badge {
-      background: linear-gradient(135deg, #6366f1, #8b5cf6);
-      padding: 4px 12px;
-      border-radius: 9999px;
-      color: white;
-      font-size: 0.875rem;
-      font-weight: 600;
-    }
-    .machine-box {
-      position: relative;
-      background: linear-gradient(45deg, #2563eb, #4f46e5);
-      border-radius: 1rem;
-      padding: 2rem;
-      margin: 2rem auto;
-      max-width: 400px;
-    }
-    .machine-box::before {
-      content: "⚙️";
-      position: absolute;
-      top: -1rem;
-      left: 50%;
-      transform: translateX(-50%);
-      font-size: 2rem;
-      animation: spin 4s linear infinite;
-    }
-    @keyframes spin {
-      from { transform: translateX(-50%) rotate(0deg); }
-      to { transform: translateX(-50%) rotate(360deg); }
-    }
-    .input-arrow, .output-arrow {
-      position: relative;
-      padding: 1rem;
-      color: white;
-      font-weight: bold;
-      text-align: center;
-    }
-    .input-arrow::after, .output-arrow::after {
-      content: "↓";
-      position: absolute;
-      bottom: -0.5rem;
-      left: 50%;
-      transform: translateX(-50%);
-      font-size: 1.5rem;
-      animation: bounce 1s infinite;
-    }
-    @keyframes bounce {
-      0%, 100% { transform: translateX(-50%) translateY(0); }
-      50% { transform: translateX(-50%) translateY(-5px); }
-    }
-  </style>
+  <script src="/js/config.js"></script>
+  <script src="components/auth-popup.js"></script>
+  <script src="components/brain-game-utils.js"></script>
 </head>
 <body class="bg-white text-gray-800 min-h-screen flex items-center justify-center p-4">
-<div class="max-w-2xl w-full bg-white shadow-xl p-6 border border-blue-200 rounded-xl text-center space-y-4">
+<div class="max-w-2xl w-full bg-white shadow-xl p-6 border border-blue-200 rounded-xl text-center space-y-4 game-container">
   <h1 class="text-2xl font-bold text-blue-700">Input Output Machine</h1>
+  <p>⏱ Time Left: <span id="timer">90</span>s | 🎯 Score: <span id="score">0</span></p>
+  <p id="question" class="text-2xl font-semibold">Loading...</p>
   
-  <div class="flex justify-center items-center space-x-4">
-    <p>⏱ Time Left: <span id="timer" class="font-mono">90</span>s</p>
-    <p>🎯 Score: <span id="score" class="font-mono">0</span></p>
-    <p>Level: <span class="level-badge">1</span></p>
-  </div>
-
-  <div id="instruction" class="text-lg text-gray-600 mb-4">Figure out what the machine does to the input!</div>
-  
-  <div class="machine-box">
-    <div class="input-arrow">Input: <span id="input" class="font-mono text-xl">?</span></div>
-    <div class="output-arrow">Output: <span id="output" class="font-mono text-xl">?</span></div>
-  </div>
-  
-  <div id="examples" class="grid grid-cols-2 gap-4 text-sm bg-blue-50 p-4 rounded-lg">
-    <!-- Examples will be populated here -->
-  </div>
-  
-  <div class="mt-4">
-    <p class="text-gray-600 mb-2">What will be the output for:</p>
-    <p id="question" class="text-xl font-bold font-mono mb-4">?</p>
-    <input type="text" id="answer-input" 
-           class="w-full max-w-xs px-4 py-2 border-2 border-blue-200 rounded-lg text-center font-mono text-xl"
-           placeholder="Enter your answer">
-  </div>
-  
-  <div class="space-y-4 mt-6">
-    <div id="feedback" class="text-sm font-medium hidden"></div>
-    <button id="checkBtn" class="bg-blue-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-blue-700 transition-colors">
-      Check Answer
-    </button>
-    <button id="nextBtn" class="bg-green-600 text-white px-6 py-2 rounded-lg font-semibold hidden hover:bg-green-700 transition-colors">
-      Next Pattern
-    </button>
-    <button id="retryBtn" class="bg-green-600 text-white px-6 py-2 rounded-lg font-semibold hidden hover:bg-green-700 transition-colors">
-      Play Again
-    </button>
-  </div>
+  <button id="retryBtn" class="bg-green-600 text-white px-4 py-2 rounded font-semibold hidden">Retry</button>
 </div>
 
 <script>
 const GAME_ID = 'input-output-machine';
 
-const patterns = [
-  // Level 1 - Simple arithmetic
+const machines = [
   {
-    rule: x => x + 2,
-    description: "Add 2",
-    examples: [1, 3, 5],
-    level: 1
+    examples: [ [2, 5], [3, 7], [4, 9] ],
+    rule: x => x * 2 + 1
   },
   {
-    rule: x => x * 2,
-    description: "Multiply by 2",
-    examples: [2, 4, 6],
-    level: 1
+    examples: [ [5, 15], [6, 18], [7, 21] ],
+    rule: x => x * 3
   },
   {
-    rule: x => x - 1,
-    description: "Subtract 1",
-    examples: [3, 5, 7],
-    level: 1
-  },
-  
-  // Level 2 - More complex patterns
-  {
-    rule: x => x * x,
-    description: "Square the number",
-    examples: [2, 3, 4],
-    level: 2
+    examples: [ [4, 16], [5, 25], [6, 36] ],
+    rule: x => x * x
   },
   {
-    rule: x => x * 3 + 1,
-    description: "Multiply by 3 and add 1",
-    examples: [1, 2, 3],
-    level: 2
-  },
-  {
-    rule: x => Math.floor(x / 2),
-    description: "Divide by 2 (round down)",
-    examples: [5, 7, 9],
-    level: 2
-  },
-  
-  // Level 3 - Advanced patterns
-  {
-    rule: x => x * x - x,
-    description: "Square minus the number",
-    examples: [3, 4, 5],
-    level: 3
-  },
-  {
-    rule: x => (x % 2 === 0) ? x / 2 : x * 3,
-    description: "If even divide by 2, if odd multiply by 3",
-    examples: [4, 5, 6],
-    level: 3
-  },
-  {
-    rule: x => Number(x.toString().split('').reverse().join('')),
-    description: "Reverse the digits",
-    examples: [12, 23, 34],
-    level: 3
+    examples: [ [3, 2], [4, 3], [5, 4] ],
+    rule: x => x - 1
   }
 ];
 
-let score = 0;
-let timeLeft = 90;
-let timerInterval;
-let currentLevel = 1;
-let currentPattern;
-let currentQuestion;
+let score = 0, timeLeft = 90, timerInterval;
+let current = {}, currentInput = 0;
 
-function generateExample(pattern, input) {
-  return {
-    input,
-    output: pattern.rule(input)
-  };
-}
-
-function displayExamples(pattern) {
-  const examplesDiv = document.getElementById("examples");
-  examplesDiv.innerHTML = "";
-  
-  pattern.examples.forEach(input => {
-    const example = generateExample(pattern, input);
-    const div = document.createElement("div");
-    div.className = "font-mono";
-    div.innerHTML = `${example.input} → ${example.output}`;
-    examplesDiv.appendChild(div);
+function generateChallenge() {
+  current = machines[Math.floor(Math.random() * machines.length)];
+  const exList = document.getElementById("examples");
+  exList.innerHTML = "";
+  current.examples.forEach(pair => {
+    const li = document.createElement("li");
+    li.textContent = `${pair[0]} → ${pair[1]}`;
+    exList.appendChild(li);
   });
-}
-
-function generateQuestion() {
-  const levelPatterns = patterns.filter(p => p.level <= currentLevel);
-  currentPattern = levelPatterns[Math.floor(Math.random() * levelPatterns.length)];
-  
-  // Generate a random input based on level
-  const max = currentLevel === 1 ? 10 : currentLevel === 2 ? 20 : 100;
-  currentQuestion = Math.floor(Math.random() * max) + 1;
-  
-  document.getElementById("question").textContent = currentQuestion;
-  displayExamples(currentPattern);
-  document.getElementById("answer-input").value = "";
-  document.getElementById("answer-input").focus();
+  currentInput = Math.floor(Math.random() * 10) + 5;
+  document.getElementById("currentInput").textContent = currentInput;
+  document.getElementById("outputGuess").value = "";
 }
 
 function checkAnswer() {
-  const userAnswer = document.getElementById("answer-input").value;
-  const correctAnswer = currentPattern.rule(currentQuestion);
-  
-  if (Number(userAnswer) === correctAnswer) {
-    handleCorrectAnswer();
-  } else {
-    handleWrongAnswer(correctAnswer);
+  const guess = parseInt(document.getElementById("outputGuess").value);
+  if (guess === current.rule(currentInput)) {
+    score++;
+    document.getElementById("score").textContent = score;
   }
-}
-
-function handleCorrectAnswer() {
-  score += currentLevel;
-  document.getElementById("score").textContent = score;
-  document.getElementById("feedback").textContent = "🎉 Correct!";
-  document.getElementById("feedback").classList.remove("hidden");
-  document.getElementById("answer-input").classList.add("correct-answer");
-  
-  // Level up every 5 correct answers
-  if (score >= currentLevel * 5 && currentLevel < 3) {
-    currentLevel++;
-    document.querySelector('.level-badge').textContent = currentLevel;
-  }
-  
-  document.getElementById("checkBtn").classList.add("hidden");
-  document.getElementById("nextBtn").classList.remove("hidden");
-}
-
-function handleWrongAnswer(correctAnswer) {
-  document.getElementById("feedback").textContent = `❌ Not quite right. The answer was ${correctAnswer}`;
-  document.getElementById("feedback").classList.remove("hidden");
-  document.getElementById("answer-input").classList.add("wrong-answer");
-  
-  setTimeout(() => {
-    document.getElementById("answer-input").classList.remove("wrong-answer");
-  }, 500);
-}
-
-function nextQuestion() {
-  document.getElementById("answer-input").classList.remove("correct-answer");
-  document.getElementById("feedback").classList.add("hidden");
-  document.getElementById("nextBtn").classList.add("hidden");
-  document.getElementById("checkBtn").classList.remove("hidden");
-  generateQuestion();
+  generateChallenge();
 }
 
 function startTimer() {
-  clearInterval(timerInterval);
   timerInterval = setInterval(() => {
     timeLeft--;
     document.getElementById("timer").textContent = timeLeft;
-    
-    if (timeLeft <= 0) {
-      endGame();
-    }
+    if (timeLeft <= 0) endGame();
   }, 1000);
 }
 
 function endGame() {
   clearInterval(timerInterval);
-  
-  const finalMessage = `
-    <div class="space-y-4">
-      <h2 class="text-2xl font-bold">Game Over!</h2>
-      <p class="text-xl">Final Score: ${score}</p>
-      <p class="text-lg">Highest Level: ${currentLevel}</p>
-      <p class="text-sm text-gray-600">Can you figure out more patterns?</p>
-    </div>
-  `;
-  
-  document.getElementById("question").innerHTML = finalMessage;
-  document.getElementById("examples").innerHTML = "";
-  document.getElementById("answer-input").style.display = "none";
-  document.getElementById("feedback").classList.add("hidden");
-  document.getElementById("checkBtn").classList.add("hidden");
-  document.getElementById("nextBtn").classList.add("hidden");
+  document.getElementById("submitBtn").disabled = true;
+  document.getElementById("outputGuess").disabled = true;
   document.getElementById("retryBtn").classList.remove("hidden");
+  document.getElementById("currentInput").textContent = "";
+  document.getElementById("examples").innerHTML = "<li class='text-gray-500'>Time's up!</li>";
+  submitGameScore(GAME_ID, score);
 }
 
-function startGame() {
+function restartGame() {
   score = 0;
   timeLeft = 90;
-  currentLevel = 1;
-  
   document.getElementById("score").textContent = score;
   document.getElementById("timer").textContent = timeLeft;
-  document.querySelector('.level-badge').textContent = currentLevel;
-  document.getElementById("answer-input").style.display = "";
+  document.getElementById("submitBtn").disabled = false;
+  document.getElementById("outputGuess").disabled = false;
   document.getElementById("retryBtn").classList.add("hidden");
-  document.getElementById("feedback").classList.add("hidden");
-  document.getElementById("nextBtn").classList.add("hidden");
-  document.getElementById("checkBtn").classList.remove("hidden");
-  
-  generateQuestion();
+  generateChallenge();
   startTimer();
 }
 
-// Event Listeners
-document.getElementById("checkBtn").onclick = checkAnswer;
-document.getElementById("nextBtn").onclick = nextQuestion;
-document.getElementById("retryBtn").onclick = startGame;
-document.getElementById("answer-input").onkeypress = (e) => {
-  if (e.key === "Enter") {
-    if (document.getElementById("nextBtn").classList.contains("hidden")) {
-      checkAnswer();
-    } else {
-      nextQuestion();
-    }
-  }
-};
 
-// Initialize game
-document.addEventListener('DOMContentLoaded', startGame);
+
+/submit`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ username, gameId, score })
+  });
+}
+
+
 </script>
 </body>
 </html>

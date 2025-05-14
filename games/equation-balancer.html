@@ -5,324 +5,94 @@
   <title>Equation Balancer – BrainGames</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <script src="https://cdn.tailwindcss.com"></script>
-  <style>
-    .correct-answer {
-      animation: correctPulse 0.5s ease-out;
-    }
-    .wrong-answer {
-      animation: wrongShake 0.5s ease-in-out;
-    }
-    @keyframes correctPulse {
-      0% { transform: scale(1); }
-      50% { transform: scale(1.05); background-color: #86efac; }
-      100% { transform: scale(1); }
-    }
-    @keyframes wrongShake {
-      0% { transform: translateX(0); }
-      25% { transform: translateX(-5px); background-color: #fca5a5; }
-      75% { transform: translateX(5px); background-color: #fca5a5; }
-      100% { transform: translateX(0); }
-    }
-    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; }
-    .equation-container {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 1rem;
-      flex-wrap: wrap;
-      margin: 2rem 0;
-    }
-    .number-input {
-      width: 4rem;
-      text-align: center;
-      font-family: monospace;
-      font-size: 1.5rem;
-    }
-    .level-badge {
-      background: linear-gradient(135deg, #6366f1, #8b5cf6);
-      padding: 4px 12px;
-      border-radius: 9999px;
-      color: white;
-      font-size: 0.875rem;
-      font-weight: 600;
-    }
-    .balance-beam {
-      position: relative;
-      width: 300px;
-      height: 4px;
-      background: #4b5563;
-      margin: 2rem auto;
-      transition: transform 0.3s ease;
-    }
-    .balance-beam::before,
-    .balance-beam::after {
-      content: '';
-      position: absolute;
-      width: 4px;
-      height: 20px;
-      background: #4b5563;
-      bottom: 0;
-    }
-    .balance-beam::before { left: 0; }
-    .balance-beam::after { right: 0; }
-    .balance-pivot {
-      position: absolute;
-      bottom: -10px;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 20px;
-      height: 20px;
-      background: #4b5563;
-      border-radius: 50%;
-    }
-  </style>
+  <script src="/js/config.js"></script>
+  <script src="components/auth-popup.js"></script>
+  <script src="components/brain-game-utils.js"></script>
 </head>
 <body class="bg-white text-gray-800 min-h-screen flex items-center justify-center p-4">
-<div class="max-w-2xl w-full bg-white shadow-xl p-6 border border-blue-200 rounded-xl text-center space-y-4">
+<div class="max-w-2xl w-full bg-white shadow-xl p-6 border border-blue-200 rounded-xl text-center space-y-4 game-container">
   <h1 class="text-2xl font-bold text-blue-700">Equation Balancer</h1>
+  <p>⏱ Time Left: <span id="timer">90</span>s | 🎯 Score: <span id="score">0</span></p>
+  <p id="question" class="text-2xl font-semibold">Loading...</p>
   
-  <div class="flex justify-center items-center space-x-4">
-    <p>⏱ Time Left: <span id="timer" class="mono">90</span>s</p>
-    <p>🎯 Score: <span id="score" class="mono">0</span></p>
-    <p>Level: <span class="level-badge">1</span></p>
-  </div>
-
-  <div id="equation-display" class="text-xl font-mono"></div>
-  <div class="balance-beam">
-    <div class="balance-pivot"></div>
-  </div>
-  
-  <div class="equation-container">
-    <div id="left-side" class="text-2xl"></div>
-    <div class="text-2xl">=</div>
-    <div id="right-side" class="text-2xl"></div>
-  </div>
-
-  <div class="space-y-4">
-    <div id="hint" class="text-sm text-gray-600 hidden"></div>
-    <button id="checkBtn" class="bg-blue-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-blue-700 transition-colors">
-      Check Answer
-    </button>
-    <button id="retryBtn" class="bg-green-600 text-white px-6 py-2 rounded-lg font-semibold hidden hover:bg-green-700 transition-colors">
-      Play Again
-    </button>
-  </div>
+  <button id="retryBtn" class="bg-green-600 text-white px-4 py-2 rounded font-semibold hidden">Retry</button>
 </div>
 
 <script>
+const GAME_ID = 'equation-balancer';
+
 const equations = [
-  {
-    left: 'x + 5',
-    right: '12',
-    answer: 7,
-    hint: 'Subtract 5 from both sides to isolate x'
-  },
-  {
-    left: '2x',
-    right: '14',
-    answer: 7,
-    hint: 'Divide both sides by 2'
-  },
-  {
-    left: 'x - 3',
-    right: '9',
-    answer: 12,
-    hint: 'Add 3 to both sides'
-  },
-  {
-    left: '3x',
-    right: '21',
-    answer: 7,
-    hint: 'Divide both sides by 3'
-  },
-  {
-    left: 'x + 8',
-    right: '15',
-    answer: 7,
-    hint: 'Subtract 8 from both sides'
-  },
-  {
-    left: '4x',
-    right: '28',
-    answer: 7,
-    hint: 'Divide both sides by 4'
-  },
-  {
-    left: 'x - 6',
-    right: '1',
-    answer: 7,
-    hint: 'Add 6 to both sides'
-  },
-  {
-    left: '5x',
-    right: '35',
-    answer: 7,
-    hint: 'Divide both sides by 5'
-  },
-  {
-    left: 'x + 10',
-    right: '17',
-    answer: 7,
-    hint: 'Subtract 10 from both sides'
-  },
-  {
-    left: '6x',
-    right: '42',
-    answer: 7,
-    hint: 'Divide both sides by 6'
-  }
+  { q: "3x + 5 = 20", answer: 5 },
+  { q: "2x - 4 = 6", answer: 5 },
+  { q: "5x = 25", answer: 5 },
+  { q: "x/2 = 6", answer: 12 },
+  { q: "4x + 8 = 24", answer: 4 },
+  { q: "10 = 2x + 2", answer: 4 },
+  { q: "15 = 3x", answer: 5 },
+  { q: "18 = 6x", answer: 3 },
+  { q: "x + 7 = 10", answer: 3 },
+  { q: "x - 3 = 2", answer: 5 }
 ];
 
-let score = 0;
-let timeLeft = 90;
-let timerInterval;
-let currentLevel = 1;
-let currentQuestion = 0;
-let wrongAttempts = 0;
+let current = 0, score = 0, timeLeft = 90, timerInterval;
 
-function displayEquation() {
-  const equation = equations[currentQuestion];
-  const leftSide = document.getElementById('left-side');
-  const rightSide = document.getElementById('right-side');
-  
-  leftSide.innerHTML = equation.left.replace('x', '<input type="number" class="number-input border rounded px-2 py-1">');
-  rightSide.textContent = equation.right;
-  
-  // Reset balance beam
-  document.querySelector('.balance-beam').style.transform = 'rotate(0deg)';
+function generateQuestion() {
+  const eq = equations[current];
+  document.getElementById("question").textContent = eq.q;
+  document.getElementById("answerInput").value = "";
 }
 
 function checkAnswer() {
-  const input = document.querySelector('.number-input');
-  const equation = equations[currentQuestion];
-  const userAnswer = parseFloat(input.value);
-  
-  if (userAnswer === equation.answer) {
-    handleSuccess();
-  } else {
-    handleWrongAnswer();
+  const input = parseInt(document.getElementById("answerInput").value.trim());
+  if (input === equations[current].answer) {
+    score++;
+    document.getElementById("score").textContent = score;
   }
-}
-
-function handleSuccess() {
-  score++;
-  const scoreEl = document.getElementById('score');
-  const input = document.querySelector('.number-input');
-  
-  scoreEl.textContent = score;
-  input.parentElement.classList.add('correct-answer');
-  
-  // Level up every 3 correct answers
-  if (score % 3 === 0) {
-    currentLevel++;
-    document.querySelector('.level-badge').textContent = currentLevel;
-  }
-  
-  // Show success message
-  document.getElementById('hint').textContent = '🎉 Correct! Moving to next question...';
-  document.getElementById('hint').classList.remove('hidden');
-  
-  // Animate balance beam to level position
-  document.querySelector('.balance-beam').style.transform = 'rotate(0deg)';
-  
-  setTimeout(() => {
-    currentQuestion = (currentQuestion + 1) % equations.length;
-    wrongAttempts = 0;
-    document.getElementById('hint').classList.add('hidden');
-    displayEquation();
-  }, 1500);
-}
-
-function handleWrongAnswer() {
-  wrongAttempts++;
-  const input = document.querySelector('.number-input');
-  input.parentElement.classList.add('wrong-answer');
-  
-  // Show hint after 2 wrong attempts
-  if (wrongAttempts >= 2) {
-    document.getElementById('hint').textContent = '💡 Hint: ' + equations[currentQuestion].hint;
-    document.getElementById('hint').classList.remove('hidden');
-  }
-  
-  // Animate balance beam based on answer
-  const userAnswer = parseFloat(input.value);
-  const correctAnswer = equations[currentQuestion].answer;
-  const rotationDegree = Math.min(Math.abs(userAnswer - correctAnswer), 20) * (userAnswer > correctAnswer ? -1 : 1);
-  document.querySelector('.balance-beam').style.transform = `rotate(${rotationDegree}deg)`;
-  
-  setTimeout(() => {
-    input.parentElement.classList.remove('wrong-answer');
-  }, 500);
+  current = (current + 1) % equations.length;
+  generateQuestion();
 }
 
 function startTimer() {
-  clearInterval(timerInterval);
   timerInterval = setInterval(() => {
     timeLeft--;
-    document.getElementById('timer').textContent = timeLeft;
-    
-    if (timeLeft <= 0) {
-      endGame();
-    }
+    document.getElementById("timer").textContent = timeLeft;
+    if (timeLeft <= 0) endGame();
   }, 1000);
 }
 
 function endGame() {
   clearInterval(timerInterval);
-  const equationDisplay = document.getElementById('equation-display');
-  const leftSide = document.getElementById('left-side');
-  const rightSide = document.getElementById('right-side');
-  const checkBtn = document.getElementById('checkBtn');
-  const retryBtn = document.getElementById('retryBtn');
-  const hint = document.getElementById('hint');
-  
-  equationDisplay.textContent = `Game Over! Final Score: ${score} | Highest Level: ${currentLevel}`;
-  leftSide.innerHTML = '';
-  rightSide.innerHTML = '';
-  checkBtn.classList.add('hidden');
-  retryBtn.classList.remove('hidden');
-  hint.classList.add('hidden');
+  document.getElementById("question").textContent = `Time's up! Final Score: ${score}`;
+  document.getElementById("submitBtn").disabled = true;
+  document.getElementById("answerInput").disabled = true;
+  document.getElementById("retryBtn").classList.remove("hidden");
+  submitGameScore(GAME_ID, score);
 }
 
-function startGame() {
+function restartGame() {
+  current = 0;
   score = 0;
   timeLeft = 90;
-  currentLevel = 1;
-  currentQuestion = 0;
-  wrongAttempts = 0;
-  
-  document.getElementById('score').textContent = score;
-  document.getElementById('timer').textContent = timeLeft;
-  document.querySelector('.level-badge').textContent = currentLevel;
-  document.getElementById('checkBtn').classList.remove('hidden');
-  document.getElementById('retryBtn').classList.add('hidden');
-  document.getElementById('hint').classList.add('hidden');
-  
-  displayEquation();
+  document.getElementById("score").textContent = score;
+  document.getElementById("timer").textContent = timeLeft;
+  document.getElementById("submitBtn").disabled = false;
+  document.getElementById("answerInput").disabled = false;
+  document.getElementById("retryBtn").classList.add("hidden");
+  generateQuestion();
   startTimer();
 }
 
-// Initialize game
-document.addEventListener('DOMContentLoaded', () => {
-  const checkBtn = document.getElementById('checkBtn');
-  const retryBtn = document.getElementById('retryBtn');
-  
-  if (checkBtn) {
-    checkBtn.onclick = checkAnswer;
-  }
-  if (retryBtn) {
-    retryBtn.onclick = startGame;
-  }
-  
-  // Add keyboard support
-  document.addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') {
-      checkAnswer();
-    }
+// ✅ Backend
+
+
+/submit`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ username, gameId, score })
   });
-  
-  startGame();
-});
+}
+
+
 </script>
 </body>
 </html>

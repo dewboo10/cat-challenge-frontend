@@ -5,189 +5,93 @@
   <title>Antonym Slam – BrainGames</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <script src="https://cdn.tailwindcss.com"></script>
-  <style>
-    .correct-answer {
-      animation: correctPulse 0.5s ease-out;
-    }
-    .wrong-answer {
-      animation: wrongShake 0.5s ease-in-out;
-    }
-    @keyframes correctPulse {
-      0% { background-color: rgb(34 197 94); transform: scale(1); }
-      50% { background-color: rgb(34 197 94); transform: scale(1.05); }
-      100% { background-color: rgb(243 244 246); transform: scale(1); }
-    }
-    @keyframes wrongShake {
-      0% { background-color: rgb(239 68 68); transform: translateX(0); }
-      25% { background-color: rgb(239 68 68); transform: translateX(-5px); }
-      75% { background-color: rgb(239 68 68); transform: translateX(5px); }
-      100% { background-color: rgb(243 244 246); transform: translateX(0); }
-    }
-    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; }
-  </style>
+  <script src="/js/config.js"></script>
+  <script src="components/auth-popup.js"></script>
+  <script src="components/brain-game-utils.js"></script>
 </head>
 <body class="bg-white text-gray-800 min-h-screen flex items-center justify-center p-4">
-<div class="max-w-2xl w-full bg-white shadow-xl p-6 border border-blue-200 rounded-xl text-center space-y-4">
+<div class="max-w-2xl w-full bg-white shadow-xl p-6 border border-blue-200 rounded-xl text-center space-y-4 game-container">
   <h1 class="text-2xl font-bold text-blue-700">Antonym Slam</h1>
-  <p>⏱ Time Left: <span id="timer" class="mono">90</span>s | 🎯 Score: <span id="score" class="mono">0</span></p>
+  <p>⏱ Time Left: <span id="timer">90</span>s | 🎯 Score: <span id="score">0</span></p>
   <p id="question" class="text-2xl font-semibold">Loading...</p>
-  <div id="options" class="grid grid-cols-1 sm:grid-cols-2 gap-4"></div>
-  <button id="retryBtn" class="bg-green-600 text-white px-4 py-2 rounded font-semibold hidden hover:bg-green-700 transition-colors">Play Again</button>
+  
+  <button id="retryBtn" class="bg-green-600 text-white px-4 py-2 rounded font-semibold hidden">Retry</button>
 </div>
 
 <script>
-let score = 0;
-let timeLeft = 90;
-let timerInterval;
-let currentAnswer;
-let currentWord;
-let currentType;
+const GAME_ID = 'antonym-slam';
 
-const antonymPairs = [
-  { word: "happy", antonym: "sad", type: "adjective", usage: "She was happy with her test results." },
-  { word: "strong", antonym: "weak", type: "adjective", usage: "The strong wind blew the leaves away." },
-  { word: "increase", antonym: "decrease", type: "verb", usage: "Prices tend to increase during holidays." },
-  { word: "above", antonym: "below", type: "preposition", usage: "The bird flew above the trees." },
-  { word: "begin", antonym: "end", type: "verb", usage: "Let's begin the meeting." },
-  { word: "fast", antonym: "slow", type: "adjective", usage: "The fast car zoomed past us." },
-  { word: "victory", antonym: "defeat", type: "noun", usage: "Their victory was well-deserved." },
-  { word: "accept", antonym: "reject", type: "verb", usage: "They decided to accept the offer." },
-  { word: "ancient", antonym: "modern", type: "adjective", usage: "We visited ancient ruins in Rome." },
-  { word: "expand", antonym: "contract", type: "verb", usage: "The business continues to expand." },
-  { word: "abundant", antonym: "scarce", type: "adjective", usage: "Water is abundant in this region." },
-  { word: "advance", antonym: "retreat", type: "verb", usage: "The army decided to advance at dawn." },
-  { word: "bold", antonym: "timid", type: "adjective", usage: "She made a bold decision." },
-  { word: "chaos", antonym: "order", type: "noun", usage: "The room was in complete chaos." },
-  { word: "dawn", antonym: "dusk", type: "noun", usage: "We woke up at dawn to start hiking." },
-  { word: "eager", antonym: "reluctant", type: "adjective", usage: "The eager students raised their hands." },
-  { word: "fresh", antonym: "stale", type: "adjective", usage: "I love the smell of fresh bread." },
-  { word: "generous", antonym: "stingy", type: "adjective", usage: "Her generous donation helped many people." },
-  { word: "innocent", antonym: "guilty", type: "adjective", usage: "The jury found him innocent." },
-  { word: "maximum", antonym: "minimum", type: "noun", usage: "The temperature reached its maximum." }
-];
+  const antonymPairs = [
+    { word: "happy", antonym: "sad" },
+    { word: "strong", antonym: "weak" },
+    { word: "increase", antonym: "decrease" },
+    { word: "above", antonym: "below" },
+    { word: "begin", antonym: "end" },
+    { word: "fast", antonym: "slow" },
+    { word: "victory", antonym: "defeat" },
+    { word: "accept", antonym: "reject" },
+    { word: "ancient", antonym: "modern" },
+    { word: "expand", antonym: "contract" }
+  ];
 
-function generateQuestion() {
-  const question = antonymPairs[Math.floor(Math.random() * antonymPairs.length)];
-  currentAnswer = question.antonym;
-  currentWord = question.word;
-  currentType = question.type;
-  
-  const questionEl = document.getElementById("question");
-  if (questionEl) {
-    questionEl.innerHTML = `
-      <div class="mb-4">
-        <p class="text-2xl font-bold mb-2">${question.word}</p>
-        <p class="text-sm text-gray-500">(${question.type})</p>
-        <p class="mt-2">What is the antonym of this word?</p>
-      </div>
-    `;
+  let correctAnswer = "", score = 0, timeLeft = 90, timerInterval;
+
+  function generateQuestion() {
+    const q = antonymPairs[Math.floor(Math.random() * antonymPairs.length)];
+    correctAnswer = q.antonym.toLowerCase();
+    document.getElementById("question").textContent = `What's the antonym of "${q.word}"?`;
   }
+
+  function checkAnswer() {
+    const input = document.getElementById("answerInput").value.trim().toLowerCase();
+    if (input === correctAnswer) {
+      score++;
+      document.getElementById("score").textContent = score;
+    }
+    document.getElementById("answerInput").value = "";
+    generateQuestion();
+  }
+
+  function startTimer() {
+    timerInterval = setInterval(() => {
+      timeLeft--;
+      document.getElementById("timer").textContent = timeLeft;
+      if (timeLeft <= 0) endGame();
+    }, 1000);
+  }
+
+  function endGame() {
+    clearInterval(timerInterval);
+    document.getElementById("question").textContent = `Time's up! Final Score: ${score}`;
+    document.getElementById("submitBtn").disabled = true;
+    document.getElementById("answerInput").disabled = true;
+    document.getElementById("retryBtn").classList.remove("hidden");
+    submitGameScore(GAME_ID, score);
+  }
+
+  function restartGame() {
+    score = 0;
+    timeLeft = 90;
+    document.getElementById("score").textContent = score;
+    document.getElementById("timer").textContent = timeLeft;
+    document.getElementById("submitBtn").disabled = false;
+    document.getElementById("answerInput").disabled = false;
+    document.getElementById("retryBtn").classList.add("hidden");
+    generateQuestion();
+    startTimer();
+  }
+
+  // Backend connection
   
-  const container = document.getElementById("options");
-  if (container) {
-    container.innerHTML = "";
-    // Get 3 random wrong answers from other pairs
-    const wrongAnswers = antonymPairs
-      .filter(pair => pair.antonym !== currentAnswer)
-      .sort(() => Math.random() - 0.5)
-      .slice(0, 3)
-      .map(pair => pair.antonym);
-    
-    const opts = [currentAnswer, ...wrongAnswers];
-    opts.sort(() => Math.random() - 0.5).forEach(opt => {
-      const btn = document.createElement("button");
-      btn.textContent = opt;
-      btn.className = "bg-gray-100 hover:bg-blue-100 px-4 py-2 rounded transition-colors text-left";
-      btn.onclick = () => {
-        // Remove any existing animation classes from all buttons
-        container.querySelectorAll('button').forEach(b => {
-          b.classList.remove('correct-answer', 'wrong-answer');
-        });
-        
-        if (opt === currentAnswer) {
-          score++;
-          const scoreEl = document.getElementById("score");
-          if (scoreEl) scoreEl.textContent = score;
-          btn.classList.add('correct-answer');
-          // Wait for animation to finish before next question
-          setTimeout(generateQuestion, 500);
-        } else {
-          btn.classList.add('wrong-answer');
-          // Find and highlight the correct answer
-          container.querySelectorAll('button').forEach(b => {
-            if (b.textContent === currentAnswer) {
-              b.classList.add('correct-answer');
-            }
-          });
-          // Show explanation for wrong answers
-          const pair = antonymPairs.find(p => p.word === currentWord);
-          questionEl.innerHTML = `
-            <div class="text-red-600 mb-2">Incorrect!</div>
-            <div class="text-lg font-bold mb-1">${currentWord} → ${currentAnswer}</div>
-            <div class="text-sm text-gray-600 italic">"${pair.usage}"</div>
-            <div class="text-sm text-gray-500 mt-1">(${currentType})</div>
-          `;
-          // Wait longer for wrong answers so user can see the explanation
-          setTimeout(generateQuestion, 2000);
-        }
-        // Disable all buttons during animation
-        container.querySelectorAll('button').forEach(b => {
-          b.disabled = true;
-        });
-      };
-      container.appendChild(btn);
+
+  /submit`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username, gameId, score })
     });
   }
-}
 
-function startTimer() {
-  clearInterval(timerInterval);
-  timerInterval = setInterval(() => {
-    timeLeft--;
-    const timerEl = document.getElementById("timer");
-    if (timerEl) timerEl.textContent = timeLeft;
-    
-    if (timeLeft <= 0) {
-      endGame();
-    }
-  }, 1000);
-}
-
-function endGame() {
-  clearInterval(timerInterval);
-  const questionEl = document.getElementById("question");
-  const optionsEl = document.getElementById("options");
-  const retryBtn = document.getElementById("retryBtn");
   
-  if (questionEl) questionEl.textContent = `Time's up! Final Score: ${score}`;
-  if (optionsEl) optionsEl.innerHTML = "";
-  if (retryBtn) retryBtn.classList.remove("hidden");
-}
-
-function startGame() {
-  score = 0;
-  timeLeft = 90;
-  
-  const scoreEl = document.getElementById("score");
-  const timerEl = document.getElementById("timer");
-  const retryBtn = document.getElementById("retryBtn");
-  
-  if (scoreEl) scoreEl.textContent = score;
-  if (timerEl) timerEl.textContent = timeLeft;
-  if (retryBtn) retryBtn.classList.add("hidden");
-  
-  generateQuestion();
-  startTimer();
-}
-
-// Initialize game
-document.addEventListener('DOMContentLoaded', () => {
-  const retryBtn = document.getElementById('retryBtn');
-  if (retryBtn) {
-    retryBtn.onclick = startGame;
-  }
-  startGame();
-});
 </script>
 </body>
 </html>

@@ -5,185 +5,31 @@
   <title>Direction Sense – BrainGames</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <script src="https://cdn.tailwindcss.com"></script>
-  <style>
-    .correct-answer {
-      animation: correctPulse 0.5s ease-out;
-    }
-    .wrong-answer {
-      animation: wrongShake 0.5s ease-in-out;
-    }
-    @keyframes correctPulse {
-      0% { transform: scale(1); }
-      50% { transform: scale(1.05); }
-      100% { transform: scale(1); }
-    }
-    @keyframes wrongShake {
-      0% { transform: translateX(0); }
-      25% { transform: translateX(-5px); }
-      75% { transform: translateX(5px); }
-      100% { transform: translateX(0); }
-    }
-    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; }
-    .grid-container {
-      display: grid;
-      grid-template-columns: repeat(5, 1fr);
-      gap: 4px;
-      max-width: 400px;
-      margin: 20px auto;
-      background: #e5e7eb;
-      padding: 4px;
-      border-radius: 8px;
-    }
-    .cell {
-      aspect-ratio: 1;
-      background: white;
-      border-radius: 4px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 1.5rem;
-      transition: all 0.3s ease;
-    }
-    .cell.start {
-      background: #3b82f6;
-      color: white;
-    }
-    .cell.goal {
-      background: #22c55e;
-      color: white;
-    }
-    .cell.path {
-      background: #93c5fd;
-      color: white;
-    }
-    .cell.current {
-      animation: pulse 2s infinite;
-    }
-    @keyframes pulse {
-      0% { transform: scale(1); }
-      50% { transform: scale(1.05); box-shadow: 0 0 10px rgba(59, 130, 246, 0.5); }
-      100% { transform: scale(1); }
-    }
-    .controls {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 8px;
-      max-width: 200px;
-      margin: 20px auto;
-    }
-    .control-btn {
-      aspect-ratio: 1;
-      border-radius: 8px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 1.5rem;
-      transition: all 0.2s ease;
-    }
-    .control-btn:active {
-      transform: scale(0.95);
-    }
-    .level-badge {
-      background: linear-gradient(135deg, #6366f1, #8b5cf6);
-      padding: 4px 12px;
-      border-radius: 9999px;
-      color: white;
-      font-size: 0.875rem;
-      font-weight: 600;
-    }
-  </style>
+  <script src="/js/config.js"></script>
+  <script src="components/auth-popup.js"></script>
+  <script src="components/brain-game-utils.js"></script>
 </head>
 <body class="bg-white text-gray-800 min-h-screen flex items-center justify-center p-4">
-<div class="max-w-2xl w-full bg-white shadow-xl p-6 border border-blue-200 rounded-xl text-center space-y-4">
+<div class="max-w-2xl w-full bg-white shadow-xl p-6 border border-blue-200 rounded-xl text-center space-y-4 game-container">
   <h1 class="text-2xl font-bold text-blue-700">Direction Sense</h1>
-  <div class="flex justify-center items-center space-x-4">
-    <p>⏱ Time Left: <span id="timer" class="mono">90</span>s</p>
-    <p>🎯 Score: <span id="score" class="mono">0</span></p>
-    <p>Level: <span class="level-badge">1</span></p>
-  </div>
-  <p id="instruction" class="text-lg text-gray-600">Loading...</p>
-  <div id="grid" class="grid-container"></div>
-  <div class="controls">
-    <button onclick="move('up')" class="control-btn bg-blue-100 hover:bg-blue-200">⬆️</button>
-    <button onclick="move('down')" class="control-btn bg-blue-100 hover:bg-blue-200">⬇️</button>
-    <button onclick="move('left')" class="control-btn bg-blue-100 hover:bg-blue-200">⬅️</button>
-    <button onclick="move('right')" class="control-btn bg-blue-100 hover:bg-blue-200">➡️</button>
-  </div>
-  <button id="retryBtn" class="bg-green-600 text-white px-6 py-3 rounded-lg font-semibold hidden hover:bg-green-700 transition-colors">Play Again</button>
+  <p>⏱ Time Left: <span id="timer">90</span>s | 🎯 Score: <span id="score">0</span></p>
+  <p id="question" class="text-2xl font-semibold">Loading...</p>
+  
+  <button id="retryBtn" class="bg-green-600 text-white px-4 py-2 rounded font-semibold hidden">Retry</button>
 </div>
 
 <script>
+const GAME_ID = 'direction-sense';
+
 const instructions = [
-  { 
-    start: [2, 2], 
-    goal: [2, 4], 
-    text: "Go 2 steps East.",
-    hint: "East means moving right on the grid."
-  },
-  { 
-    start: [1, 1], 
-    goal: [3, 1], 
-    text: "Go 2 steps South.",
-    hint: "South means moving down on the grid."
-  },
-  { 
-    start: [4, 2], 
-    goal: [2, 2], 
-    text: "Go 2 steps North.",
-    hint: "North means moving up on the grid."
-  },
-  { 
-    start: [0, 0], 
-    goal: [0, 2], 
-    text: "Go 2 steps East.",
-    hint: "East means moving right on the grid."
-  },
-  { 
-    start: [3, 3], 
-    goal: [3, 1], 
-    text: "Go 2 steps West.",
-    hint: "West means moving left on the grid."
-  },
-  {
-    start: [0, 0],
-    goal: [2, 2],
-    text: "Go 2 steps South, then 2 steps East.",
-    hint: "Break down the movement: first down, then right."
-  },
-  {
-    start: [4, 4],
-    goal: [2, 2],
-    text: "Go 2 steps North, then 2 steps West.",
-    hint: "Break down the movement: first up, then left."
-  },
-  {
-    start: [2, 0],
-    goal: [0, 2],
-    text: "Go 2 steps North, then 2 steps East.",
-    hint: "Break down the movement: first up, then right."
-  },
-  {
-    start: [0, 4],
-    goal: [2, 2],
-    text: "Go 2 steps South, then 2 steps West.",
-    hint: "Break down the movement: first down, then left."
-  },
-  {
-    start: [1, 1],
-    goal: [3, 3],
-    text: "Go 2 steps South, then 2 steps East.",
-    hint: "Break down the movement: first down, then right."
-  }
+  { start: [2, 2], goal: [2, 4], text: "Go 2 steps East." },
+  { start: [1, 1], goal: [3, 1], text: "Go 2 steps South." },
+  { start: [4, 2], goal: [2, 2], text: "Go 2 steps North." },
+  { start: [0, 0], goal: [0, 2], text: "Go 2 steps East." },
+  { start: [3, 3], goal: [3, 1], text: "Go 2 steps West." }
 ];
 
-let score = 0;
-let timeLeft = 90;
-let timerInterval;
-let currentLevel = 1;
-let currentQuestion = 0;
-let pos = [];
-let moves = [];
-let wrongMoves = 0;
+let score = 0, timeLeft = 90, timerInterval, current = 0, pos = [];
 
 function drawGrid(start, goal) {
   const grid = document.getElementById("grid");
@@ -192,179 +38,72 @@ function drawGrid(start, goal) {
     for (let c = 0; c < 5; c++) {
       const div = document.createElement("div");
       div.className = "cell";
-      if (r === start[0] && c === start[1]) {
-        div.classList.add("start");
-        div.textContent = "🟦";
-      }
-      if (r === goal[0] && c === goal[1]) {
-        div.classList.add("goal");
-        div.textContent = "🎯";
-      }
-      if (r === pos[0] && c === pos[1] && !(r === start[0] && c === start[1])) {
-        div.classList.add("current");
-        div.textContent = "👤";
-      }
-      if (moves.some(m => m[0] === r && m[1] === c)) {
-        div.classList.add("path");
-      }
+      if (r === start[0] && c === start[1]) div.classList.add("start");
+      if (r === goal[0] && c === goal[1]) div.classList.add("goal");
       grid.appendChild(div);
     }
   }
 }
 
 function generateQuestion() {
-  const q = instructions[currentQuestion];
+  const q = instructions[current];
   pos = [...q.start];
-  moves = [pos.slice()];
-  wrongMoves = 0;
-  
-  const instruction = document.getElementById("instruction");
-  instruction.innerHTML = `
-    <p class="text-xl font-bold mb-2">${q.text}</p>
-    <p class="text-sm text-gray-500">${q.hint}</p>
-  `;
-  
+  document.getElementById("instruction").textContent = q.text;
   drawGrid(q.start, q.goal);
 }
 
 function move(dir) {
-  const oldPos = [...pos];
-  
   if (dir === 'up' && pos[0] > 0) pos[0]--;
   else if (dir === 'down' && pos[0] < 4) pos[0]++;
   else if (dir === 'left' && pos[1] > 0) pos[1]--;
   else if (dir === 'right' && pos[1] < 4) pos[1]++;
-  
-  // Only add to moves if position actually changed
-  if (oldPos[0] !== pos[0] || oldPos[1] !== pos[1]) {
-    moves.push(pos.slice());
-  }
 
-  const goal = instructions[currentQuestion].goal;
+  const goal = instructions[current].goal;
   if (pos[0] === goal[0] && pos[1] === goal[1]) {
-    handleSuccess();
-  } else if (moves.length > goal.length * 2) {
-    handleWrongMove();
-  }
-  
-  drawGrid(instructions[currentQuestion].start, goal);
-}
-
-function handleSuccess() {
-  score++;
-  const scoreEl = document.getElementById("score");
-  const instruction = document.getElementById("instruction");
-  
-  scoreEl.textContent = score;
-  instruction.innerHTML = `
-    <div class="text-green-600 mb-2">Correct! 🎉</div>
-    <div class="text-sm text-gray-600">Perfect navigation!</div>
-  `;
-  
-  // Level up every 3 correct answers
-  if (score % 3 === 0) {
-    currentLevel++;
-    document.querySelector(".level-badge").textContent = currentLevel;
-  }
-  
-  // Disable controls briefly
-  const controls = document.querySelectorAll('.control-btn');
-  controls.forEach(btn => btn.disabled = true);
-  
-  setTimeout(() => {
-    controls.forEach(btn => btn.disabled = false);
-    currentQuestion = (currentQuestion + 1) % instructions.length;
+    score++;
+    document.getElementById("score").textContent = score;
+    current = (current + 1) % instructions.length;
     generateQuestion();
-  }, 1000);
-}
-
-function handleWrongMove() {
-  wrongMoves++;
-  const instruction = document.getElementById("instruction");
-  const q = instructions[currentQuestion];
-  
-  if (wrongMoves >= 3) {
-    instruction.innerHTML = `
-      <div class="text-red-600 mb-2">Let's try a new question!</div>
-      <div class="text-sm text-gray-600">${q.hint}</div>
-    `;
-    setTimeout(() => {
-      currentQuestion = (currentQuestion + 1) % instructions.length;
-      generateQuestion();
-    }, 2000);
-  } else {
-    instruction.innerHTML = `
-      <div class="text-red-600 mb-2">Not quite right!</div>
-      <div class="text-sm text-gray-600">${q.hint}</div>
-    `;
   }
 }
 
 function startTimer() {
-  clearInterval(timerInterval);
   timerInterval = setInterval(() => {
     timeLeft--;
-    const timerEl = document.getElementById("timer");
-    if (timerEl) timerEl.textContent = timeLeft;
-    
-    if (timeLeft <= 0) {
-      endGame();
-    }
+    document.getElementById("timer").textContent = timeLeft;
+    if (timeLeft <= 0) endGame();
   }, 1000);
 }
 
 function endGame() {
   clearInterval(timerInterval);
-  const instruction = document.getElementById("instruction");
-  const grid = document.getElementById("grid");
-  const controls = document.querySelector(".controls");
-  const retryBtn = document.getElementById("retryBtn");
-  
-  instruction.textContent = `Game Over! Final Score: ${score} | Highest Level: ${currentLevel}`;
-  grid.innerHTML = "";
-  controls.style.display = "none";
-  retryBtn.classList.remove("hidden");
+  document.getElementById("instruction").textContent = `Time's up! Final Score: ${score}`;
+  document.getElementById("retryBtn").classList.remove("hidden");
+  submitGameScore(GAME_ID, score);
 }
 
-function startGame() {
+function restartGame() {
   score = 0;
   timeLeft = 90;
-  currentLevel = 1;
-  currentQuestion = 0;
-  wrongMoves = 0;
-  
-  const scoreEl = document.getElementById("score");
-  const timerEl = document.getElementById("timer");
-  const retryBtn = document.getElementById("retryBtn");
-  const levelBadge = document.querySelector(".level-badge");
-  const controls = document.querySelector(".controls");
-  
-  if (scoreEl) scoreEl.textContent = score;
-  if (timerEl) timerEl.textContent = timeLeft;
-  if (retryBtn) retryBtn.classList.add("hidden");
-  if (levelBadge) levelBadge.textContent = currentLevel;
-  if (controls) controls.style.display = "grid";
-  
+  current = 0;
+  document.getElementById("score").textContent = score;
+  document.getElementById("timer").textContent = timeLeft;
+  document.getElementById("retryBtn").classList.add("hidden");
   generateQuestion();
   startTimer();
 }
 
-// Initialize game
-document.addEventListener('DOMContentLoaded', () => {
-  const retryBtn = document.getElementById('retryBtn');
-  if (retryBtn) {
-    retryBtn.onclick = startGame;
-  }
-  startGame();
-  
-  // Add keyboard controls
-  document.addEventListener('keydown', (e) => {
-    if (e.key === 'ArrowUp') move('up');
-    else if (e.key === 'ArrowDown') move('down');
-    else if (e.key === 'ArrowLeft') move('left');
-    else if (e.key === 'ArrowRight') move('right');
+// ✅ Backend
+
+
+/submit`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ username, gameId, score })
   });
-});
+}
+
+
 </script>
 </body>
 </html>

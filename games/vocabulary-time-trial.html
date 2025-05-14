@@ -5,244 +5,64 @@
   <title>Vocabulary Time Trial – BrainGames</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <script src="https://cdn.tailwindcss.com"></script>
-  <style>
-    .correct-answer {
-      animation: correctPulse 0.5s ease-out;
-    }
-    .wrong-answer {
-      animation: wrongShake 0.5s ease-in-out;
-    }
-    @keyframes correctPulse {
-      0% { background-color: rgb(34 197 94); transform: scale(1); }
-      50% { background-color: rgb(34 197 94); transform: scale(1.05); }
-      100% { background-color: rgb(243 244 246); transform: scale(1); }
-    }
-    @keyframes wrongShake {
-      0% { background-color: rgb(239 68 68); transform: translateX(0); }
-      25% { background-color: rgb(239 68 68); transform: translateX(-5px); }
-      75% { background-color: rgb(239 68 68); transform: translateX(5px); }
-      100% { background-color: rgb(243 244 246); transform: translateX(0); }
-    }
-  </style>
+  <script src="../js/config.js"></script>
+  <script src="../js/brain-game-utils.js"></script>
 </head>
 <body class="bg-white text-gray-800 min-h-screen flex items-center justify-center p-4">
-<div class="max-w-2xl w-full bg-white shadow-xl p-6 border border-blue-200 rounded-xl text-center space-y-4">
+<div class="max-w-2xl w-full bg-white shadow-xl p-6 border border-blue-200 rounded-xl text-center space-y-4 game-container">
   <h1 class="text-2xl font-bold text-blue-700">Vocabulary Time Trial</h1>
   <p>⏱ Time Left: <span id="timer">90</span>s | 🎯 Score: <span id="score">0</span></p>
   <p id="question" class="text-2xl font-semibold">Loading...</p>
   <div id="options" class="grid grid-cols-1 sm:grid-cols-2 gap-4"></div>
-  <button id="retryBtn" class="bg-green-600 text-white px-4 py-2 rounded font-semibold hidden hover:bg-green-700 transition-colors">Play Again</button>
+  <button id="retryBtn" class="bg-green-600 text-white px-4 py-2 rounded font-semibold hidden hover:bg-green-700 transition-colors">Retry</button>
 </div>
 
 <script>
-let score = 0;
-let timeLeft = 90;
-let timerInterval;
-let currentAnswer;
-let currentWord;
-let currentUsage;
+const GAME_ID = 'vocabulary-time-trial';
 
 const questions = [
-  { 
-    word: "benevolent", 
-    answer: "kind and generous", 
-    options: ["cruel and harsh", "lazy and bored", "loud and angry"],
-    usage: "The benevolent donor gave millions to charity.",
-    type: "adjective"
-  },
-  { 
-    word: "elated", 
-    answer: "extremely happy", 
-    options: ["somewhat confused", "totally exhausted", "slightly amused"],
-    usage: "She was elated to receive the job offer.",
-    type: "adjective"
-  },
-  { 
-    word: "ambiguous", 
-    answer: "unclear or vague", 
-    options: ["well-defined", "exact and certain", "simple and obvious"],
-    usage: "The instructions were ambiguous and hard to follow.",
-    type: "adjective"
-  },
-  { 
-    word: "meticulous", 
-    answer: "very careful and precise", 
-    options: ["messy and random", "rough and careless", "quick and dirty"],
-    usage: "His meticulous attention to detail impressed everyone.",
-    type: "adjective"
-  },
-  { 
-    word: "contemplate", 
-    answer: "think deeply", 
-    options: ["ignore", "run away", "talk loudly"],
-    usage: "She sat by the lake to contemplate her future.",
-    type: "verb"
-  },
-  { 
-    word: "ephemeral", 
-    answer: "lasting for a very short time", 
-    options: ["permanent", "ancient", "unchanging"],
-    usage: "The beauty of cherry blossoms is ephemeral.",
-    type: "adjective"
-  },
-  { 
-    word: "ubiquitous", 
-    answer: "present everywhere", 
-    options: ["rare", "unique", "hidden"],
-    usage: "Smartphones have become ubiquitous in modern life.",
-    type: "adjective"
-  },
-  { 
-    word: "pragmatic", 
-    answer: "practical and realistic", 
-    options: ["idealistic", "emotional", "theoretical"],
-    usage: "She took a pragmatic approach to solving the problem.",
-    type: "adjective"
-  },
-  { 
-    word: "eloquent", 
-    answer: "fluent and persuasive in speaking", 
-    options: ["stuttering", "silent", "confusing"],
-    usage: "His eloquent speech moved the audience to tears.",
-    type: "adjective"
-  },
-  { 
-    word: "tenacious", 
-    answer: "persistent and determined", 
-    options: ["weak-willed", "giving up easily", "indecisive"],
-    usage: "Her tenacious pursuit of justice paid off.",
-    type: "adjective"
-  },
-  { 
-    word: "enigmatic", 
-    answer: "difficult to interpret or understand", 
-    options: ["straightforward", "simple", "obvious"],
-    usage: "The Mona Lisa's enigmatic smile has puzzled viewers for centuries.",
-    type: "adjective"
-  },
-  { 
-    word: "serendipity", 
-    answer: "fortunate chance discovery", 
-    options: ["planned event", "bad luck", "hard work"],
-    usage: "Finding his dream job was pure serendipity.",
-    type: "noun"
-  }
+  { word: "benevolent", answer: "kind and generous", options: ["cruel and harsh", "lazy and bored", "loud and angry"] },
+  { word: "elated", answer: "extremely happy", options: ["somewhat confused", "totally exhausted", "slightly amused"] },
+  { word: "ambiguous", answer: "unclear or vague", options: ["well-defined", "exact and certain", "simple and obvious"] },
+  { word: "meticulous", answer: "very careful and precise", options: ["messy and random", "rough and careless", "quick and dirty"] },
+  { word: "contemplate", answer: "think deeply", options: ["ignore", "run away", "talk loudly"] },
+  { word: "ephemeral", answer: "lasting for a very short time", options: ["permanent", "ancient", "unchanging"] },
+  { word: "ubiquitous", answer: "present everywhere", options: ["rare", "unique", "hidden"] },
+  { word: "pragmatic", answer: "practical and realistic", options: ["idealistic", "emotional", "theoretical"] }
 ];
 
+let current = {};
+
 function generateQuestion() {
-  const question = questions[Math.floor(Math.random() * questions.length)];
-  currentAnswer = question.answer;
-  currentWord = question.word;
-  currentUsage = question.usage;
-  
+  current = questions[Math.floor(Math.random() * questions.length)];
   const questionEl = document.getElementById("question");
   if (questionEl) {
-    questionEl.innerHTML = `
-      <div class="mb-4">
-        <p class="text-2xl font-bold mb-2">${question.word}</p>
-        <p class="text-sm text-gray-500">(${question.type})</p>
-        <p class="mt-2">What is the meaning of this word?</p>
-      </div>
-    `;
+    questionEl.textContent = `What is the meaning of "${current.word}"?`;
   }
   
+  const opts = new Set([current.answer, ...current.options]);
   const container = document.getElementById("options");
   if (container) {
     container.innerHTML = "";
-    const opts = [question.answer, ...question.options];
-    opts.sort(() => Math.random() - 0.5).forEach(opt => {
+    Array.from(opts).sort(() => Math.random() - 0.5).forEach(opt => {
       const btn = document.createElement("button");
       btn.textContent = opt;
-      btn.className = "bg-gray-100 hover:bg-blue-100 px-4 py-2 rounded transition-colors text-left";
+      btn.className = "bg-gray-100 hover:bg-blue-100 px-4 py-2 rounded transition-colors";
       btn.onclick = () => {
-        // Remove any existing animation classes from all buttons
-        container.querySelectorAll('button').forEach(b => {
-          b.classList.remove('correct-answer', 'wrong-answer');
-        });
-        
-        if (opt === currentAnswer) {
+        if (opt === current.answer) {
           score++;
           const scoreEl = document.getElementById("score");
           if (scoreEl) scoreEl.textContent = score;
-          btn.classList.add('correct-answer');
-          // Wait for animation to finish before next question
-          setTimeout(generateQuestion, 500);
-        } else {
-          btn.classList.add('wrong-answer');
-          // Find and highlight the correct answer
-          container.querySelectorAll('button').forEach(b => {
-            if (b.textContent === currentAnswer) {
-              b.classList.add('correct-answer');
-            }
-          });
-          // Show explanation for wrong answers
-          questionEl.innerHTML = `
-            <div class="text-red-600 mb-2">Incorrect!</div>
-            <div class="text-lg font-bold mb-1">${currentWord}</div>
-            <div class="text-base mb-2">${currentAnswer}</div>
-            <div class="text-sm text-gray-600 italic">"${currentUsage}"</div>
-          `;
-          // Wait longer for wrong answers so user can see the explanation
-          setTimeout(generateQuestion, 2000);
         }
-        // Disable all buttons during animation
-        container.querySelectorAll('button').forEach(b => {
-          b.disabled = true;
-        });
+        generateQuestion();
       };
       container.appendChild(btn);
     });
   }
 }
 
-function startTimer() {
-  clearInterval(timerInterval);
-  timerInterval = setInterval(() => {
-    timeLeft--;
-    const timerEl = document.getElementById("timer");
-    if (timerEl) timerEl.textContent = timeLeft;
-    
-    if (timeLeft <= 0) {
-      endGame();
-    }
-  }, 1000);
-}
-
-function endGame() {
-  clearInterval(timerInterval);
-  const questionEl = document.getElementById("question");
-  const optionsEl = document.getElementById("options");
-  const retryBtn = document.getElementById("retryBtn");
-  
-  if (questionEl) questionEl.textContent = `Time's up! Final Score: ${score}`;
-  if (optionsEl) optionsEl.innerHTML = "";
-  if (retryBtn) retryBtn.classList.remove("hidden");
-}
-
-function startGame() {
-  score = 0;
-  timeLeft = 90;
-  
-  const scoreEl = document.getElementById("score");
-  const timerEl = document.getElementById("timer");
-  const retryBtn = document.getElementById("retryBtn");
-  
-  if (scoreEl) scoreEl.textContent = score;
-  if (timerEl) timerEl.textContent = timeLeft;
-  if (retryBtn) retryBtn.classList.add("hidden");
-  
-  generateQuestion();
-  startTimer();
-}
-
-// Initialize game
-document.addEventListener('DOMContentLoaded', () => {
-  const retryBtn = document.getElementById('retryBtn');
-  if (retryBtn) {
-    retryBtn.onclick = startGame;
-  }
-  startGame();
-});
+// Register the game function globally
+window['vocabulary-time-trial'] = generateQuestion;
 </script>
 </body>
 </html>
