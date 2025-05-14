@@ -1,4 +1,4 @@
-=const API_BASE = CONFIG.AUTH_API;
+const API_BASE = CONFIG.AUTH_API;
 
 async function registerUser() {
   const username = document.getElementById("auth-username").value.trim();
