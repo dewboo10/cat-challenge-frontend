@@ -1,7 +1,9 @@
 // ✅ Fully Updated Dashboard.js with Backend Review Check and Guest Fallback + Auth Modal Logic
 
 document.addEventListener("DOMContentLoaded", () => {
-  const user = JSON.parse(localStorage.getItem("user"));
+  const userRaw = localStorage.getItem("user");
+const user = userRaw && userRaw !== "undefined" ? JSON.parse(userRaw) : null;
+
   const selectedExam = localStorage.getItem("selectedExam");
 
   if (!selectedExam) {

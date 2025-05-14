@@ -314,7 +314,9 @@
 
   function updateProgressSection() {
     const progressSection = document.getElementById("progress-section");
-    const user = JSON.parse(localStorage.getItem("user"));
+    const userRaw = localStorage.getItem("user");
+const user = userRaw && userRaw !== "undefined" ? JSON.parse(userRaw) : null;
+
 
     if (!user) {
       progressSection.innerHTML = `
