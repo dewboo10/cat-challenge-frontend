@@ -5,86 +5,323 @@
   <title>Mental Math Match – BrainGames</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <script src="https://cdn.tailwindcss.com"></script>
-  <script src="/js/config.js"></script>
-  <script src="components/auth-popup.js"></script>
-  <script src="components/brain-game-utils.js"></script>
+  <style>
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      25% { transform: translateX(-5px); }
+      75% { transform: translateX(5px); }
+    }
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+    }
+    .shake {
+      animation: shake 0.5s ease-in-out;
+    }
+    .pulse {
+      animation: pulse 0.5s ease-in-out;
+    }
+    .equation {
+      transition: all 0.3s ease;
+    }
+    .equation:hover {
+      transform: scale(1.05);
+    }
+    .correct {
+      background-color: rgba(34, 197, 94, 0.2);
+      border-color: rgb(34, 197, 94);
+    }
+    .wrong {
+      background-color: rgba(239, 68, 68, 0.2);
+      border-color: rgb(239, 68, 68);
+    }
+    .level-badge {
+      background: linear-gradient(135deg, #6366f1, #8b5cf6);
+      padding: 4px 12px;
+      border-radius: 9999px;
+      color: white;
+      font-size: 0.875rem;
+      font-weight: 600;
+    }
+  </style>
 </head>
 <body class="bg-white text-gray-800 min-h-screen flex items-center justify-center p-4">
-<div class="max-w-2xl w-full bg-white shadow-xl p-6 border border-blue-200 rounded-xl text-center space-y-4 game-container">
-  <h1 class="text-2xl font-bold text-blue-700">Mental Math Match</h1>
-  <p>⏱ Time Left: <span id="timer">90</span>s | 🎯 Score: <span id="score">0</span></p>
-  <p id="question" class="text-2xl font-semibold">Loading...</p>
-  <div id="options" class="grid grid-cols-1 sm:grid-cols-2 gap-4"></div>
-  <button id="retryBtn" class="bg-green-600 text-white px-4 py-2 rounded font-semibold hidden">Retry</button>
-</div>
+  <div class="max-w-2xl w-full bg-white shadow-xl p-6 border border-blue-200 rounded-xl text-center space-y-4">
+    <h1 class="text-2xl font-bold text-blue-700">Mental Math Match</h1>
+    
+    <div class="flex justify-center items-center space-x-4">
+      <p>⏱ Time Left: <span id="timer" class="font-mono">90</span>s</p>
+      <p>🎯 Score: <span id="score" class="font-mono">0</span></p>
+      <p>Level: <span id="level" class="level-badge">1</span></p>
+    </div>
+
+    <div id="instruction" class="text-lg text-gray-600 mb-4">Match the equation with its correct result!</div>
+    
+    <div class="grid grid-cols-2 gap-6">
+      <div class="space-y-4">
+        <h3 class="font-semibold text-blue-600">Equations</h3>
+        <div id="equations" class="space-y-2"></div>
+      </div>
+      <div class="space-y-4">
+        <h3 class="font-semibold text-blue-600">Results</h3>
+        <div id="results" class="space-y-2"></div>
+      </div>
+    </div>
+    
+    <div class="space-y-4 mt-6">
+      <div id="feedback" class="text-sm font-medium hidden"></div>
+      <button id="nextBtn" class="bg-green-600 text-white px-6 py-2 rounded-lg font-semibold hidden hover:bg-green-700 transition-colors">
+        Next Set
+      </button>
+      <button id="retryBtn" class="bg-green-600 text-white px-6 py-2 rounded-lg font-semibold hidden hover:bg-green-700 transition-colors">
+        Play Again
+      </button>
+    </div>
+  </div>
 
 <script>
 const GAME_ID = 'mental-math-match';
 
-let currentAnswer = 0, score = 0, timeLeft = 90, timerInterval;
+let score = 0;
+let timeLeft = 90;
+let timerInterval;
+let currentLevel = 1;
+let selectedEquation = null;
+let selectedResult = null;
+let currentPairs = [];
+let matchedPairs = new Set();
 
-function generateProblem() {
-  const a = Math.floor(Math.random() * 30 + 1);
-  const b = Math.floor(Math.random() * 30 + 1);
-  const op = ['+', '-', '*'][Math.floor(Math.random() * 3)];
-  let expression = `${a} ${op} ${b}`;
-  currentAnswer = eval(expression);
-  document.getElementById("problem").textContent = expression;
-  const options = document.getElementById("options");
-  options.innerHTML = "";
-  const answers = new Set([currentAnswer]);
-  while (answers.size < 4) {
-    answers.add(currentAnswer + Math.floor(Math.random() * 10 - 5));
+function generateEquation(level) {
+  let num1, num2, operator, result;
+  
+  switch(level) {
+    case 1:
+      // Simple addition and subtraction
+      num1 = Math.floor(Math.random() * 20) + 1;
+      num2 = Math.floor(Math.random() * 20) + 1;
+      operator = Math.random() < 0.5 ? '+' : '-';
+      result = operator === '+' ? num1 + num2 : num1 - num2;
+      break;
+    case 2:
+      // Multiplication and division
+      num1 = Math.floor(Math.random() * 12) + 1;
+      num2 = Math.floor(Math.random() * 12) + 1;
+      operator = Math.random() < 0.5 ? '×' : '÷';
+      if (operator === '÷') {
+        result = num1;
+        num1 = num1 * num2;
+      } else {
+        result = num1 * num2;
+      }
+      break;
+    case 3:
+      // Mixed operations with parentheses
+      num1 = Math.floor(Math.random() * 20) + 1;
+      num2 = Math.floor(Math.random() * 10) + 1;
+      const num3 = Math.floor(Math.random() * 10) + 1;
+      const ops = ['+', '-', '×'];
+      operator = ops[Math.floor(Math.random() * ops.length)];
+      const secondOp = ops[Math.floor(Math.random() * ops.length)];
+      
+      if (Math.random() < 0.5) {
+        result = eval(`(${num1} ${operator} ${num2}) ${secondOp} ${num3}`);
+        return {
+          equation: `(${num1} ${operator} ${num2}) ${secondOp} ${num3}`,
+          result: result
+        };
+      } else {
+        result = eval(`${num1} ${operator} (${num2} ${secondOp} ${num3})`);
+        return {
+          equation: `${num1} ${operator} (${num2} ${secondOp} ${num3})`,
+          result: result
+        };
+      }
   }
-  Array.from(answers).sort(() => Math.random() - 0.5).forEach(ans => {
-    const btn = document.createElement("button");
-    btn.textContent = ans;
-    btn.className = "bg-gray-100 hover:bg-blue-100 px-4 py-2 rounded transition-colors";
-    btn.onclick = () => {
-      if (ans === currentAnswer) score++;
-      document.getElementById("score").textContent = score;
-      generateProblem();
-    };
-    options.appendChild(btn);
+  
+  return {
+    equation: `${num1} ${operator} ${num2}`,
+    result: result
+  };
+}
+
+function generatePairs() {
+  currentPairs = [];
+  matchedPairs.clear();
+  
+  for (let i = 0; i < 4; i++) {
+    currentPairs.push(generateEquation(currentLevel));
+  }
+}
+
+function shuffleArray(array) {
+  for (let i = array.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [array[i], array[j]] = [array[j], array[i]];
+  }
+  return array;
+}
+
+function displayPairs() {
+  const equationsDiv = document.getElementById('equations');
+  const resultsDiv = document.getElementById('results');
+  
+  equationsDiv.innerHTML = '';
+  resultsDiv.innerHTML = '';
+  
+  const equations = currentPairs.map(pair => pair.equation);
+  const results = currentPairs.map(pair => pair.result);
+  
+  shuffleArray(equations).forEach((equation, index) => {
+    const btn = document.createElement('button');
+    btn.className = 'equation w-full p-3 border-2 rounded-lg hover:bg-blue-50 transition-colors text-left';
+    btn.textContent = equation;
+    btn.onclick = () => handleEquationClick(btn, equation);
+    equationsDiv.appendChild(btn);
+  });
+  
+  shuffleArray(results).forEach((result, index) => {
+    const btn = document.createElement('button');
+    btn.className = 'equation w-full p-3 border-2 rounded-lg hover:bg-blue-50 transition-colors text-left';
+    btn.textContent = result;
+    btn.onclick = () => handleResultClick(btn, result);
+    resultsDiv.appendChild(btn);
   });
 }
 
+function handleEquationClick(button, equation) {
+  if (matchedPairs.has(equation)) return;
+  
+  if (selectedEquation) {
+    document.querySelectorAll('#equations button').forEach(btn => 
+      btn.classList.remove('bg-blue-100', 'border-blue-500'));
+  }
+  
+  selectedEquation = { button, value: equation };
+  button.classList.add('bg-blue-100', 'border-blue-500');
+  
+  checkMatch();
+}
+
+function handleResultClick(button, result) {
+  if (matchedPairs.has(result)) return;
+  
+  if (selectedResult) {
+    document.querySelectorAll('#results button').forEach(btn => 
+      btn.classList.remove('bg-blue-100', 'border-blue-500'));
+  }
+  
+  selectedResult = { button, value: result };
+  button.classList.add('bg-blue-100', 'border-blue-500');
+  
+  checkMatch();
+}
+
+function checkMatch() {
+  if (!selectedEquation || !selectedResult) return;
+  
+  const pair = currentPairs.find(p => p.equation === selectedEquation.value);
+  
+  if (pair && pair.result === selectedResult.value) {
+    handleCorrectMatch();
+  } else {
+    handleWrongMatch();
+  }
+  
+  selectedEquation = null;
+  selectedResult = null;
+}
+
+function handleCorrectMatch() {
+  score += currentLevel;
+  document.getElementById('score').textContent = score;
+  
+  selectedEquation.button.classList.add('correct');
+  selectedResult.button.classList.add('correct');
+  
+  matchedPairs.add(selectedEquation.value);
+  matchedPairs.add(selectedResult.value);
+  
+  if (matchedPairs.size === currentPairs.length * 2) {
+    if (score >= currentLevel * 12 && currentLevel < 3) {
+      currentLevel++;
+      document.getElementById('level').textContent = currentLevel;
+    }
+    document.getElementById('nextBtn').classList.remove('hidden');
+  }
+}
+
+function handleWrongMatch() {
+  selectedEquation.button.classList.add('wrong', 'shake');
+  selectedResult.button.classList.add('wrong', 'shake');
+  
+  setTimeout(() => {
+    selectedEquation.button.classList.remove('wrong', 'shake', 'bg-blue-100', 'border-blue-500');
+    selectedResult.button.classList.remove('wrong', 'shake', 'bg-blue-100', 'border-blue-500');
+  }, 1000);
+}
+
+function nextRound() {
+  document.getElementById('nextBtn').classList.add('hidden');
+  generatePairs();
+  displayPairs();
+}
+
 function startTimer() {
+  clearInterval(timerInterval);
   timerInterval = setInterval(() => {
     timeLeft--;
-    document.getElementById("timer").textContent = timeLeft;
-    if (timeLeft <= 0) endGame();
+    document.getElementById('timer').textContent = timeLeft;
+    
+    if (timeLeft <= 0) {
+      endGame();
+    }
   }, 1000);
 }
 
 function endGame() {
   clearInterval(timerInterval);
-  document.getElementById("problem").textContent = `Time's up! Final Score: ${score}`;
-  document.getElementById("options").innerHTML = "";
-  document.getElementById("retryBtn").classList.remove("hidden");
-  submitGameScore(GAME_ID, score);
+  
+  const finalMessage = `
+    <div class="space-y-4">
+      <h2 class="text-2xl font-bold">Game Over!</h2>
+      <p class="text-xl">Final Score: ${score}</p>
+      <p class="text-lg">Highest Level: ${currentLevel}</p>
+      <p class="text-sm text-gray-600">Keep practicing to improve your mental math!</p>
+    </div>
+  `;
+  
+  document.getElementById('equations').innerHTML = finalMessage;
+  document.getElementById('results').innerHTML = '';
+  document.getElementById('nextBtn').classList.add('hidden');
+  document.getElementById('retryBtn').classList.remove('hidden');
+  document.getElementById('instruction').textContent = 'Thanks for playing!';
 }
 
-function restartGame() {
+function startGame() {
   score = 0;
   timeLeft = 90;
-  document.getElementById("score").textContent = score;
-  document.getElementById("timer").textContent = timeLeft;
-  document.getElementById("retryBtn").classList.add("hidden");
-  generateProblem();
+  currentLevel = 1;
+  selectedEquation = null;
+  selectedResult = null;
+  
+  document.getElementById('score').textContent = score;
+  document.getElementById('timer').textContent = timeLeft;
+  document.getElementById('level').textContent = currentLevel;
+  document.getElementById('retryBtn').classList.add('hidden');
+  document.getElementById('nextBtn').classList.add('hidden');
+  document.getElementById('instruction').textContent = 'Match the equation with its correct result!';
+  
+  generatePairs();
+  displayPairs();
   startTimer();
 }
 
+// Event Listeners
+document.getElementById('nextBtn').onclick = nextRound;
+document.getElementById('retryBtn').onclick = startGame;
 
-
-/submit`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ username, gameId, score })
-  });
-}
-
-
+// Initialize game
+document.addEventListener('DOMContentLoaded', startGame);
 </script>
 </body>
 </html>

@@ -5,103 +5,290 @@
   <title>Find Main Idea – BrainGames</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <script src="https://cdn.tailwindcss.com"></script>
-  <script src="/js/config.js"></script>
-  <script src="components/auth-popup.js"></script>
-  <script src="components/brain-game-utils.js"></script>
+  <style>
+    .correct-answer {
+      animation: correctPulse 0.5s ease-out;
+    }
+    .wrong-answer {
+      animation: wrongShake 0.5s ease-in-out;
+    }
+    @keyframes correctPulse {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.05); background-color: #86efac; }
+      100% { transform: scale(1); }
+    }
+    @keyframes wrongShake {
+      0% { transform: translateX(0); }
+      25% { transform: translateX(-5px); background-color: #fca5a5; }
+      75% { transform: translateX(5px); background-color: #fca5a5; }
+      100% { transform: translateX(0); }
+    }
+    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; }
+    .level-badge {
+      background: linear-gradient(135deg, #6366f1, #8b5cf6);
+      padding: 4px 12px;
+      border-radius: 9999px;
+      color: white;
+      font-size: 0.875rem;
+      font-weight: 600;
+    }
+    .passage-container {
+      max-height: 300px;
+      overflow-y: auto;
+      padding: 1rem;
+      border: 1px solid #e5e7eb;
+      border-radius: 0.5rem;
+      margin: 1rem 0;
+      background: #f9fafb;
+    }
+    .option-button {
+      transition: all 0.2s ease;
+    }
+    .option-button:hover {
+      transform: translateY(-2px);
+    }
+    .option-button.selected {
+      border-color: #3b82f6;
+      background-color: #eff6ff;
+    }
+  </style>
 </head>
 <body class="bg-white text-gray-800 min-h-screen flex items-center justify-center p-4">
-<div class="max-w-2xl w-full bg-white shadow-xl p-6 border border-blue-200 rounded-xl text-center space-y-4 game-container">
+<div class="max-w-3xl w-full bg-white shadow-xl p-6 border border-blue-200 rounded-xl text-center space-y-4">
   <h1 class="text-2xl font-bold text-blue-700">Find Main Idea</h1>
-  <p>⏱ Time Left: <span id="timer">90</span>s | 🎯 Score: <span id="score">0</span></p>
-  <p id="question" class="text-2xl font-semibold">Loading...</p>
-  <div id="options" class="grid grid-cols-1 sm:grid-cols-2 gap-4"></div>
-  <button id="retryBtn" class="bg-green-600 text-white px-4 py-2 rounded font-semibold hidden">Retry</button>
+  
+  <div class="flex justify-center items-center space-x-4">
+    <p>⏱ Time Left: <span id="timer" class="mono">90</span>s</p>
+    <p>🎯 Score: <span id="score" class="mono">0</span></p>
+    <p>Level: <span class="level-badge">1</span></p>
+  </div>
+
+  <div class="passage-container text-left">
+    <p id="passage" class="text-lg leading-relaxed"></p>
+  </div>
+
+  <div class="space-y-3" id="options-container">
+    <!-- Options will be dynamically inserted here -->
+  </div>
+
+  <div class="space-y-4">
+    <div id="feedback" class="text-sm font-medium hidden"></div>
+    <div id="explanation" class="text-sm text-gray-600 hidden"></div>
+    <button id="nextBtn" class="bg-blue-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-blue-700 transition-colors hidden">
+      Next Question
+    </button>
+    <button id="retryBtn" class="bg-green-600 text-white px-6 py-2 rounded-lg font-semibold hidden hover:bg-green-700 transition-colors">
+      Play Again
+    </button>
+  </div>
 </div>
 
 <script>
-const GAME_ID = 'find-main-idea';
-
-const questions = [
+const passages = [
   {
-    passage: "In an increasingly interconnected world, learning a second language has become not just a desirable skill but a necessity. It opens doors to cultural exchange and professional opportunities.",
+    text: "The Great Barrier Reef, stretching over 2,300 kilometers along Australia's northeast coast, is the world's largest coral reef system. Home to thousands of species of marine life, including fish, mollusks, and sea turtles, it serves as a crucial ecosystem. However, rising ocean temperatures and pollution threaten its survival, with many coral colonies experiencing bleaching events in recent years.",
     options: [
-      "The benefits of learning a second language are numerous.",
-      "The world is becoming more connected.",
-      "Professional growth is tied to cultural awareness.",
-      "People prefer learning local languages."
+      "The Great Barrier Reef is located in Australia",
+      "The Great Barrier Reef is a vital marine ecosystem facing environmental threats",
+      "Coral bleaching is damaging the reef",
+      "Many species live in the Great Barrier Reef"
     ],
-    answer: "The benefits of learning a second language are numerous."
+    correct: 1,
+    explanation: "The passage discusses the reef's size, biodiversity, and environmental challenges, with the main focus being its importance as an ecosystem and the threats it faces."
   },
   {
-    passage: "While smartphones have made communication more convenient, they have also introduced new forms of social isolation. People are often physically present but mentally absent due to device distraction.",
+    text: "Regular exercise has numerous benefits for both physical and mental health. It strengthens muscles and bones, improves cardiovascular health, and helps maintain a healthy weight. Additionally, exercise releases endorphins, which boost mood and reduce stress. Studies show that people who exercise regularly have lower rates of depression and anxiety.",
     options: [
-      "Smartphones are harmful to society.",
-      "Convenience has replaced real human interaction.",
-      "Smartphones create a paradox of connection and isolation.",
-      "People should stop using smartphones."
+      "Exercise helps build strong muscles",
+      "Exercise makes people happy",
+      "Exercise provides multiple health benefits for body and mind",
+      "Regular exercise prevents depression"
     ],
-    answer: "Smartphones create a paradox of connection and isolation."
+    correct: 2,
+    explanation: "The passage outlines various benefits of exercise, encompassing both physical and mental aspects, making the comprehensive benefits the main idea."
+  },
+  {
+    text: "The invention of the printing press by Johannes Gutenberg in the 15th century revolutionized communication and learning in Europe. Before this innovation, books were handwritten and extremely expensive, making them accessible only to the wealthy. The printing press allowed for mass production of books, leading to increased literacy rates and the spread of knowledge across social classes.",
+    options: [
+      "Books were very expensive before the printing press",
+      "Johannes Gutenberg invented the printing press",
+      "The printing press democratized access to knowledge",
+      "Literacy rates increased in Europe"
+    ],
+    correct: 2,
+    explanation: "The passage focuses on how the printing press transformed society by making books and knowledge more accessible to everyone, not just the wealthy."
+  },
+  {
+    text: "Honeybees communicate through an intricate dance language. When a worker bee discovers a good source of nectar, it returns to the hive and performs specific movements. The waggle dance, for example, indicates both the distance and direction of the food source. Other bees observe this dance and can then locate the same flowers.",
+    options: [
+      "Bees use dance to share information about food sources",
+      "Worker bees collect nectar from flowers",
+      "The waggle dance is an important bee behavior",
+      "Bees work together in a hive"
+    ],
+    correct: 0,
+    explanation: "The passage primarily describes how bees use dance as a communication method to share information about food locations with other bees."
+  },
+  {
+    text: "Renewable energy sources like solar and wind power are becoming increasingly important in the fight against climate change. Unlike fossil fuels, these energy sources produce no greenhouse gas emissions during operation. As technology improves and costs decrease, more countries are investing in renewable energy infrastructure to reduce their carbon footprint.",
+    options: [
+      "Solar and wind power are types of renewable energy",
+      "Renewable energy is cheaper than fossil fuels",
+      "Renewable energy is gaining importance as a solution to climate change",
+      "Countries are investing in new technology"
+    ],
+    correct: 2,
+    explanation: "The passage emphasizes the growing role of renewable energy in addressing climate change, discussing both its benefits and increasing adoption."
   }
 ];
 
-let index = 0, score = 0, timeLeft = 90, timerInterval;
+let score = 0;
+let timeLeft = 90;
+let timerInterval;
+let currentLevel = 1;
+let currentQuestion = 0;
+let selectedOption = null;
 
-function generateQuestion() {
-  const q = questions[index];
-  document.getElementById("passage").textContent = q.passage;
-  const optionsDiv = document.getElementById("options");
-  optionsDiv.innerHTML = "";
-  q.options.forEach(opt => {
-    const btn = document.createElement("button");
-    btn.textContent = opt;
-    btn.className = "block w-full border px-4 py-2 bg-gray-100 hover:bg-blue-100 rounded";
-    btn.onclick = () => {
-      if (opt === q.answer) score++;
-      document.getElementById("score").textContent = score;
-      index = (index + 1) % questions.length;
-      generateQuestion();
-    };
-    optionsDiv.appendChild(btn);
+function displayQuestion() {
+  const question = passages[currentQuestion];
+  const passage = document.getElementById('passage');
+  const optionsContainer = document.getElementById('options-container');
+  
+  // Display passage
+  passage.textContent = question.text;
+  
+  // Clear and create new options
+  optionsContainer.innerHTML = '';
+  question.options.forEach((option, index) => {
+    const button = document.createElement('button');
+    button.className = 'option-button w-full p-4 text-left border rounded-lg hover:bg-gray-50 transition-all';
+    button.textContent = option;
+    button.onclick = () => selectOption(index);
+    optionsContainer.appendChild(button);
   });
+  
+  // Reset UI elements
+  document.getElementById('feedback').classList.add('hidden');
+  document.getElementById('explanation').classList.add('hidden');
+  document.getElementById('nextBtn').classList.add('hidden');
+  selectedOption = null;
+}
+
+function selectOption(index) {
+  if (selectedOption !== null) return; // Prevent multiple selections
+  
+  selectedOption = index;
+  const buttons = document.querySelectorAll('.option-button');
+  const question = passages[currentQuestion];
+  
+  buttons[index].classList.add('selected');
+  
+  if (index === question.correct) {
+    handleCorrectAnswer(buttons[index]);
+  } else {
+    handleWrongAnswer(buttons[index], buttons[question.correct]);
+  }
+}
+
+function handleCorrectAnswer(button) {
+  score++;
+  document.getElementById('score').textContent = score;
+  button.classList.add('correct-answer', 'bg-green-100');
+  
+  // Level up every 3 correct answers
+  if (score % 3 === 0) {
+    currentLevel++;
+    document.querySelector('.level-badge').textContent = currentLevel;
+  }
+  
+  showFeedback(true);
+}
+
+function handleWrongAnswer(wrongButton, correctButton) {
+  wrongButton.classList.add('wrong-answer', 'bg-red-100');
+  correctButton.classList.add('bg-green-100');
+  showFeedback(false);
+}
+
+function showFeedback(isCorrect) {
+  const feedback = document.getElementById('feedback');
+  const explanation = document.getElementById('explanation');
+  const nextBtn = document.getElementById('nextBtn');
+  
+  feedback.textContent = isCorrect ? '🎉 Correct!' : '❌ Not quite right.';
+  feedback.className = `text-sm font-medium ${isCorrect ? 'text-green-600' : 'text-red-600'}`;
+  
+  explanation.textContent = passages[currentQuestion].explanation;
+  
+  feedback.classList.remove('hidden');
+  explanation.classList.remove('hidden');
+  nextBtn.classList.remove('hidden');
+}
+
+function nextQuestion() {
+  currentQuestion = (currentQuestion + 1) % passages.length;
+  displayQuestion();
 }
 
 function startTimer() {
+  clearInterval(timerInterval);
   timerInterval = setInterval(() => {
     timeLeft--;
-    document.getElementById("timer").textContent = timeLeft;
-    if (timeLeft <= 0) endGame();
+    document.getElementById('timer').textContent = timeLeft;
+    
+    if (timeLeft <= 0) {
+      endGame();
+    }
   }, 1000);
 }
 
 function endGame() {
   clearInterval(timerInterval);
-  document.getElementById("passage").textContent = `Time's up! Final Score: ${score}`;
-  document.getElementById("options").innerHTML = "";
-  document.getElementById("retryBtn").classList.remove("hidden");
-  submitGameScore(GAME_ID, score);
+  const passage = document.getElementById('passage');
+  const optionsContainer = document.getElementById('options-container');
+  const feedback = document.getElementById('feedback');
+  const explanation = document.getElementById('explanation');
+  const nextBtn = document.getElementById('nextBtn');
+  const retryBtn = document.getElementById('retryBtn');
+  
+  passage.textContent = `Game Over! Final Score: ${score} | Highest Level: ${currentLevel}`;
+  optionsContainer.innerHTML = '';
+  feedback.classList.add('hidden');
+  explanation.classList.add('hidden');
+  nextBtn.classList.add('hidden');
+  retryBtn.classList.remove('hidden');
 }
 
-function restartGame() {
-  index = 0;
+function startGame() {
   score = 0;
   timeLeft = 90;
-  document.getElementById("score").textContent = score;
-  document.getElementById("timer").textContent = timeLeft;
-  document.getElementById("retryBtn").classList.add("hidden");
-  generateQuestion();
+  currentLevel = 1;
+  currentQuestion = 0;
+  selectedOption = null;
+  
+  document.getElementById('score').textContent = score;
+  document.getElementById('timer').textContent = timeLeft;
+  document.querySelector('.level-badge').textContent = currentLevel;
+  document.getElementById('retryBtn').classList.add('hidden');
+  
+  displayQuestion();
   startTimer();
 }
 
-
-
-/submit`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ username, gameId, score })
-  });
-}
-
-
+// Initialize game
+document.addEventListener('DOMContentLoaded', () => {
+  const nextBtn = document.getElementById('nextBtn');
+  const retryBtn = document.getElementById('retryBtn');
+  
+  if (nextBtn) {
+    nextBtn.onclick = nextQuestion;
+  }
+  if (retryBtn) {
+    retryBtn.onclick = startGame;
+  }
+  
+  startGame();
+});
 </script>
 </body>
 </html>

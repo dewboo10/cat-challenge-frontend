@@ -5,98 +5,300 @@
   <title>Seating Arrangement – BrainGames</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <script src="https://cdn.tailwindcss.com"></script>
-  <script src="/js/config.js"></script>
-  <script src="components/auth-popup.js"></script>
-  <script src="components/brain-game-utils.js"></script>
+  <style>
+    .option {
+      transition: all 0.3s ease;
+    }
+    .option:hover {
+      transform: scale(1.02);
+    }
+    .correct {
+      background-color: rgba(34, 197, 94, 0.2);
+      border-color: rgb(34, 197, 94);
+    }
+    .wrong {
+      background-color: rgba(239, 68, 68, 0.2);
+      border-color: rgb(239, 68, 68);
+    }
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      25% { transform: translateX(-5px); }
+      75% { transform: translateX(5px); }
+    }
+    .shake {
+      animation: shake 0.5s ease-in-out;
+    }
+    .level-badge {
+      background: linear-gradient(135deg, #6366f1, #8b5cf6);
+      padding: 4px 12px;
+      border-radius: 9999px;
+      color: white;
+      font-size: 0.875rem;
+      font-weight: 600;
+    }
+    .streak-badge {
+      background: linear-gradient(135deg, #f59e0b, #d97706);
+      padding: 4px 12px;
+      border-radius: 9999px;
+      color: white;
+      font-size: 0.875rem;
+      font-weight: 600;
+    }
+    .question-appear {
+      animation: appear 0.5s ease-out;
+    }
+    @keyframes appear {
+      from { 
+        opacity: 0;
+        transform: translateY(-20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+  </style>
 </head>
 <body class="bg-white text-gray-800 min-h-screen flex items-center justify-center p-4">
-<div class="max-w-2xl w-full bg-white shadow-xl p-6 border border-blue-200 rounded-xl text-center space-y-4 game-container">
-  <h1 class="text-2xl font-bold text-blue-700">Seating Arrangement</h1>
-  <p>⏱ Time Left: <span id="timer">90</span>s | 🎯 Score: <span id="score">0</span></p>
-  <p id="question" class="text-2xl font-semibold">Loading...</p>
-  <div id="options" class="grid grid-cols-1 sm:grid-cols-2 gap-4"></div>
-  <button id="retryBtn" class="bg-green-600 text-white px-4 py-2 rounded font-semibold hidden">Retry</button>
-</div>
+  <div class="max-w-2xl w-full bg-white shadow-xl p-6 border border-blue-200 rounded-xl text-center space-y-4">
+    <h1 class="text-2xl font-bold text-blue-700">Seating Arrangement</h1>
+    
+    <div class="flex justify-center items-center space-x-4">
+      <p>⏱ Time Left: <span id="timer" class="font-mono">90</span>s</p>
+      <p>🎯 Score: <span id="score" class="font-mono">0</span></p>
+      <p>Level: <span id="level" class="level-badge">1</span></p>
+      <p>Streak: <span id="streak" class="streak-badge">0</span></p>
+    </div>
+
+    <div id="instruction" class="text-lg text-gray-600 mb-4">Solve the seating arrangement puzzles!</div>
+    
+    <div id="question" class="text-xl font-bold text-blue-600 mb-8 question-appear"></div>
+    
+    <div id="options" class="grid grid-cols-2 gap-4"></div>
+    
+    <div class="space-y-4 mt-6">
+      <div id="feedback" class="text-sm font-medium hidden"></div>
+      <button id="retryBtn" class="bg-green-600 text-white px-6 py-2 rounded-lg font-semibold hidden hover:bg-green-700 transition-colors">
+        Play Again
+      </button>
+    </div>
+  </div>
 
 <script>
 const GAME_ID = 'seating-arrangement';
 
-const questions = [
-  {
-    q: "A, B, C, D and E are sitting in a row. B is to the right of A. C is between A and D. Who is sitting in the middle?",
-    options: ["A", "B", "C", "D"],
-    answer: "C"
-  },
-  {
-    q: "P, Q, R, S are sitting in a circle. R is to the left of P, and S is opposite Q. Who is to the right of P?",
-    options: ["Q", "R", "S", "Cannot be determined"],
-    answer: "Q"
-  },
-  {
-    q: "Six people A to F sit in a row. A is to the left of B, but right of C. Who is in the middle if D is at one end?",
-    options: ["A", "C", "D", "Cannot be determined"],
-    answer: "Cannot be determined"
-  }
-];
+let score = 0;
+let timeLeft = 90;
+let timerInterval;
+let currentLevel = 1;
+let streak = 0;
+let currentQuestionIndex = 0;
 
-let index = 0, score = 0, timeLeft = 90, timerInterval;
+const questions = {
+  1: [ // Level 1 - Linear arrangements
+    {
+      q: "Five friends A, B, C, D, and E are sitting in a row. If B is sitting next to A, and C is sitting next to D, who must be sitting in the middle?",
+      options: ["A", "B", "E", "Cannot be determined"],
+      answer: "E",
+      explanation: "Since B is next to A and C is next to D, E must be in the middle to separate these pairs."
+    },
+    {
+      q: "In a row of 5 people, P is sitting next to Q, and R is sitting next to S. If T is not sitting next to P or S, where must T be sitting?",
+      options: ["Middle", "End", "Next to Q", "Cannot be determined"],
+      answer: "Middle",
+      explanation: "T must be in the middle to separate the pairs PQ and RS."
+    },
+    {
+      q: "Six students are sitting in a row. If John is third from the left and Mary is second from the right, how many students are sitting between them?",
+      options: ["1", "2", "3", "Cannot be determined"],
+      answer: "1",
+      explanation: "In a row of 6, third from left is position 3, second from right is position 5, so there is 1 person between them."
+    }
+  ],
+  2: [ // Level 2 - Circular arrangements
+    {
+      q: "Five people P, Q, R, S, and T are sitting in a circle. If P is sitting between Q and R, and S is not sitting next to R, where must T be sitting?",
+      options: ["Next to Q", "Next to S", "Between S and Q", "Cannot be determined"],
+      answer: "Between S and Q",
+      explanation: "Since P is between Q and R, and S can't be next to R, T must be between S and Q to complete the circle."
+    },
+    {
+      q: "In a circular arrangement of 6 people, A sits opposite to B, and C sits to the immediate right of B. If D sits opposite to E, where must F be sitting?",
+      options: ["Next to A", "Opposite to C", "Between A and E", "Cannot be determined"],
+      answer: "Opposite to C",
+      explanation: "In a circle of 6, opposite positions are fixed. If we know B's opposite (A) and E's opposite (D), then F must be opposite to C."
+    },
+    {
+      q: "Eight friends are sitting in a circle. If every third person is wearing a hat, and Alex is wearing a hat, how many people between Alex and the next person wearing a hat?",
+      options: ["1", "2", "3", "Cannot be determined"],
+      answer: "2",
+      explanation: "In a circular arrangement, if every third person wears a hat, there must be 2 people between each hat-wearer."
+    }
+  ],
+  3: [ // Level 3 - Complex arrangements
+    {
+      q: "Eight people are sitting in two parallel rows facing each other. A sits third from left in row 1. B sits opposite to C who sits to the immediate right of D. If E sits opposite to A, and F sits at an end, where must G be sitting?",
+      options: ["Row 1, leftmost", "Row 2, rightmost", "Row 1, rightmost", "Cannot be determined"],
+      answer: "Row 2, rightmost",
+      explanation: "By mapping the given positions and relationships, G must be at the rightmost position in row 2."
+    },
+    {
+      q: "In a square arrangement, 8 people are sitting on the corners and middle of each side. If no two adjacent people are wearing the same color, and P is wearing blue with Q wearing red on the adjacent corner, what color must R be wearing if sitting opposite to P?",
+      options: ["Blue", "Red", "Either Blue or Red", "Cannot be determined"],
+      answer: "Either Blue or Red",
+      explanation: "Since R is opposite to P and not adjacent to either P or Q, R could wear either color."
+    },
+    {
+      q: "In a double row arrangement of 12 people, if every person in row 1 must face someone of the opposite gender in row 2, and we know the first 4 positions in row 1 are M,F,M,F (M=Male, F=Female), what must be the arrangement of the first 4 positions in row 2?",
+      options: ["F,M,F,M", "M,F,M,F", "F,M,M,F", "Cannot be determined"],
+      answer: "F,M,F,M",
+      explanation: "To satisfy the opposite gender requirement, row 2 must be F,M,F,M to face M,F,M,F respectively."
+    }
+  ]
+};
 
 function generateQuestion() {
-  const q = questions[index];
-  document.getElementById("question").textContent = q.q;
-  const container = document.getElementById("options");
-  container.innerHTML = "";
-  q.options.forEach(opt => {
-    const btn = document.createElement("button");
-    btn.textContent = opt;
-    btn.className = "bg-gray-100 hover:bg-blue-100 px-4 py-2 rounded transition-colors";
-    btn.onclick = () => {
-      if (opt === q.answer) score++;
-      document.getElementById("score").textContent = score;
-      index = (index + 1) % questions.length;
-      generateQuestion();
-    };
-    container.appendChild(btn);
+  const currentQuestions = questions[currentLevel];
+  const question = currentQuestions[currentQuestionIndex % currentQuestions.length];
+  
+  document.getElementById('question').textContent = question.q;
+  const optionsDiv = document.getElementById('options');
+  optionsDiv.innerHTML = '';
+  
+  question.options.forEach(option => {
+    const button = document.createElement('button');
+    button.className = 'option p-4 text-xl border-2 rounded-lg hover:bg-blue-50 transition-colors';
+    button.textContent = option;
+    button.onclick = () => checkAnswer(button, option, question.answer, question.explanation);
+    optionsDiv.appendChild(button);
   });
 }
 
+function checkAnswer(button, selected, correct, explanation) {
+  const buttons = document.querySelectorAll('.option');
+  buttons.forEach(btn => btn.disabled = true);
+  
+  if (selected === correct) {
+    handleCorrectAnswer(button, explanation);
+  } else {
+    handleWrongAnswer(button, correct, explanation);
+  }
+  
+  setTimeout(() => {
+    buttons.forEach(btn => {
+      btn.classList.remove('correct', 'wrong', 'shake');
+    });
+    currentQuestionIndex++;
+    generateQuestion();
+    buttons.forEach(btn => btn.disabled = false);
+  }, 2000);
+}
+
+function handleCorrectAnswer(button, explanation) {
+  streak++;
+  score += currentLevel + Math.floor(streak / 3); // Bonus points for streaks
+  
+  document.getElementById('score').textContent = score;
+  document.getElementById('streak').textContent = streak;
+  
+  button.classList.add('correct');
+  document.getElementById('feedback').textContent = `Correct! ${explanation}`;
+  document.getElementById('feedback').classList.remove('hidden');
+  
+  if (score >= currentLevel * 15 && currentLevel < 3) {
+    currentLevel++;
+    document.getElementById('level').textContent = currentLevel;
+  }
+}
+
+function handleWrongAnswer(button, correct, explanation) {
+  streak = 0;
+  document.getElementById('streak').textContent = streak;
+  
+  button.classList.add('wrong', 'shake');
+  
+  const correctButton = Array.from(document.querySelectorAll('.option'))
+    .find(btn => btn.textContent === correct);
+  correctButton.classList.add('correct');
+  
+  document.getElementById('feedback').textContent = `Incorrect. ${explanation}`;
+  document.getElementById('feedback').classList.remove('hidden');
+}
+
 function startTimer() {
+  clearInterval(timerInterval);
   timerInterval = setInterval(() => {
     timeLeft--;
-    document.getElementById("timer").textContent = timeLeft;
-    if (timeLeft <= 0) endGame();
+    document.getElementById('timer').textContent = timeLeft;
+    
+    if (timeLeft <= 0) {
+      endGame();
+    }
   }, 1000);
 }
 
 function endGame() {
   clearInterval(timerInterval);
-  document.getElementById("question").textContent = `Time's up! Final Score: ${score}`;
-  document.getElementById("options").innerHTML = "";
-  document.getElementById("retryBtn").classList.remove("hidden");
-  submitGameScore(GAME_ID, score);
+  
+  const finalMessage = `
+    <div class="space-y-4">
+      <h2 class="text-2xl font-bold">Game Over!</h2>
+      <p class="text-xl">Final Score: ${score}</p>
+      <p class="text-lg">Highest Level: ${currentLevel}</p>
+      <p class="text-sm">Longest Streak: ${streak}</p>
+      <p class="text-sm text-gray-600">Keep practicing to improve your logical reasoning skills!</p>
+    </div>
+  `;
+  
+  document.getElementById('question').textContent = '';
+  document.getElementById('options').innerHTML = finalMessage;
+  document.getElementById('feedback').classList.add('hidden');
+  document.getElementById('retryBtn').classList.remove('hidden');
+  document.getElementById('instruction').textContent = 'Thanks for playing!';
+  
+  // Save score
+  try {
+    const user = JSON.parse(localStorage.getItem('user'));
+    if (user && user.username) {
+      fetch('/api/scores/submit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          username: user.username,
+          gameId: GAME_ID,
+          score: score
+        })
+      }).catch(console.error);
+    }
+  } catch (error) {
+    console.error('Error saving score:', error);
+  }
 }
 
-function restartGame() {
-  index = 0;
+function startGame() {
   score = 0;
   timeLeft = 90;
-  document.getElementById("score").textContent = score;
-  document.getElementById("timer").textContent = timeLeft;
-  document.getElementById("retryBtn").classList.add("hidden");
+  currentLevel = 1;
+  streak = 0;
+  currentQuestionIndex = 0;
+  
+  document.getElementById('score').textContent = score;
+  document.getElementById('timer').textContent = timeLeft;
+  document.getElementById('level').textContent = currentLevel;
+  document.getElementById('streak').textContent = streak;
+  document.getElementById('retryBtn').classList.add('hidden');
+  document.getElementById('feedback').classList.add('hidden');
+  document.getElementById('instruction').textContent = 'Solve the seating arrangement puzzles!';
+  
   generateQuestion();
   startTimer();
 }
 
+// Event Listeners
+document.getElementById('retryBtn').onclick = startGame;
 
-
-/submit`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ username, gameId, score })
-  });
-}
-
-
+// Initialize game
+document.addEventListener('DOMContentLoaded', startGame);
 </script>
 </body>
 </html>

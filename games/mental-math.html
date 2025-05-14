@@ -5,103 +5,193 @@
   <title>Mental Math – BrainGames</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <script src="https://cdn.tailwindcss.com"></script>
-  <script src="/js/config.js"></script>
-  <script src="components/auth-popup.js"></script>
-  <script src="components/brain-game-utils.js"></script>
+  <style>
+    .correct-answer {
+      animation: correctPulse 0.5s ease-out;
+    }
+    .wrong-answer {
+      animation: wrongShake 0.5s ease-in-out;
+    }
+    @keyframes correctPulse {
+      0% { background-color: rgb(34 197 94); transform: scale(1); }
+      50% { background-color: rgb(34 197 94); transform: scale(1.05); }
+      100% { background-color: rgb(243 244 246); transform: scale(1); }
+    }
+    @keyframes wrongShake {
+      0% { background-color: rgb(239 68 68); transform: translateX(0); }
+      25% { background-color: rgb(239 68 68); transform: translateX(-5px); }
+      75% { background-color: rgb(239 68 68); transform: translateX(5px); }
+      100% { background-color: rgb(243 244 246); transform: translateX(0); }
+    }
+  </style>
 </head>
 <body class="bg-white text-gray-800 min-h-screen flex items-center justify-center p-4">
-<div class="max-w-2xl w-full bg-white shadow-xl p-6 border border-blue-200 rounded-xl text-center space-y-4 game-container">
+<div class="max-w-2xl w-full bg-white shadow-xl p-6 border border-blue-200 rounded-xl text-center space-y-4">
   <h1 class="text-2xl font-bold text-blue-700">Mental Math</h1>
   <p>⏱ Time Left: <span id="timer">90</span>s | 🎯 Score: <span id="score">0</span></p>
   <p id="question" class="text-2xl font-semibold">Loading...</p>
-  
-  <button id="retryBtn" class="bg-green-600 text-white px-4 py-2 rounded font-semibold hidden">Retry</button>
+  <div id="options" class="grid grid-cols-1 sm:grid-cols-2 gap-4"></div>
+  <button id="retryBtn" class="bg-green-600 text-white px-4 py-2 rounded font-semibold hidden hover:bg-green-700 transition-colors">Play Again</button>
 </div>
 
 <script>
-const GAME_ID = 'mental-math';
-
-const GAME_ID = 'mental-math';
-let score = 0, timeLeft = 90, timerInterval, currentAnswer;
+let score = 0;
+let timeLeft = 90;
+let timerInterval;
 
 function generateQuestion() {
   const operations = [
+    // Addition
     () => {
-      const a = Math.floor(Math.random() * 100) + 1;
-      const b = Math.floor(Math.random() * 100) + 1;
-      currentAnswer = a + b;
-      return `${a} + ${b}`;
+      const a = Math.floor(Math.random() * 100);
+      const b = Math.floor(Math.random() * 100);
+      return {
+        question: `${a} + ${b} = ?`,
+        answer: a + b,
+        generateWrong: () => {
+          const correct = a + b;
+          const offset = Math.floor(Math.random() * 5) + 1;
+          return Math.random() < 0.5 ? correct + offset : correct - offset;
+        }
+      };
     },
-    () => {
-      const a = Math.floor(Math.random() * 100) + 1;
-      const b = Math.floor(Math.random() * Math.min(a, 50)) + 1;
-      currentAnswer = a - b;
-      return `${a} - ${b}`;
-    },
+    // Multiplication
     () => {
       const a = Math.floor(Math.random() * 12) + 1;
       const b = Math.floor(Math.random() * 12) + 1;
-      currentAnswer = a * b;
-      return `${a} × ${b}`;
+      return {
+        question: `${a} × ${b} = ?`,
+        answer: a * b,
+        generateWrong: () => {
+          const correct = a * b;
+          const offset = Math.floor(Math.random() * 5) + 1;
+          return Math.random() < 0.5 ? correct + offset : correct - offset;
+        }
+      };
+    },
+    // Subtraction
+    () => {
+      const result = Math.floor(Math.random() * 50);
+      const b = Math.floor(Math.random() * 50);
+      const a = result + b;
+      return {
+        question: `${a} - ${b} = ?`,
+        answer: result,
+        generateWrong: () => {
+          const offset = Math.floor(Math.random() * 5) + 1;
+          return Math.random() < 0.5 ? result + offset : result - offset;
+        }
+      };
     }
   ];
 
-  const operation = operations[Math.floor(Math.random() * operations.length)];
-  document.getElementById("question").textContent = operation();
-  document.getElementById("answer").value = "";
-  document.getElementById("answer").focus();
-}
-
-function checkAnswer() {
-  const userAnswer = parseInt(document.getElementById("answer").value);
-  if (userAnswer === currentAnswer) {
-    score++;
-    document.getElementById("score").textContent = score;
+  const operation = operations[Math.floor(Math.random() * operations.length)]();
+  const correctAnswer = operation.answer;
+  
+  const questionEl = document.getElementById("question");
+  if (questionEl) {
+    questionEl.textContent = operation.question;
   }
-  generateQuestion();
+  
+  const container = document.getElementById("options");
+  if (container) {
+    container.innerHTML = "";
+    const choices = new Set([correctAnswer]);
+    while (choices.size < 4) {
+      const wrongAnswer = operation.generateWrong();
+      if (wrongAnswer !== correctAnswer && wrongAnswer >= 0) {
+        choices.add(wrongAnswer);
+      }
+    }
+    
+    Array.from(choices)
+      .sort(() => Math.random() - 0.5)
+      .forEach(opt => {
+        const btn = document.createElement("button");
+        btn.textContent = opt;
+        btn.className = "bg-gray-100 hover:bg-blue-100 px-4 py-2 rounded transition-colors";
+        btn.onclick = () => {
+          // Remove any existing animation classes from all buttons
+          container.querySelectorAll('button').forEach(b => {
+            b.classList.remove('correct-answer', 'wrong-answer');
+          });
+          
+          if (opt === correctAnswer) {
+            score++;
+            const scoreEl = document.getElementById("score");
+            if (scoreEl) scoreEl.textContent = score;
+            btn.classList.add('correct-answer');
+            // Wait for animation to finish before next question
+            setTimeout(generateQuestion, 500);
+          } else {
+            btn.classList.add('wrong-answer');
+            // Find and highlight the correct answer
+            container.querySelectorAll('button').forEach(b => {
+              if (b.textContent === correctAnswer.toString()) {
+                b.classList.add('correct-answer');
+              }
+            });
+            // Wait longer for wrong answers so user can see the correct one
+            setTimeout(generateQuestion, 1000);
+          }
+          // Disable all buttons during animation
+          container.querySelectorAll('button').forEach(b => {
+            b.disabled = true;
+          });
+        };
+        container.appendChild(btn);
+      });
+  }
 }
 
 function startTimer() {
+  clearInterval(timerInterval);
   timerInterval = setInterval(() => {
     timeLeft--;
-    document.getElementById("timer").textContent = timeLeft;
-    if (timeLeft <= 0) endGame();
+    const timerEl = document.getElementById("timer");
+    if (timerEl) timerEl.textContent = timeLeft;
+    
+    if (timeLeft <= 0) {
+      endGame();
+    }
   }, 1000);
 }
 
 function endGame() {
   clearInterval(timerInterval);
-  document.getElementById("question").textContent = `Time's up! Final Score: ${score}`;
-  document.getElementById("answer").disabled = true;
-  document.getElementById("retryBtn").classList.remove("hidden");
-  submitGameScore(GAME_ID, score);
+  const questionEl = document.getElementById("question");
+  const optionsEl = document.getElementById("options");
+  const retryBtn = document.getElementById("retryBtn");
+  
+  if (questionEl) questionEl.textContent = `Time's up! Final Score: ${score}`;
+  if (optionsEl) optionsEl.innerHTML = "";
+  if (retryBtn) retryBtn.classList.remove("hidden");
 }
 
-function restartGame() {
+function startGame() {
   score = 0;
   timeLeft = 90;
-  document.getElementById("score").textContent = score;
-  document.getElementById("timer").textContent = timeLeft;
-  document.getElementById("answer").disabled = false;
-  document.getElementById("retryBtn").classList.add("hidden");
+  
+  const scoreEl = document.getElementById("score");
+  const timerEl = document.getElementById("timer");
+  const retryBtn = document.getElementById("retryBtn");
+  
+  if (scoreEl) scoreEl.textContent = score;
+  if (timerEl) timerEl.textContent = timeLeft;
+  if (retryBtn) retryBtn.classList.add("hidden");
+  
   generateQuestion();
   startTimer();
 }
 
-// Handle Enter key
-document.getElementById("answer").addEventListener("keypress", (e) => {
-  if (e.key === "Enter") checkAnswer();
+// Initialize game
+document.addEventListener('DOMContentLoaded', () => {
+  const retryBtn = document.getElementById('retryBtn');
+  if (retryBtn) {
+    retryBtn.onclick = startGame;
+  }
+  startGame();
 });
-
-
-
-
-window.onload = () => {
-  initGameStats(GAME_ID);
-  generateQuestion();
-  startTimer();
-  document.getElementById("retryBtn").addEventListener("click", restartGame);
-};
 </script>
 </body>
 </html>

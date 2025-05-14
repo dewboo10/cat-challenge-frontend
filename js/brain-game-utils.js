@@ -6,7 +6,7 @@ const username = localStorage.getItem("username");
 // Score submission - will work when backend is available
 function submitGameScore(gameId, score) {
   if (!isLoggedIn || !username) {
-    showAuthPopup();
+    console.log("Score not submitted - user not logged in");
     return;
   }
 
@@ -21,17 +21,14 @@ function submitGameScore(gameId, score) {
 
 // Common game initialization
 function initGame(gameId) {
-  // Start the game immediately without waiting for backend
+  // Reset score
+  score = 0;
+  const scoreEl = document.getElementById("score");
+  if (scoreEl) scoreEl.textContent = score;
+  
+  // Start the game
   if (typeof window[gameId] === 'function') {
     window[gameId]();
-  } else if (typeof generateQuestion === 'function') {
-    generateQuestion();
-  } else if (typeof generateSeries === 'function') {
-    generateSeries();
-  } else if (typeof generateProblem === 'function') {
-    generateProblem();
-  } else if (typeof generateGraph === 'function') {
-    generateGraph();
   }
   
   // Start timer
@@ -40,7 +37,7 @@ function initGame(gameId) {
   // Add retry button listener
   const retryBtn = document.getElementById("retryBtn");
   if (retryBtn) {
-    retryBtn.addEventListener("click", restartGame);
+    retryBtn.onclick = () => restartGame(gameId);
   }
 }
 
@@ -79,8 +76,10 @@ function endGame() {
   }
 }
 
-function restartGame() {
+function restartGame(gameId) {
   score = 0;
+  timeLeft = 90;
+  
   const scoreEl = document.getElementById("score");
   const timerEl = document.getElementById("timer");
   const retryBtn = document.getElementById("retryBtn");
@@ -89,16 +88,8 @@ function restartGame() {
   if (timerEl) timerEl.textContent = timeLeft;
   if (retryBtn) retryBtn.classList.add("hidden");
   
-  if (typeof window[GAME_ID] === 'function') {
-    window[GAME_ID]();
-  } else if (typeof generateQuestion === 'function') {
-    generateQuestion();
-  } else if (typeof generateSeries === 'function') {
-    generateSeries();
-  } else if (typeof generateProblem === 'function') {
-    generateProblem();
-  } else if (typeof generateGraph === 'function') {
-    generateGraph();
+  if (typeof window[gameId] === 'function') {
+    window[gameId]();
   }
   
   startTimer();
